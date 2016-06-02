@@ -107,6 +107,7 @@ struct idmac_desc {
 /* Each descriptor can transfer up to 4KB of data in chained mode */
 #define DW_MCI_DESC_DATA_LENGTH	0x1000
 
+static void dw_mci_parse_custom_dt(struct dw_mci *host);
 #if defined(CONFIG_DEBUG_FS)
 static int dw_mci_req_show(struct seq_file *s, void *v)
 {
@@ -2885,6 +2886,7 @@ static int dw_mci_init_slot(struct dw_mci *host)
 
 	dw_mci_get_cd(mmc);
 
+	dw_mci_parse_custom_dt(host);
 	ret = mmc_add_host(mmc);
 	if (ret)
 		goto err_host_allocated;
@@ -3139,10 +3141,29 @@ static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 	return pdata;
 }
 
+static void dw_mci_parse_custom_dt(struct dw_mci *host)
+{
+	struct device *dev = host->dev;
+	struct device_node *np = dev->of_node;
+
+	if (of_find_property(np, "supports-detect-complete", NULL)) {
+		 struct dw_mci_slot *slot = host->slot;
+		 if (!slot)
+			  return;
+		 slot->mmc->supports_detect_complete = true;
+		 dev_info(dev, "%s: supports detect complete\n",
+				   mmc_hostname(slot->mmc));
+	}
+}
 #else /* CONFIG_OF */
 static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 {
 	return ERR_PTR(-EINVAL);
+}
+
+static void dw_mci_parse_custom_dt(struct dw_mci *host)
+{
+	return;
 }
 #endif /* CONFIG_OF */
 
