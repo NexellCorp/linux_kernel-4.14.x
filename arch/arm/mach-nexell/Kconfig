@@ -1,0 +1,36 @@
+menuconfig ARCH_NEXELL
+	bool "Nexell SoCs"
+	select ARM_AMBA
+	select HAVE_SMP
+	select ARCH_HAS_CPUFREQ
+	select GENERIC_TIME
+	select GENERIC_CLOCKEVENTS
+	select ZONE_DMA
+	select SPARSE_IRQ
+	select COMMON_CLK
+	select PINCTRL
+	select ARCH_REQUIRE_GPIOLIB
+	select ARM_PATCH_PHYS_VIRT
+	select USE_OF
+	select VIRT_TO_BUS
+
+if ARCH_NEXELL
+
+config ARCH_NXP3220_COMMON
+	bool
+	select CPU_V7
+	select ARM_GIC
+
+config ARCH_NXP3220
+	bool "NXP3220"
+	select ARCH_NXP3220_COMMON
+	help
+	   Nexell NXP3220 (ARM Cortex A7) SoC based systems
+
+config ARCH_SIP_S31NX
+	bool "SIP_S31NX"
+	select ARCH_NXP3220_COMMON
+	help
+	  Nexell SIP_S31NX (ARM Cortex A7) based on NXP3220
+
+endif

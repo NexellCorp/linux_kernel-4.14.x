@@ -800,6 +800,8 @@ source "arch/arm/plat-pxa/Kconfig"
 
 source "arch/arm/mach-mmp/Kconfig"
 
+source "arch/arm/mach-nexell/Kconfig"
+
 source "arch/arm/mach-oxnas/Kconfig"
 
 source "arch/arm/mach-qcom/Kconfig"
