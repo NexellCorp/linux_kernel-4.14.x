@@ -211,6 +211,17 @@
 				     <GIC_SPI 49 IRQ_TYPE_NONE>,
 				     <GIC_SPI 101 IRQ_TYPE_NONE>;
 		};
+
+		timer: timer@208c0000 {
+			compatible = "nexell,nxp3220-timer";
+			reg = <0x208c0000 0x1000>;
+			clocks =  <&cmu CLK_TIMER0_TCLK0>,
+			       <&cmu CLK_TIMER0_TCLK1>;
+			clock-names = "timer0", "timer1";
+			interrupts = <GIC_SPI 107 IRQ_TYPE_NONE>;
+			clksource = <0>;
+			clkevent = <1>;
+		};
 	};
 };
 
