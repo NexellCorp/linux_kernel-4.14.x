@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+
 / {
 	compatible = "nexell,nxp3220";
 	#address-cells = <0x1>;
@@ -34,7 +36,20 @@
 		compatible = "simple-bus";
 		#address-cells = <1>;
 		#size-cells = <1>;
+		interrupt-parent = <&gic>;
 		ranges;
+
+		gic: interrupt-controller@22011000 {
+			compatible = "arm,cortex-a7-gic";
+			reg = <0 0x22011000 0 0x1000>,
+			      <0 0x22012000 0 0x1000>,
+			      <0 0x22014000 0 0x2000>,
+			      <0 0x22016000 0 0x2000>;
+			interrupt-controller;
+			#interrupt-cells = <3>;
+			interrupt-parent = <&gic>;
+			interrupts = <GIC_PPI 9 (GIC_CPU_MASK_SIMPLE(2) | IRQ_TYPE_LEVEL_HIGH)>;
+		};
 
 		pinctrl_0: pinctrl@20180000 {
 			compatible = "nexell,sip_s31nx-pinctrl";
