@@ -615,4 +615,11 @@ config CLKSRC_ST_LPC
 	  Enable this option to use the Low Power controller timer
 	  as clocksource.
 
+config CLKSRC_NXP3220
+	bool "timer driver for NEXELL NXP3220"
+	depends on GENERIC_CLOCKEVENTS
+	depends on HAS_IOMEM
+	help
+	  This is a new clocksource driver for the timer found in
+	  Nexell NXP3220.
 endmenu
