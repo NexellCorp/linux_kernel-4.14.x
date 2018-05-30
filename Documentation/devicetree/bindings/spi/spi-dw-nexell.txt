@@ -1,0 +1,41 @@
+Synopsys DesignWare AMBA 2.0 Synchronous Serial Interface for NXP3220.
+
+Required properties:
+- compatible : "nexell,nxp3220-dw-spi"
+- reg : The register base for the controller.
+- interrupts : One interrupt, used by the controller.
+- clcoks : Must contain one entry, for the module clock.
+- spi-mode : Sets whether SPI operates in normal, dual, quad,
+	     and octal modes.
+	     Normal : 0x0,
+	     Dual   : 0x1,
+	     Quad   : 0x2,
+	     Octal  : 0x3
+- pinctrl-names : Uses "default", can use "sleep" if provided
+                   See ../pinctrl/pinctrl-binding.txt
+- pinctrl-0 : pin control group to be used for this controller.
+
+Optional properties:
+- cs-gpios : Specifies the gpio pis to be used for chipselects.
+- num-cs : The number of chipselects. If omitted, this will default to 4.
+- reg-io-width : The I/O register width (in bytes) implemented by this
+  device.  Supported values are 2 or 4 (the default).
+- status : Set node status. disabled or okay
+
+Child nodes as per the generic SPI binding.
+
+Example:
+in dtsi file
+	spi0: spi@30000000 {
+		compatible = "nexell,nxp3220-dw-spi";
+		reg = <0x30000000 0x1000>;
+		interrupts = <GIC_SPI 93 4>;
+		clocks = <&cmu CLK_SPI0_CORE>
+			<&cmu CLK_SPI0_APB>;
+		clock-names = "core", "apb";
+		num-cs = <1>;
+		spi-mode = <0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&spi0_bus>;
+		status = "disabled";
+	};

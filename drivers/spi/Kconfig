@@ -237,6 +237,16 @@ config SPI_DW_MMIO
 	tristate "Memory-mapped io interface driver for DW SPI core"
 	depends on SPI_DESIGNWARE
 
+config SPI_DW_NEXELL
+	tristate "Nexell SPI driver for DW SPI core"
+	select SPI_DESIGNWARE
+	help
+	  If you say yes to this option, support will be included
+          NEXELL SPI driver based on Designware SPI.
+
+          This driver can also be built as a module.  If so, the module
+          will be called spi-dw-nexell.
+
 config SPI_DLN2
        tristate "Diolan DLN-2 USB SPI adapter"
        depends on MFD_DLN2
