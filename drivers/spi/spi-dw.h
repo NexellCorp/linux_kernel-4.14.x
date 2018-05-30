@@ -36,6 +36,9 @@
 /* Bit fields in CTRLR0 */
 #define SPI_DFS_OFFSET			0
 
+#define SPI_FF_OFFSET			21
+#define SPI_FF_MASK			(0x3 << SPI_FF_OFFSET)
+
 #define SPI_FRF_OFFSET			4
 #define SPI_FRF_SPI			0x0
 #define SPI_FRF_SSP			0x1
@@ -134,6 +137,7 @@ struct dw_spi {
 	const struct dw_spi_dma_ops *dma_ops;
 	void			*dma_tx;
 	void			*dma_rx;
+	u32			spi_mode;
 
 	/* Bus interface info */
 	void			*priv;

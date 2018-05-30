@@ -340,6 +340,11 @@ static int dw_spi_transfer_one(struct spi_master *master,
 		cr0 |= (chip->tmode << SPI_TMOD_OFFSET);
 	}
 
+	if (dws->spi_mode) {
+		cr0 &= ~SPI_FF_MASK;
+		cr0 |= (dws->spi_mode << SPI_FF_OFFSET);
+	}
+
 	dw_writel(dws, DW_SPI_CTRL0, cr0);
 
 	/* Check if current transfer is a DMA transaction */
