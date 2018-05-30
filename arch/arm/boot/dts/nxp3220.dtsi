@@ -51,6 +51,30 @@
 			interrupts = <GIC_PPI 9 (GIC_CPU_MASK_SIMPLE(2) | IRQ_TYPE_LEVEL_HIGH)>;
 		};
 
+		sys_reg_sys: syscon@20030000 {
+			compatible = "nexell,system-reg", "syscon",
+				     "simple-mfd";
+			reg = <0x20030000 0x1000>;
+		};
+
+		sys_reg_usb: syscon@24030000 {
+			compatible = "nexell,system-reg","syscon",
+				     "simple-mfd";
+			reg = <0x24030000 0x1000>;
+		};
+
+		sys_reg_mm: syscon@25030000 {
+			compatible = "nexell,system-reg","syscon",
+				     "simple-mfd";
+			reg = <0x25030000 0x1000>;
+		};
+
+		sys_reg_hsifys: syscon@26030000 {
+			compatible = "nexell,system-reg","syscon",
+				     "simple-mfd";
+			reg = <0x26030000 0x1000>;
+		};
+
 		pinctrl_0: pinctrl@20180000 {
 			compatible = "nexell,nxp3220-pinctrl";
 			reg = <0x20180000 0x1000
