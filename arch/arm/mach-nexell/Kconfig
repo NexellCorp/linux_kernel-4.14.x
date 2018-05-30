@@ -13,6 +13,7 @@ menuconfig ARCH_NEXELL
 	select ARM_PATCH_PHYS_VIRT
 	select USE_OF
 	select VIRT_TO_BUS
+	select HAVE_S3C2410_I2C if I2C
 
 if ARCH_NEXELL
 
