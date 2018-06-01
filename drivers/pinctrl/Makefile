@@ -52,6 +52,7 @@ obj-$(CONFIG_PINCTRL_BERLIN)	+= berlin/
 obj-y				+= freescale/
 obj-$(CONFIG_X86)		+= intel/
 obj-y				+= mvebu/
+obj-$(CONFIG_PINCTRL_NEXELL)	+= nexell/
 obj-y				+= nomadik/
 obj-$(CONFIG_PINCTRL_PXA)	+= pxa/
 obj-$(CONFIG_ARCH_QCOM)		+= qcom/
