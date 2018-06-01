@@ -1,0 +1,58 @@
+Binding for Nexell PLL(2555, 2651) controllers
+
+Required Properties:
+- compatible: should be one of the following.
+ - "nexell,pll2555"		: PLL2555
+ - "nexell,pll2651"		: PLL2651
+- reg: Base address and size of the PLL memory area
+- clocks: phandle of the external reference clock
+- #clock-cells: should be 1.
+
+Optional properties:
+- clock-output-names: can be "pll0", "pll1", "pll_cpu", "pll_ddr0", "pll_ddr1"
+
+Example:
+	pll_0: pll0 {
+		compatible = "nexell,pll2555", "syscon";
+		reg = <0x27020000 0x60>;
+
+		#clock-cells = <1>;
+		clocks = <&oscclk>;
+		clock-output-names = "pll0";
+	};
+
+	pll_1: pll1 {
+		compatible = "nexell,pll2651", "syscon";
+		reg = <0x27030000 0x60>;
+
+		#clock-cells = <1>;
+		clocks = <&oscclk>;
+		clock-output-names = "pll1";
+	};
+
+	pll_cpu: pll-cpu {
+		compatible = "nexell,pll2555", "syscon";
+		reg = <0x22070000 0x60>;
+
+		#clock-cells = <1>;
+		clocks = <&oscclk>;
+		clock-output-names = "pll_cpu";
+	};
+
+	pll_ddr0: pll-ddr0 {
+		compatible = "nexell,pl2555", "syscon";
+		reg = <0x23070000 0x60>;
+
+		#clock-cells = <1>;
+		clocks = <&oscclk>;
+		clock-output-names = "pll_ddr0";
+	};
+
+	pll_ddr1: pll-ddr1 {
+		compatible = "nexell,pll2651", "syscon";
+		reg = <0x23070000 0x60>;
+
+		#clock-cells = <1>;
+		clocks = <&oscclk>;
+		clock-output-names = "pll_ddr1";
+	};
