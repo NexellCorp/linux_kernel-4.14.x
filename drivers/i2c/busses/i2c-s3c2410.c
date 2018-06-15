@@ -158,6 +158,8 @@ static const struct of_device_id s3c24xx_i2c_match[] = {
 	  .data = (void *)(QUIRK_S3C2440 | QUIRK_NO_GPIO) },
 	{ .compatible = "samsung,exynos5-sata-phy-i2c",
 	  .data = (void *)(QUIRK_S3C2440 | QUIRK_POLL | QUIRK_NO_GPIO) },
+	{ .compatible = "nexell,s3c2410-i2c",
+	  .data = (void *)(QUIRK_S3C2440 | QUIRK_NO_GPIO) },
 	{},
 };
 MODULE_DEVICE_TABLE(of, s3c24xx_i2c_match);
