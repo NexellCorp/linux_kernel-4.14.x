@@ -41,14 +41,12 @@
 
 		gic: interrupt-controller@22011000 {
 			compatible = "arm,cortex-a7-gic";
-			reg = <0 0x22011000 0 0x1000>,
-			      <0 0x22012000 0 0x1000>,
-			      <0 0x22014000 0 0x2000>,
-			      <0 0x22016000 0 0x2000>;
+			reg = <0x220c1000 0x1000>,
+			      <0x220c2000 0x1000>,
+			      <0x220c4000 0x2000>,
+			      <0x220c6000 0x2000>;
 			interrupt-controller;
 			#interrupt-cells = <3>;
-			interrupt-parent = <&gic>;
-			interrupts = <GIC_PPI 9 (GIC_CPU_MASK_SIMPLE(2) | IRQ_TYPE_LEVEL_HIGH)>;
 		};
 
 		sys_reg_sys: syscon@20030000 {
