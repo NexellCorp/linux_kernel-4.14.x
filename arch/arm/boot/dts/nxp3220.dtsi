@@ -177,6 +177,54 @@
 			       <&cmu CLK_SRC_CODA960_0_CORE>;
 		};
 
+		dwmmc_0: dwmmc@26080000 {
+			compatible = "nexell,nxp3220-dw-mshc";
+			interrupts = <GIC_SPI 82 IRQ_TYPE_NONE>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x26080000 0x1000>;
+			clock-names = "biu", "ciu";
+			clocks = <&cmu CLK_SDMMC0_AHB>,
+			         <&cmu CLK_SDMMC0_CORE>;
+			bus-width = <8>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&mmc0_clk &mmc0_cmd &mmc0_bus8>;
+			fifo-depth = <0x20>;
+			status = "disabled";
+		};
+
+		dwmmc_1: dwmmc@26090000 {
+			compatible = "nexell,nxp3220-dw-mshc";
+			interrupts = <GIC_SPI 83 IRQ_TYPE_NONE>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x26090000 0x1000>;
+			clock-names = "biu", "ciu";
+			clocks = <&cmu CLK_SDMMC1_AHB>,
+			         <&cmu CLK_SDMMC1_CORE>;
+			bus-width = <4>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&mmc1_clk &mmc1_cmd &mmc1_bus4>;
+			fifo-depth = <0x20>;
+			status = "disabled";
+		};
+
+		dwmmc_2: dwmmc@260a0000 {
+			compatible = "nexell,nxp3220-dw-mshc";
+			interrupts = <GIC_SPI 84 IRQ_TYPE_NONE>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x260a0000 0x1000>;
+			clock-names = "biu","ciu";
+			clocks = <&cmu CLK_SDMMC2_AHB>,
+			         <&cmu CLK_SDMMC2_CORE>;
+			fifo-depth = <0x20>;
+			bus-width = <4>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&mmc2_clk &mmc2_cmd &mmc2_bus4>;
+			status = "disabled";
+		};
+
 		sys_reg_sys: syscon@20030000 {
 			compatible = "nexell,system-reg", "syscon",
 				     "simple-mfd";
