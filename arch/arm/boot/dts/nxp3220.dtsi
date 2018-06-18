@@ -183,6 +183,10 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0x26080000 0x1000>;
+			assigned-clocks = <&cmu CLK_SRC_SDMMC0_CORE>,
+					  <&pll_0 0>;
+			assigned-clock-parents = <&pll_0 0>;
+			clock-frequency = <400000000>;
 			clock-names = "biu", "ciu";
 			clocks = <&cmu CLK_SDMMC0_AHB>,
 			         <&cmu CLK_SDMMC0_CORE>;
@@ -199,6 +203,9 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0x26090000 0x1000>;
+			assigned-clocks = <&cmu CLK_SRC_SDMMC1_CORE>,
+					  <&pll_0 0>;
+			assigned-clock-parents = <&pll_0 0>;
 			clock-names = "biu", "ciu";
 			clocks = <&cmu CLK_SDMMC1_AHB>,
 			         <&cmu CLK_SDMMC1_CORE>;
@@ -215,6 +222,9 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0x260a0000 0x1000>;
+			assigned-clocks = <&cmu CLK_SRC_SDMMC2_CORE>,
+					  <&pll_0 0>;
+			assigned-clock-parents = <&pll_0 0>;
 			clock-names = "biu","ciu";
 			clocks = <&cmu CLK_SDMMC2_AHB>,
 			         <&cmu CLK_SDMMC2_CORE>;
