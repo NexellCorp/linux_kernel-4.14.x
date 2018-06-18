@@ -47,6 +47,39 @@
 		interrupt-parent = <&gic>;
 		ranges;
 
+		amba {
+			#address-cells = <1>;
+			#size-cells = <1>;
+			compatible = "simple-bus";
+			ranges;
+
+			pdma0: pdma@20900000 {
+				compatible = "arm,pl330", "arm,primecell";
+				reg = <0x20900000 0x1000>;
+				clocks = <&cmu CLK_DMA0_APB>,
+				         <&cmu CLK_DMA0_AXI>,
+				         <&cmu CLK_DMA_BUS0_AXI>;
+				clock-names = "apb_pclk", "axi_clk", "axi_bclk";
+				interrupts = <GIC_SPI 35 IRQ_TYPE_NONE>, <GIC_SPI 34 IRQ_TYPE_NONE>;
+				#dma-cells = <1>;
+				dma-channels = <8>;
+				dma-requests = <32>;
+			};
+
+			pdma1: pdma@20910000 {
+				compatible = "arm,pl330", "arm,primecell";
+				reg = <0x20910000 0x1000>;
+				clocks = <&cmu CLK_DMA1_APB>,
+				         <&cmu CLK_DMA1_AXI>,
+				         <&cmu CLK_DMA_BUS0_AXI>;
+				clock-names = "apb_pclk", "axi_clk", "axi_bclk";
+				interrupts = <GIC_SPI 37 IRQ_TYPE_NONE>, <GIC_SPI 36 IRQ_TYPE_NONE>;
+				#dma-cells = <1>;
+				dma-channels = <8>;
+				dma-requests = <32>;
+			};
+		};
+
 		gic: interrupt-controller@22011000 {
 			compatible = "arm,cortex-a7-gic";
 			reg = <0x220c1000 0x1000>,
