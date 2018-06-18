@@ -55,6 +55,98 @@
 		#interrupt-cells = <2>;
 	};
 
+	mmc0_clk: mmc0-clk {
+		nexell,pins = "gpiob-20";
+		nexell,pin-function = <NX_PIN_FUNC2>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	mmc0_cmd: mmc0-cmd {
+		nexell,pins = "gpiob-21";
+		nexell,pin-function = <NX_PIN_FUNC2>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	mmc0_bus1: mmc0-bus1 {
+		nexell,pins = "gpiob-9";
+		nexell,pin-function = <NX_PIN_FUNC2>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	mmc0_bus4: mmc0-bus4 {
+		nexell,pins = "gpiob-9", "gpiob-10","gpiob-11", "gpiob-12";
+		nexell,pin-function = <NX_PIN_FUNC2>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	mmc0_bus8: mmc0-bus8 {
+		nexell,pins = "gpiob-9", "gpiob-10","gpiob-11", "gpiob-12",
+			      "gpiob-13", "gpiob-14", "gpiob-15", "gpiob-16";
+		nexell,pin-function = <NX_PIN_FUNC2>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	mmc1_clk: mmc1-clk {
+		nexell,pins = "gpiob-1";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	mmc1_cmd: mmc1-cmd {
+		nexell,pins = "gpiob-2";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	mmc1_bus1: mmc1-bus1 {
+		nexell,pins = "gpioa-29";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	mmc1_bus4: mmc1-bus4 {
+		nexell,pins = "gpioa-29", "gpioa-30", "gpioa-31", "gpiob-0";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	mmc2_clk: mmc2_clk {
+		nexell,pins = "gpiob-7";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	mmc2_cmd: mmc2_cmd {
+		nexell,pins = "gpiob-8";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	mmc2_bus1: mmc2-bus1 {
+		nexell,pins = "gpiob-3";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	mmc2_bus4: mmc2-bus4 {
+		nexell,pins = "gpiob-3", "gpiob-4", "gpiob-5", "gpiob-6";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
 	uart0_bus: uart0-bus {
 		nexell,pins = "gpiod-10", "gpiod-11";
 		nexell,pin-function = <NX_PIN_FUNC1>;
