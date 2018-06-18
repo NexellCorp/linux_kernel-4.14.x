@@ -54,4 +54,74 @@
 		interrupt-controller;
 		#interrupt-cells = <2>;
 	};
+
+	uart0_bus: uart0-bus {
+		nexell,pins = "gpiod-10", "gpiod-11";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	uart1_bus: uart1-bus {
+		nexell,pins = "gpiod-12", "gpiod-13";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	uart2_bus: uart2-bus {
+		nexell,pins = "gpiod-14", "gpiod-15";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	uart3_bus: uart3-bus {
+		nexell,pins = "gpiod-16", "gpiod-17";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	uart4_bus: uart4-bus {
+		nexell,pins = "gpiod-18", "gpiod-19";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	uart4_hflow: uart4-hflow {
+		nexell,pins = "gpiod-20", "gpiod-21";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	uart5_bus: uart5-bus {
+		nexell,pins = "gpiod-22", "gpiod-23";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	uart5_hflow: uart5-hflow {
+		nexell,pins = "gpiod-24", "gpiod-25";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	uart6_bus: uart6-bus {
+		nexell,pins = "gpiod-26", "gpiod-27";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	uart6_hflow: uart6-hflow {
+		nexell,pins = "gpiod-28", "gpiob-29";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
 };

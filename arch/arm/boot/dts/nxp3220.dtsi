@@ -10,6 +10,13 @@
 
 	aliases {
 		pinctrl0 = &pinctrl_0;
+		serial0 = &uart0;
+		serial1 = &uart1;
+		serial2 = &uart2;
+		serial3 = &uart3;
+		serial4 = &uart4;
+		serial5 = &uart5;
+		serial6 = &uart6;
 	};
 
 	cpus {
@@ -221,6 +228,110 @@
 			interrupts = <GIC_SPI 107 IRQ_TYPE_NONE>;
 			clksource = <0>;
 			clkevent = <1>;
+		};
+
+		uart0: serial@20400000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x20400000 0x1000>;
+			interrupts = <GIC_SPI 112 IRQ_TYPE_NONE>;
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			clocks = <&cmu CLK_UART0_CORE>,
+				 <&cmu CLK_UART0_APB>;
+			clock-names = "baudclk", "apb_pclk";
+			clock-frequency =  <100000000>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&uart0_bus>;
+			status = "disabled";
+		};
+
+		uart1: serial@20410000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x20410000 0x1000>;
+			interrupts = <GIC_SPI 113 IRQ_TYPE_NONE>;
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			clocks = <&cmu CLK_UART1_CORE>,
+				 <&cmu CLK_UART1_APB>;
+			clock-names = "baudclk", "apb_pclk";
+			pinctrl-names = "default";
+			pinctrl-0 = <&uart1_bus>;
+			status = "disabled";
+		};
+
+		uart2: serial@20420000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x20420000 0x1000>;
+			interrupts = <GIC_SPI 114 IRQ_TYPE_NONE>;
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			clocks = <&cmu CLK_UART2_CORE>,
+				 <&cmu CLK_UART2_APB>;
+			clock-names = "baudclk", "apb_pclk";
+			clock-frequency =  <100000000>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&uart2_bus>;
+			status = "disabled";
+		};
+
+		uart3: serial@20430000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x20430000 0x1000>;
+			interrupts = <GIC_SPI 115 IRQ_TYPE_NONE>;
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			clocks = <&cmu CLK_UART3_CORE>,
+				 <&cmu CLK_UART3_APB>;
+			clock-names = "baudclk", "apb_pclk";
+			clock-frequency =  <100000000>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&uart3_bus>;
+			status = "disabled";
+		};
+
+		uart4: serial@20440000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x20414000 0x1000>;
+			interrupts = <GIC_SPI 116 IRQ_TYPE_NONE>;
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			clocks = <&cmu CLK_UART4_CORE>,
+				 <&cmu CLK_UART4_APB>;
+			clock-names = "baudclk", "apb_pclk";
+			clock-frequency =  <100000000>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&uart4_bus>;
+			status = "disabled";
+		};
+
+		uart5: serial@20450000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x20450000 0x1000>;
+			interrupts = <GIC_SPI 117 IRQ_TYPE_NONE>;
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			clocks = <&cmu CLK_UART5_CORE>,
+				 <&cmu CLK_UART5_APB>;
+			clock-names = "baudclk", "apb_pclk";
+			clock-frequency =  <100000000>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&uart5_bus>;
+			status = "disabled";
+		};
+
+		uart6: serial@20460000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x20420000 0x1000>;
+			interrupts = <GIC_SPI 118 IRQ_TYPE_NONE>;
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			clocks = <&cmu CLK_UART6_CORE>,
+				 <&cmu CLK_UART6_APB>;
+			clock-names = "baudclk", "apb_pclk";
+			clock-frequency =  <100000000>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&uart6_bus>;
+			status = "disabled";
 		};
 	};
 };
