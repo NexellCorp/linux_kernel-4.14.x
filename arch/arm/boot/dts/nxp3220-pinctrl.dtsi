@@ -55,6 +55,41 @@
 		#interrupt-cells = <2>;
 	};
 
+	i2c0_bus: i2c0-bus {
+		nexell,pins = "gpiob-27", "gpiob-28";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	i2c1_bus: i2c1-bus {
+		nexell,pins = "gpiob-29", "gpiob-30";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	i2c2_bus: i2c2-bus {
+		nexell,pins = "gpioa-0", "gpioa-1";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	i2c3_bus: i2c3-bus {
+		nexell,pins = "gpioa-2", "gpioa-3";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	i2c4_bus: i2c4-bus {
+		nexell,pins = "gpioa-4", "gpioa-5";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
 	mmc0_clk: mmc0-clk {
 		nexell,pins = "gpiob-20";
 		nexell,pin-function = <NX_PIN_FUNC2>;
