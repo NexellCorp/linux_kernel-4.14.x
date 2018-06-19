@@ -448,7 +448,7 @@
 
 		uart4: serial@20440000 {
 			compatible = "snps,dw-apb-uart";
-			reg = <0x20414000 0x1000>;
+			reg = <0x20440000 0x1000>;
 			interrupts = <GIC_SPI 116 IRQ_TYPE_NONE>;
 			reg-shift = <2>;
 			reg-io-width = <4>;
@@ -478,7 +478,7 @@
 
 		uart6: serial@20460000 {
 			compatible = "snps,dw-apb-uart";
-			reg = <0x20420000 0x1000>;
+			reg = <0x20460000 0x1000>;
 			interrupts = <GIC_SPI 118 IRQ_TYPE_NONE>;
 			reg-shift = <2>;
 			reg-io-width = <4>;
