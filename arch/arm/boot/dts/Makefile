@@ -1065,7 +1065,9 @@ dtb-$(CONFIG_ARCH_MEDIATEK) += \
 	mt7623n-bananapi-bpi-r2.dtb \
 	mt8127-moose.dtb \
 	mt8135-evbp1.dtb
-dtb-$(CONFIG_ARCH_NEXELL) +=  nxp3220-vtk.dtb
+dtb-$(CONFIG_ARCH_NEXELL) += \
+	nxp3220-vtk.dtb \
+	sip-s31nx-artik310s-trike-rev00.dtb
 dtb-$(CONFIG_ARCH_ZX) += zx296702-ad1.dtb
 dtb-$(CONFIG_ARCH_ASPEED) += aspeed-bmc-opp-palmetto.dtb \
 	aspeed-bmc-opp-romulus.dtb \
