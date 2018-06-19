@@ -17,6 +17,11 @@
 		serial4 = &uart4;
 		serial5 = &uart5;
 		serial6 = &uart6;
+		i2c0 = &i2c_0;
+		i2c1 = &i2c_1;
+		i2c2 = &i2c_2;
+		i2c3 = &i2c_3;
+		i2c4 = &i2c_4;
 	};
 
 	cpus {
@@ -160,6 +165,12 @@
 			       <&cmu_cpu CLK_CPU_DIV_PLL>,
 			       <&cmu_ddr CLK_DDR_DIV_PLL_DDR0>,
 			       <&cmu_ddr CLK_DDR_DIV_PLL_DDR1>;
+
+			assigned-clocks = <&cmu CLK_SRC_I2C0_APB>,
+					  <&cmu CLK_SYS_DIV_I2C0_APB>,
+					  <&pll_0 0>;
+			assigned-clock-parents = <&pll_0 0>;
+			assigned-clock-rates = <0>, <100000000>, <0>;
 		};
 
 		cmu_cpu: clock-controller@22000000 {
@@ -265,6 +276,61 @@
 			bus-width = <4>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&mmc2_clk &mmc2_cmd &mmc2_bus4>;
+			status = "disabled";
+		};
+
+		i2c_0: i2c@20500000 {
+			compatible = "nexell,s3c2410-i2c";
+			reg = <0x20500000 0x100>;
+			interrupts = <GIC_SPI 52 IRQ_TYPE_NONE>;
+			clock-names = "i2c";
+			clocks = <&cmu CLK_I2C0_APB>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c0_bus>;
+			status = "disabled";
+		};
+
+		i2c_1: i2c@20510000 {
+			compatible = "nexell,s3c2410-i2c";
+			reg = <0x20510000 0x100>;
+			interrupts = <GIC_SPI 53 IRQ_TYPE_NONE>;
+			clock-names = "i2c1_apb";
+			clocks = <&cmu CLK_I2C1_APB>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c1_bus>;
+			status = "disabled";
+		};
+
+		i2c_2: i2c@20520000 {
+			compatible = "nexell,s3c2410-i2c";
+			reg = <0x20520000 0x100>;
+			interrupts = <GIC_SPI 54 IRQ_TYPE_NONE>;
+			clock-names = "i2c2_apb";
+			clocks = <&cmu CLK_I2C2_APB>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c2_bus>;
+			status = "disabled";
+		};
+
+		i2c_3: i2c@20530000 {
+			compatible = "nexell,s3c2410-i2c";
+			reg = <0x20530000 0x100>;
+			interrupts = <GIC_SPI 55 IRQ_TYPE_NONE>;
+			clock-names = "i2c3_apb";
+			clocks = <&cmu CLK_I2C3_APB>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c3_bus>;
+			status = "disabled";
+		};
+
+		i2c_4: i2c@20540000 {
+			compatible = "nexell,s3c2410-i2c";
+			reg = <0x20540000 0x100>;
+			interrupts = <GIC_SPI 56 IRQ_TYPE_NONE>;
+			clock-names = "i2c4_apb";
+			clocks = <&cmu CLK_I2C4_APB>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c4_bus>;
 			status = "disabled";
 		};
 
