@@ -16,6 +16,17 @@
 	};
 };
 
+&dwmmc_2 {
+	cap-mmc-highspeed;
+	cd-gpios = <&gpio_b 24 0>;
+	cd-inverted;
+	nexell,drive_shift = <0x04>;
+	nexell,sample_shift = <0x04>;
+	card-detect-delay = <200>;
+	disable-wp;
+	status = "okay";
+};
+
 &i2c_1 {
 	status = "okay";
 	#address-cells = <1>;
