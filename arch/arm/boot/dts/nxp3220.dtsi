@@ -294,7 +294,7 @@
 			compatible = "nexell,s3c2410-i2c";
 			reg = <0x20510000 0x100>;
 			interrupts = <GIC_SPI 53 IRQ_TYPE_NONE>;
-			clock-names = "i2c1_apb";
+			clock-names = "i2c";
 			clocks = <&cmu CLK_I2C1_APB>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&i2c1_bus>;
@@ -305,7 +305,7 @@
 			compatible = "nexell,s3c2410-i2c";
 			reg = <0x20520000 0x100>;
 			interrupts = <GIC_SPI 54 IRQ_TYPE_NONE>;
-			clock-names = "i2c2_apb";
+			clock-names = "i2c";
 			clocks = <&cmu CLK_I2C2_APB>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&i2c2_bus>;
@@ -316,7 +316,7 @@
 			compatible = "nexell,s3c2410-i2c";
 			reg = <0x20530000 0x100>;
 			interrupts = <GIC_SPI 55 IRQ_TYPE_NONE>;
-			clock-names = "i2c3_apb";
+			clock-names = "i2c";
 			clocks = <&cmu CLK_I2C3_APB>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&i2c3_bus>;
@@ -327,7 +327,7 @@
 			compatible = "nexell,s3c2410-i2c";
 			reg = <0x20540000 0x100>;
 			interrupts = <GIC_SPI 56 IRQ_TYPE_NONE>;
-			clock-names = "i2c4_apb";
+			clock-names = "i2c";
 			clocks = <&cmu CLK_I2C4_APB>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&i2c4_bus>;
