@@ -395,6 +395,58 @@
 			status = "disabled";
 		};
 
+		i2s0: i2s@20780000 {
+			compatible = "nexell,nxp3220-i2s";
+			#sound-dai-cells = <0>;
+			reg = <0x20780000 0x1000>;
+			clocks = <&cmu CLK_I2S0_CORE>, <&cmu CLK_I2S0_APB>;
+			clock-names = "i2s", "pclk";
+			dmas = <&pdma0 5 &pdma0 4>;
+			dma-names = "tx", "rx";
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2s0_bus>;
+			status = "disabled";
+		};
+
+		i2s1: i2s@20790000 {
+			compatible = "nexell,nxp3220-i2s";
+			#sound-dai-cells = <0>;
+			reg = <0x20790000 0x1000>;
+			clocks = <&cmu CLK_I2S1_CORE>, <&cmu CLK_I2S1_APB>;
+			clock-names = "i2s", "pclk";
+			dmas = <&pdma1 5 &pdma1 4>;
+			dma-names = "tx", "rx";
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2s1_bus>;
+			status = "disabled";
+		};
+
+		i2s2: i2s@207a0000 {
+			compatible = "nexell,nxp3220-i2s";
+			#sound-dai-cells = <0>;
+			reg = <0x207a0000 0x1000>;
+			clocks = <&cmu CLK_I2S2_CORE>, <&cmu CLK_I2S2_APB>;
+			clock-names = "i2s", "pclk";
+			dmas = <&pdma0 7 &pdma0 6>;
+			dma-names = "tx", "rx";
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2s2_bus>;
+			status = "disabled";
+		};
+
+		i2s3: i2s@207b0000 {
+			compatible = "nexell,nxp3220-i2s";
+			#sound-dai-cells = <0>;
+			reg = <0x207b0000 0x1000>;
+			clocks = <&cmu CLK_I2S3_CORE>, <&cmu CLK_I2S3_APB>;
+			clock-names = "i2s", "pclk";
+			dmas = <&pdma1 7 &pdma1 6>;
+			dma-names = "tx", "rx";
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2s3_bus>;
+			status = "disabled";
+		};
+
 		sys_reg_sys: syscon@20030000 {
 			compatible = "nexell,system-reg", "syscon",
 				     "simple-mfd";
