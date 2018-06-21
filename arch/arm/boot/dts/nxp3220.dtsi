@@ -261,6 +261,7 @@
 			assigned-clocks = <&cmu CLK_SRC_SDMMC1_CORE>,
 					  <&pll_0 0>;
 			assigned-clock-parents = <&pll_0 0>;
+			clock-frequency = <400000000>;
 			clock-names = "biu", "ciu";
 			clocks = <&cmu CLK_SDMMC1_AHB>,
 			         <&cmu CLK_SDMMC1_CORE>;
@@ -280,6 +281,7 @@
 			assigned-clocks = <&cmu CLK_SRC_SDMMC2_CORE>,
 					  <&pll_0 0>;
 			assigned-clock-parents = <&pll_0 0>;
+			clock-frequency = <400000000>;
 			clock-names = "biu","ciu";
 			clocks = <&cmu CLK_SDMMC2_AHB>,
 			         <&cmu CLK_SDMMC2_CORE>;
