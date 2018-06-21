@@ -42,6 +42,7 @@ MODULE_PARM_DESC(caps_charge, "ALC5623 cap charge time (msecs)");
 struct alc5623_priv {
 	struct regmap *regmap;
 	u8 id;
+	kernel_ulong_t driver_data;
 	unsigned int sysclk;
 	unsigned int add_ctrl;
 	unsigned int jack_det_ctrl;
@@ -893,6 +894,47 @@ static int alc5623_probe(struct snd_soc_codec *codec)
 {
 	struct alc5623_priv *alc5623 = snd_soc_codec_get_drvdata(codec);
 	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
+	unsigned int vid1, vid2;
+	int ret;
+
+	/* can read vendor id after mclk supplied */
+	ret = regmap_read(alc5623->regmap, ALC5623_VENDOR_ID1, &vid1);
+	if (ret < 0) {
+		dev_err(codec->dev, "failed to read vendor ID1: %d\n", ret);
+		return ret;
+	}
+
+	ret = regmap_read(alc5623->regmap, ALC5623_VENDOR_ID2, &vid2);
+	if (ret < 0) {
+		dev_err(codec->dev, "failed to read vendor ID2: %d\n", ret);
+		return ret;
+	}
+	vid2 >>= 8;
+
+	if ((vid1 != 0x10ec) || (vid2 != alc5623->driver_data)) {
+		dev_err(codec->dev, "unknown or wrong codec\n");
+		dev_err(codec->dev, "Expected %x:%lx, got %x:%x\n",
+				0x10ec, alc5623->driver_data,
+				vid1, vid2);
+		return -ENODEV;
+	}
+
+	dev_dbg(codec->dev, "Found codec id : alc56%02x\n", vid2);
+
+	alc5623->id = vid2;
+	switch (alc5623->id) {
+	case 0x21:
+		alc5623_dai.name = "alc5621-hifi";
+		break;
+	case 0x22:
+		alc5623_dai.name = "alc5622-hifi";
+		break;
+	case 0x23:
+		alc5623_dai.name = "alc5623-hifi";
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	alc5623_reset(codec);
 
@@ -980,7 +1022,6 @@ static int alc5623_i2c_probe(struct i2c_client *client,
 	struct alc5623_platform_data *pdata;
 	struct alc5623_priv *alc5623;
 	struct device_node *np;
-	unsigned int vid1, vid2;
 	int ret;
 	u32 val32;
 
@@ -995,29 +1036,6 @@ static int alc5623_i2c_probe(struct i2c_client *client,
 		dev_err(&client->dev, "Failed to initialise I/O: %d\n", ret);
 		return ret;
 	}
-
-	ret = regmap_read(alc5623->regmap, ALC5623_VENDOR_ID1, &vid1);
-	if (ret < 0) {
-		dev_err(&client->dev, "failed to read vendor ID1: %d\n", ret);
-		return ret;
-	}
-
-	ret = regmap_read(alc5623->regmap, ALC5623_VENDOR_ID2, &vid2);
-	if (ret < 0) {
-		dev_err(&client->dev, "failed to read vendor ID2: %d\n", ret);
-		return ret;
-	}
-	vid2 >>= 8;
-
-	if ((vid1 != 0x10ec) || (vid2 != id->driver_data)) {
-		dev_err(&client->dev, "unknown or wrong codec\n");
-		dev_err(&client->dev, "Expected %x:%lx, got %x:%x\n",
-				0x10ec, id->driver_data,
-				vid1, vid2);
-		return -ENODEV;
-	}
-
-	dev_dbg(&client->dev, "Found codec id : alc56%02x\n", vid2);
 
 	pdata = client->dev.platform_data;
 	if (pdata) {
@@ -1035,20 +1053,7 @@ static int alc5623_i2c_probe(struct i2c_client *client,
 		}
 	}
 
-	alc5623->id = vid2;
-	switch (alc5623->id) {
-	case 0x21:
-		alc5623_dai.name = "alc5621-hifi";
-		break;
-	case 0x22:
-		alc5623_dai.name = "alc5622-hifi";
-		break;
-	case 0x23:
-		alc5623_dai.name = "alc5623-hifi";
-		break;
-	default:
-		return -EINVAL;
-	}
+	alc5623->driver_data = id->driver_data;
 
 	i2c_set_clientdata(client, alc5623);
 
