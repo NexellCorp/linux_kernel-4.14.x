@@ -26,6 +26,8 @@
 #define SDMMC_DRV_PHASE			0x408
 #define SDMMC_SMP_PHASE			0x40c
 
+#define DWMMC_PRE_DIV			4
+
 struct dw_mci_nexell_priv_data {
 	u32	drv_phase;
 	u32	smp_phase;
@@ -37,6 +39,9 @@ static int dw_mci_nexell_priv_init(struct dw_mci *host)
 
 	mci_writel(host, DRV_PHASE, priv->drv_phase);
 	mci_writel(host, SMP_PHASE, priv->smp_phase);
+
+	host->bus_hz /= DWMMC_PRE_DIV;
+
 	return 0;
 }
 
@@ -46,6 +51,7 @@ static int dw_mci_nexell_runtime_resume(struct device *dev)
 	struct dw_mci *host = dev_get_drvdata(dev);
 
 	dw_mci_nexell_priv_init(host);
+
 	return dw_mci_runtime_resume(dev);
 }
 #endif
@@ -66,6 +72,7 @@ static int dw_mci_nexell_parse_dt(struct dw_mci *host)
 		priv->smp_phase = 2;
 
 	host->priv = priv;
+
 	return 0;
 }
 
