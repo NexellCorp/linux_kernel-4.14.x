@@ -83,6 +83,12 @@
 	status = "okay";
 };
 
+&pwm {
+	status = "okay";
+	assigned-clocks = <&cmu CLK_PWM0_APB>;
+	assigned-clock-rates = <166000000>;
+};
+
 &tmuctrl_0 {
 	status = "okay";
 };
