@@ -16,6 +16,30 @@
 	};
 };
 
+&i2c_1 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+};
+
+&i2c_2 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+};
+
+&i2c_3 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+};
+
+&i2c_4 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+};
+
 &uart0 {
 	status = "okay";
 };
