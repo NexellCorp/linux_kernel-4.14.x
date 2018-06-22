@@ -334,6 +334,23 @@
 			status = "disabled";
 		};
 
+		pwm: pwm@20880000 {
+			compatible = "nexell,nxp3220-pwm";
+			reg = <0x20880000 0x400>;
+			clocks = <&cmu CLK_PWM0_APB>,
+				 <&cmu CLK_PWM0_TCLK0>,
+				 <&cmu CLK_PWM0_TCLK1>,
+				 <&cmu CLK_PWM0_TCLK2>,
+				 <&cmu CLK_PWM0_TCLK3>;
+			clock-names = "pwm_apb", "pwm_tclk0", "pwm_tclk1",
+				      "pwm_tclk2", "pwm_tclk3";
+			nexell,pwm-outputs = <0>, <1>, <2>, <3>;
+			tclk_freq = <100000000>, <100000000>, <100000000>, <100000000>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pwm0_pin &pwm1_pin &pwm2_pin &pwm3_pin>;
+			status = "disabled";
+		};
+
 		sys_reg_sys: syscon@20030000 {
 			compatible = "nexell,system-reg", "syscon",
 				     "simple-mfd";

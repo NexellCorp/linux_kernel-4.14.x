@@ -182,6 +182,34 @@
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
 
+	pwm0_pin: pwm0 {
+		nexell,pins = "gpioc-1";
+		nexell,pin-function = <NX_PIN_FUNC2>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	pwm1_pin: pwm1 {
+		nexell,pins = "gpioc-2";
+		nexell,pin-function = <NX_PIN_FUNC2>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	pwm2_pin: pwm2 {
+		nexell,pins = "gpioc-4";
+		nexell,pin-function = <NX_PIN_FUNC2>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	pwm3_pin: pwm3 {
+		nexell,pins = "gpioc-5";
+		nexell,pin-function = <NX_PIN_FUNC2>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
 	uart0_bus: uart0-bus {
 		nexell,pins = "gpiod-10", "gpiod-11";
 		nexell,pin-function = <NX_PIN_FUNC1>;
