@@ -89,6 +89,10 @@
 	status = "okay";
 };
 
+&dwc2otg {
+	status = "okay";
+};
+
 &pwm {
 	status = "okay";
 	assigned-clocks = <&cmu CLK_PWM0_APB>;
@@ -100,5 +104,9 @@
 };
 
 &uart2 {
+	status = "okay";
+};
+
+&usb2phy {
 	status = "okay";
 };
