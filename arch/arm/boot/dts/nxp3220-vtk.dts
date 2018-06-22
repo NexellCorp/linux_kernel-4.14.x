@@ -52,6 +52,12 @@
 
 };
 
+&adc {
+	status = "okay";
+	assigned-clocks = <&cmu CLK_ADC0_APB>;
+	assigned-clock-rates = <100000000>;
+};
+
 &dwmmc_0 {
 	cap-mmc-highspeed;
 	broken-cd;
