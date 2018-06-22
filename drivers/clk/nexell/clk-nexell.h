@@ -4,8 +4,8 @@
  * Copyright (c) 2018 Chanho Park <chanho61.park@samsung.com>
  */
 
-#ifndef __CLK_NXP3220_H
-#define __CLK_NXP3220_H
+#ifndef __CLK_NEXELL_H
+#define __CLK_NEXELL_H
 
 #include <linux/clk-provider.h>
 
@@ -105,11 +105,12 @@ struct nexell_gate_clock {
 	const char		*parent_name;
 	unsigned long		flags;
 	unsigned long		offset;
+	unsigned long		clr_offset;
 	u8			bit_idx;
 	u8			gate_flags;
 };
 
-#define __GATE(_id, dname, cname, pname, o, b, f, gf)		\
+#define __GATE(_id, dname, cname, pname, o, co, b, f, gf)	\
 	{							\
 		.id		= _id,				\
 		.dev_name	= dname,			\
@@ -117,19 +118,20 @@ struct nexell_gate_clock {
 		.parent_name	= pname,			\
 		.flags		= f,				\
 		.offset		= o,				\
+		.clr_offset	= co,				\
 		.bit_idx	= b,				\
 		.gate_flags	= gf,				\
 	}
 
 /* Do not propagate clock rate setting to parent */
-#define GATE_NP(_id, cname, pname, o, b, f, gf)			\
-	__GATE(_id, NULL, cname, pname, o, b, f, gf)
+#define GATE_NP(_id, cname, pname, o, co, b, f, gf)		\
+	__GATE(_id, NULL, cname, pname, o, co, b, f, gf)
 
-#define GATE(_id, cname, pname, o, b, f, gf)			\
-	__GATE(_id, NULL, cname, pname, o, b, (f) | CLK_SET_RATE_PARENT, gf)
+#define GATE(_id, cname, pname, o, co, b, f, gf)		\
+	__GATE(_id, NULL, cname, pname, o, co, b, (f) | CLK_SET_RATE_PARENT, gf)
 
-#define GATE_D(_id, dname, cname, pname, o, b, f, gf)		\
-	__GATE(_id, dname, cname, pname, o, b, f, gf)
+#define GATE_D(_id, dname, cname, pname, o, co, b, f, gf)	\
+	__GATE(_id, dname, cname, pname, o, co, b, f, gf)
 
 struct nexell_composite_clock {
 	unsigned int	id;
@@ -156,6 +158,7 @@ struct nexell_composite_clock {
 	/* Gate */
 	bool		has_gate;
 	unsigned long	gate_offset;
+	unsigned long	gate_clr_offset;
 	u8		gate_bit_idx;
 	u8		gate_flags;
 };
@@ -196,9 +199,10 @@ struct nexell_composite_clock {
 #define COMP_DIV_NONE					\
 	.has_div	= false,			\
 
-#define COMP_GATE(o, idx, gf)				\
+#define COMP_GATE(o, co, idx, gf)			\
 	.has_gate	= true,				\
 	.gate_offset	= o,				\
+	.gate_clr_offset = o,				\
 	.gate_bit_idx	= idx,				\
 	.gate_flags	= gf,				\
 

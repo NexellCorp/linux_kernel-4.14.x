@@ -5,8 +5,9 @@
  */
 
 #include <linux/of_address.h>
-#include "clk-nexell.h"
 #include <dt-bindings/clock/nxp3220-clk.h>
+#include "clk-nexell.h"
+#include "clk-nxp3220.h"
 
 #define DDR_DDR0		0x0200
 #define DDR_AXI			0x0400
@@ -40,20 +41,23 @@ static const struct nexell_div_clock ddr_div_clks[] __initconst = {
 		PLL_DDR1_DIV + 0x60),
 };
 
+#define GATE_DDR(_id, cname, pname, o, b, f, gf)		\
+	GATE(_id, cname, pname, o, o + 0x10, b, (f) | CLK_IGNORE_UNUSED, gf)
+
 static const struct nexell_gate_clock ddr_gate_clks[] __initconst = {
-	GATE(CLK_DDR, "ddr", "div_ddr",
+	GATE_DDR(CLK_DDR, "ddr", "div_ddr",
 	     DDR_DDR0 + 0x10, 0, 0, 0),
-	GATE(CLK_DDR_AXI, "ddr_axi", "div_ddr_axi",
+	GATE_DDR(CLK_DDR_AXI, "ddr_axi", "div_ddr_axi",
 	     DDR_AXI + 0x10, 0, 0, 0),
-	GATE(CLK_DDR_TZASC, "ddr_tzasc", "div_ddr_axi",
+	GATE_DDR(CLK_DDR_TZASC, "ddr_tzasc", "div_ddr_axi",
 	     DDR_AXI + 0x10, 1, 0, 0),
-	GATE(CLK_DDR_APB, "ddr_apb", "div_ddr_apb",
+	GATE_DDR(CLK_DDR_APB, "ddr_apb", "div_ddr_apb",
 	     DDR_AXI + 0x10, 2, 0, 0),
-	GATE(CLK_DDR_SYSREG_APB, "ddr_sysreg_apb", "div_ddr_apb",
+	GATE_DDR(CLK_DDR_SYSREG_APB, "ddr_sysreg_apb", "div_ddr_apb",
 	     DDR_AXI + 0x10, 3, 0, 0),
-	GATE(CLK_PLL_DDR0, "pll_ddr0_gate", "pll_ddr0_div",
+	GATE_DDR(CLK_PLL_DDR0, "pll_ddr0_gate", "pll_ddr0_div",
 	     PLL_DDR0_DIV + 0x10, 0, 0, 0),
-	GATE(CLK_PLL_DDR1, "pll_ddr1_gate", "pll_ddr1_div",
+	GATE_DDR(CLK_PLL_DDR1, "pll_ddr1_gate", "pll_ddr1_div",
 	     PLL_DDR1_DIV + 0x10, 0, 0, 0),
 };
 
@@ -78,8 +82,8 @@ static void __init nxp3220_cmu_ddr_init(struct device_node *np)
 					 ARRAY_SIZE(ddr_fixed_factor_clks));
 	nexell_clk_register_mux(ctx, ddr_mux_clks, ARRAY_SIZE(ddr_mux_clks));
 	nexell_clk_register_div(ctx, ddr_div_clks, ARRAY_SIZE(ddr_div_clks));
-	nexell_clk_register_gate(ctx, ddr_gate_clks,
-				 ARRAY_SIZE(ddr_gate_clks));
+	nxp3220_clk_register_gate(ctx, ddr_gate_clks,
+				  ARRAY_SIZE(ddr_gate_clks));
 
 	if (of_clk_add_provider(np, of_clk_src_onecell_get, &ctx->clk_data))
 		pr_err("%s: failed to add clock provider\n", __func__);

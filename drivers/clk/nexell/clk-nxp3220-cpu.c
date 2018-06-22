@@ -5,8 +5,9 @@
  */
 
 #include <linux/of_address.h>
-#include "clk-nexell.h"
 #include <dt-bindings/clock/nxp3220-clk.h>
+#include "clk-nexell.h"
+#include "clk-nxp3220.h"
 
 #define CPU_CPU0_ARM			0x0200
 #define PLL_CPU_DIV0			0x0400
@@ -44,33 +45,36 @@ static const struct nexell_div_clock cpu_div_clks[] __initconst = {
 		HPM_CPU0 + 0x60),
 };
 
+#define GATE_CPU(_id, cname, pname, o, b, f, gf)		\
+	GATE(_id, cname, pname, o, o + 0x10, b, (f) | CLK_IGNORE_UNUSED, gf)
+
 static const struct nexell_gate_clock cpu_gate_clks[] __initconst = {
-	GATE(CLK_CPU_ARM, "cpu_arm", "div_cpu_arm",
+	GATE_CPU(CLK_CPU_ARM, "cpu_arm", "div_cpu_arm",
 	     CPU_CPU0_ARM + 0x10, 0, 0, 0),
-	GATE(CLK_CPU_BLK_BIST, "cpu_blk_bist", "div_cpu_arm",
+	GATE_CPU(CLK_CPU_BLK_BIST, "cpu_blk_bist", "div_cpu_arm",
 	     CPU_CPU0_ARM + 0x10, 1, 0, 0),
-	GATE(CLK_CPU_AXI, "cpu_axi", "div_cpu_axi",
+	GATE_CPU(CLK_CPU_AXI, "cpu_axi", "div_cpu_axi",
 	     CPU_CPU0_ARM + 0x10, 2, 0, 0),
-	GATE(CLK_CPU_AXIM, "cpu_axim", "div_cpu_axi",
+	GATE_CPU(CLK_CPU_AXIM, "cpu_axim", "div_cpu_axi",
 	     CPU_CPU0_ARM + 0x10, 3, 0, 0),
-	GATE(CLK_CPU_ATCLK, "cpu_atclk", "div_cpu_atclk",
+	GATE_CPU(CLK_CPU_ATCLK, "cpu_atclk", "div_cpu_atclk",
 	     CPU_CPU0_ARM + 0x10, 4, 0, 0),
-	GATE(CLK_CPU_CNTCLK, "cpu_cntclk", "div_cpu_cntclk",
+	GATE_CPU(CLK_CPU_CNTCLK, "cpu_cntclk", "div_cpu_cntclk",
 	     CPU_CPU0_ARM + 0x10, 5, 0, 0),
-	GATE(CLK_CPU_TSCLK, "cpu_tsclk", "div_cpu_tsclk",
+	GATE_CPU(CLK_CPU_TSCLK, "cpu_tsclk", "div_cpu_tsclk",
 	     CPU_CPU0_ARM + 0x10, 6, 0, 0),
-	GATE(CLK_CPU_DBGAPB, "cpu_dbgapb", "div_cpu_dbgapb",
+	GATE_CPU(CLK_CPU_DBGAPB, "cpu_dbgapb", "div_cpu_dbgapb",
 	     CPU_CPU0_ARM + 0x10, 7, 0, 0),
-	GATE(CLK_CPU_APB, "cpu_apb", "div_cpu_apb",
+	GATE_CPU(CLK_CPU_APB, "cpu_apb", "div_cpu_apb",
 	     CPU_CPU0_ARM + 0x10, 8, 0, 0),
-	GATE(CLK_CPU_SYSREG_APB, "cpu_sysreg_apb", "div_cpu_apb",
+	GATE_CPU(CLK_CPU_SYSREG_APB, "cpu_sysreg_apb", "div_cpu_apb",
 	     CPU_CPU0_ARM + 0x10, 9, 0, 0),
-	GATE(CLK_CPU_AXIM_APB, "cpu_axim_apb", "div_cpu_apb",
+	GATE_CPU(CLK_CPU_AXIM_APB, "cpu_axim_apb", "div_cpu_apb",
 	     CPU_CPU0_ARM + 0x10, 10, 0, 0),
 
-	GATE(CLK_CPU_PLL_DIV, "cpu_pll_div", "div_cpu_pll",
+	GATE_CPU(CLK_CPU_PLL_DIV, "cpu_pll_div", "div_cpu_pll",
 	     PLL_CPU_DIV0 + 0x10, 0, 0, 0),
-	GATE(CLK_CPU_HPM, "cpu_hpm", "div_cpu_hpm",
+	GATE_CPU(CLK_CPU_HPM, "cpu_hpm", "div_cpu_hpm",
 	     HPM_CPU0 + 0x10, 0, 0, 0),
 };
 
@@ -93,8 +97,8 @@ static void __init nxp3220_cmu_cpu_init(struct device_node *np)
 
 	nexell_clk_register_mux(ctx, cpu_mux_clks, ARRAY_SIZE(cpu_mux_clks));
 	nexell_clk_register_div(ctx, cpu_div_clks, ARRAY_SIZE(cpu_div_clks));
-	nexell_clk_register_gate(ctx, cpu_gate_clks,
-				 ARRAY_SIZE(cpu_gate_clks));
+	nxp3220_clk_register_gate(ctx, cpu_gate_clks,
+				  ARRAY_SIZE(cpu_gate_clks));
 
 	if (of_clk_add_provider(np, of_clk_src_onecell_get, &ctx->clk_data))
 		pr_err("%s: failed to add clock provider\n", __func__);

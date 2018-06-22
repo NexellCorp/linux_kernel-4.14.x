@@ -5,8 +5,9 @@
  */
 
 #include <linux/of_address.h>
-#include "clk-nexell.h"
 #include <dt-bindings/clock/nxp3220-clk.h>
+#include "clk-nexell.h"
+#include "clk-nxp3220.h"
 
 #define MM_AXI			0x0200
 #define MM_VIP_PADOUT0		0x0400
@@ -37,46 +38,49 @@ static const struct nexell_div_clock mm_div_clks[] __initconst = {
 	       "src_coda960_0_core", MM_CODA960_CORE + 0x60),
 };
 
+#define GATE_MM(_id, cname, pname, o, b, f, gf)		\
+	GATE(_id, cname, pname, o, o + 0x10, b, f, gf)
+
 static const struct nexell_gate_clock mm_gate_clks[] __initconst = {
-	GATE(CLK_MM_AXI, "mm_axi", "div_mm_axi",
-	     MM_AXI + 0x10, 0, 0, 0),
-	GATE(CLK_MM_BLK_BIST, "mm_blk_bist", "div_mm_axi",
+	GATE_MM(CLK_MM_AXI, "mm_axi", "div_mm_axi",
+	     MM_AXI + 0x10, 0, CLK_IGNORE_UNUSED, 0),
+	GATE_MM(CLK_MM_BLK_BIST, "mm_blk_bist", "div_mm_axi",
 	     MM_AXI + 0x10, 1, 0, 0),
-	GATE(CLK_MM_ROTATOR_AXI, "mm_rotator_axi", "div_mm_axi",
+	GATE_MM(CLK_MM_ROTATOR_AXI, "mm_rotator_axi", "div_mm_axi",
 	     MM_AXI + 0x10, 2, 0, 0),
-	GATE(CLK_MM_G2D_AXI, "mm_g2d_axi", "div_mm_axi",
+	GATE_MM(CLK_MM_G2D_AXI, "mm_g2d_axi", "div_mm_axi",
 	     MM_AXI + 0x10, 3, 0, 0),
-	GATE(CLK_MM_DEINTERLACE_AXI, "mm_deinterlace_axi", "div_mm_axi",
+	GATE_MM(CLK_MM_DEINTERLACE_AXI, "mm_deinterlace_axi", "div_mm_axi",
 	     MM_AXI + 0x10, 4, 0, 0),
-	GATE(CLK_MM_VIP_AXI, "mm_vip_axi", "div_mm_axi",
+	GATE_MM(CLK_MM_VIP_AXI, "mm_vip_axi", "div_mm_axi",
 	     MM_AXI + 0x10, 5, 0, 0),
-	GATE(CLK_MM_DPC_AXI, "mm_dpc_axi", "div_mm_axi",
+	GATE_MM(CLK_MM_DPC_AXI, "mm_dpc_axi", "div_mm_axi",
 	     MM_AXI + 0x10, 6, 0, 0),
-	GATE(CLK_MM_CODA960_AXI, "mm_coda960_axi", "div_mm_axi",
+	GATE_MM(CLK_MM_CODA960_AXI, "mm_coda960_axi", "div_mm_axi",
 	     MM_AXI + 0x10, 7, 0, 0),
-	GATE(CLK_MM_APB, "mm_apb", "div_mm_apb",
-	     MM_AXI + 0x10, 8, 0, 0),
-	GATE(CLK_MM_SYSREG_APB, "mm_sysreg_apb", "div_mm_apb",
+	GATE_MM(CLK_MM_APB, "mm_apb", "div_mm_apb",
+	     MM_AXI + 0x10, 8, CLK_IGNORE_UNUSED, 0),
+	GATE_MM(CLK_MM_SYSREG_APB, "mm_sysreg_apb", "div_mm_apb",
 	     MM_AXI + 0x10, 9, 0, 0),
-	GATE(CLK_MM_DEINTERLACE_APB, "mm_deinterlace_apb", "div_mm_apb",
+	GATE_MM(CLK_MM_DEINTERLACE_APB, "mm_deinterlace_apb", "div_mm_apb",
 	     MM_AXI + 0x10, 10, 0, 0),
-	GATE(CLK_MM_VIP_APB, "mm_vip_apb", "div_mm_apb",
+	GATE_MM(CLK_MM_VIP_APB, "mm_vip_apb", "div_mm_apb",
 	     MM_AXI + 0x10, 11, 0, 0),
-	GATE(CLK_MM_LVDS_PHY, "mm_lvds_phy", "div_mm_apb",
+	GATE_MM(CLK_MM_LVDS_PHY, "mm_lvds_phy", "div_mm_apb",
 	     MM_AXI + 0x10, 12, 0, 0),
-	GATE(CLK_MM_CODA960_APB, "mm_coda960_apb", "div_mm_apb",
+	GATE_MM(CLK_MM_CODA960_APB, "mm_coda960_apb", "div_mm_apb",
 	     MM_AXI + 0x10, 13, 0, 0),
-	GATE(CLK_MM_VIP_PADOUT0, "mm_vip_padout0", "div_mm_vip_padout0",
+	GATE_MM(CLK_MM_VIP_PADOUT0, "mm_vip_padout0", "div_mm_vip_padout0",
 	     MM_VIP_PADOUT0 + 0x10, 0, 0, 0),
-	GATE(CLK_MM_VIP_PADOUT1, "mm_vip_padout1", "div_mm_vip_padout1",
+	GATE_MM(CLK_MM_VIP_PADOUT1, "mm_vip_padout1", "div_mm_vip_padout1",
 	     MM_VIP_PADOUT1 + 0x10, 0, 0, 0),
-	GATE(CLK_MM_DPC_X2, "mm_dpc_x2", "div_mm_dpc_x2",
+	GATE_MM(CLK_MM_DPC_X2, "mm_dpc_x2", "div_mm_dpc_x2",
 	     MM_DPC_X2 + 0x10, 0, 0, 0),
-	GATE(CLK_MM_DPC_X1, "mm_dpc_x1", "div_mm_dpc_x1",
+	GATE_MM(CLK_MM_DPC_X1, "mm_dpc_x1", "div_mm_dpc_x1",
 	     MM_DPC_X2 + 0x10, 1, 0, 0),
-	GATE(CLK_MM_LVDS_VCLK, "mm_lvds_vclk", "div_mm_lvds_vclk",
+	GATE_MM(CLK_MM_LVDS_VCLK, "mm_lvds_vclk", "div_mm_lvds_vclk",
 	     MM_LVDS_VCLK + 0x10, 0, 0, 0),
-	GATE(CLK_MM_CODA960_CORE, "mm_coda960_core", "div_mm_coda960_core",
+	GATE_MM(CLK_MM_CODA960_CORE, "mm_coda960_core", "div_mm_coda960_core",
 	     MM_CODA960_CORE + 0x10, 0, 0, 0),
 };
 
@@ -98,7 +102,7 @@ static void __init nxp3220_cmu_mm_init(struct device_node *np)
 	}
 
 	nexell_clk_register_div(ctx, mm_div_clks, ARRAY_SIZE(mm_div_clks));
-	nexell_clk_register_gate(ctx, mm_gate_clks, ARRAY_SIZE(mm_gate_clks));
+	nxp3220_clk_register_gate(ctx, mm_gate_clks, ARRAY_SIZE(mm_gate_clks));
 
 	if (of_clk_add_provider(np, of_clk_src_onecell_get, &ctx->clk_data))
 		pr_err("%s: failed to add clock provider\n", __func__);
