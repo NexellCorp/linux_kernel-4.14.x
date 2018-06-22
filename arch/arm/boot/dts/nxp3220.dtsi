@@ -578,6 +578,17 @@
 			pinctrl-0 = <&spi2_bus>;
 			status = "disabled";
 		};
+
+		usb2phy: usb2phy@24030000 {
+			compatible = "nexell,nxp3220-usb2-phy";
+			reg = <0x24030000 0x200>;
+			#phy-cells = <1>;
+			assigned-clocks = <&cmu_usb CLK_USB_AHB>;
+			assigned-clock-rates = <250000000>;
+			clocks = <&cmu_usb CLK_USB_AHB>, <&cmu_usb CLK_USB_SYSREG_APB>;
+			clock-names = "ahb", "apb";
+			status = "disabled";
+		};
 	};
 };
 
