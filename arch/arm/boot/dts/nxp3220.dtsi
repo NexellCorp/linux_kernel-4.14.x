@@ -387,6 +387,16 @@
 			clkevent = <1>;
 		};
 
+		tmuctrl_0: tmuctrl@200e0000 {
+			compatible = "nexell,nxp3220-tmu";
+			reg = <0x200e0000 0x1000>;
+			interrupts = <GIC_SPI 110 IRQ_TYPE_NONE>;
+			clocks = <&cmu  CLK_TMU0_APB>;
+			clock-names = "tmu_apbif";
+			#include "nxp3220-tmu-sensor-conf.dtsi"
+			status = "disabled"
+		};
+
 		uart0: serial@20400000 {
 			compatible = "snps,dw-apb-uart";
 			reg = <0x20400000 0x1000>;
