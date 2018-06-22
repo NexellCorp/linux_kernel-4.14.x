@@ -4,6 +4,7 @@
 #
 
 obj-$(CONFIG_COMMON_CLK_NEXELL) += clk-nexell-pll.o clk-nexell.o
+obj-$(CONFIG_COMMON_CLK_NXP3220) += clk-nxp3220.o
 obj-$(CONFIG_COMMON_CLK_NXP3220) += clk-nxp3220-cmu.o
 obj-$(CONFIG_COMMON_CLK_NXP3220) += clk-nxp3220-cpu.o
 obj-$(CONFIG_COMMON_CLK_NXP3220) += clk-nxp3220-ddr.o
