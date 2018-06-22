@@ -114,3 +114,7 @@
 &usb2phy {
 	status = "okay";
 };
+
+&rtc {
+	status = "okay";
+};
