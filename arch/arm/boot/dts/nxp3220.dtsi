@@ -295,6 +295,24 @@
 			status = "disabled";
 		};
 
+		dwc2otg: dwc2otg@240c0000 {
+			compatible = "nexell,nxp3220-dwc2otg";
+			reg = <0x240c0000 0x11000>;
+			interrupts = <GIC_SPI 123 IRQ_TYPE_NONE>;
+			clocks = <&cmu_usb CLK_USB_USB20OTG>;
+			clock-names = "otg";
+			pinctrl-names = "default";
+			pinctrl-0 = <&otg_vbus_en>;
+			phys = <&usb2phy 0>;
+			phy-names = "usb2-phy";
+			dr_mode = "otg";
+			g-use-dma = <1>;
+			g-rx-fifo-size = <1064>;
+			g-np-tx-fifo-size = <512>;
+			g-tx-fifo-size = <512 512 1024 1024 256 64 64 64 192 192 64 64 64 64 64>;
+			status = "disabled";
+		};
+
 		i2c_0: i2c@20500000 {
 			compatible = "nexell,s3c2410-i2c";
 			reg = <0x20500000 0x100>;
