@@ -607,6 +607,13 @@
 			status = "disabled";
 		};
 
+		rtc: rtc@2008c000 {
+			compatible = "nexell,nx-rtc";
+			reg = <0x2008C000 0x100>;
+			interrupts = <GIC_SPI 104 IRQ_TYPE_NONE>;
+			status = "disabled";
+		};
+
 		usb2phy: usb2phy@24030000 {
 			compatible = "nexell,nxp3220-usb2-phy";
 			reg = <0x24030000 0x200>;
