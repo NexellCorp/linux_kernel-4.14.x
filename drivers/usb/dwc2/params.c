@@ -136,6 +136,27 @@ static void dwc2_set_stm32f4x9_fsotg_params(struct dwc2_hsotg *hsotg)
 	p->activate_stm_fs_transceiver = true;
 }
 
+static void dwc2_set_nxp3220_params(struct dwc2_hsotg *hsotg)
+{
+	struct dwc2_core_params *p = &hsotg->params;
+
+	p->otg_cap = DWC2_CAP_PARAM_HNP_SRP_CAPABLE;
+	p->phy_type = DWC2_PHY_TYPE_PARAM_UTMI;
+	p->speed = DWC2_SPEED_PARAM_HIGH;
+	p->phy_utmi_width = 16;
+	p->i2c_enable = false;
+	p->reload_ctl = false;
+	p->max_packet_count = 1023;
+	p->max_transfer_size = 65535;
+	p->ahbcfg = GAHBCFG_HBSTLEN_INCR16 <<
+		GAHBCFG_HBSTLEN_SHIFT;
+	p->dma_desc_enable = true; /* enable ddma for gadget, hcd */
+	p->host_channels = 16;
+	p->host_rx_fifo_size = 1024;
+	p->host_nperio_tx_fifo_size = 384;
+	p->host_perio_tx_fifo_size = 512;
+}
+
 const struct of_device_id dwc2_of_match_table[] = {
 	{ .compatible = "brcm,bcm2835-usb", .data = dwc2_set_bcm_params },
 	{ .compatible = "hisilicon,hi6220-usb", .data = dwc2_set_his_params  },
@@ -154,6 +175,7 @@ const struct of_device_id dwc2_of_match_table[] = {
 	{ .compatible = "st,stm32f4x9-fsotg",
 	  .data = dwc2_set_stm32f4x9_fsotg_params },
 	{ .compatible = "st,stm32f4x9-hsotg" },
+	{ .compatible = "nexell,nxp3220-dwc2otg", .data = &dwc2_set_nxp3220_params },
 	{},
 };
 MODULE_DEVICE_TABLE(of, dwc2_of_match_table);
@@ -629,6 +651,7 @@ int dwc2_get_hwparams(struct dwc2_hsotg *hsotg)
 	hw->snpsid = dwc2_readl(hsotg->regs + GSNPSID);
 	if ((hw->snpsid & 0xfffff000) != 0x4f542000 &&
 	    (hw->snpsid & 0xfffff000) != 0x4f543000 &&
+	    (hw->snpsid & 0xfffff000) != 0x4f544000 &&
 	    (hw->snpsid & 0xffff0000) != 0x55310000 &&
 	    (hw->snpsid & 0xffff0000) != 0x55320000) {
 		dev_err(hsotg->dev, "Bad value for GSNPSID: 0x%08x\n",
