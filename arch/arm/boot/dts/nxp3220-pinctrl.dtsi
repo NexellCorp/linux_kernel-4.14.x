@@ -210,6 +210,13 @@
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
 
+        otg_vbus_en: otg-vbus-en {
+		nexell,pins = "gpioc-15";
+		nexell,pin-function = <NX_PIN_FUNC2>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
 	uart0_bus: uart0-bus {
 		nexell,pins = "gpiod-10", "gpiod-11";
 		nexell,pin-function = <NX_PIN_FUNC1>;
