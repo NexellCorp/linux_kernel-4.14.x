@@ -542,6 +542,15 @@ config NAU7802
 	  To compile this driver as a module, choose M here: the
 	  module will be called nau7802.
 
+config NEXELL_ADC
+	tristate "Nexell ADC driver"
+	depends on ARCH_SIP_S31NX && OF
+	help
+	  Say yes here to build support for Nexell ADC.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called nexell_adc.
+
 config PALMAS_GPADC
 	tristate "TI Palmas General Purpose ADC"
 	depends on MFD_PALMAS
