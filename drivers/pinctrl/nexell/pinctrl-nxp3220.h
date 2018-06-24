@@ -31,16 +31,93 @@
 		.name		= id				\
 	}
 
-#define GPIO_OUT (0x00)
-#define GPIO_OUT_ENB (0x04)
-#define GPIO_INT_MODE (0x08) /* 0x08,0x0c */
-#define GPIO_INT_MODEEX (0x28)
-#define GPIO_INT_ENB (0x10)
-#define GPIO_INT_STATUS (0x14)
-#define GPIO_ALTFN (0x20) /* 0x20,0x24 */
-#define GPIO_INT_DET (0x3C)
-#define GPIO_IN_ENB (0x74)
-#define GPIO_ALTFNEX (0x7c)
+#define GPIO_OUT			0x00
+#define GPIO_OUT_ENB			0x04
+#define GPIO_INT_MODE			0x08 /* 0x08,0x0c */
+#define GPIO_INT_ENB			0x10
+#define GPIO_INT_STATUS			0x14
+#define GPIO_PAD			0x18
+#define GPIO_ALTFN			0x20 /* 0x20,0x24 */
+#define GPIO_INT_MODEEX			0x28
+#define GPIO_INT_DET			0x3C
+#define GPIO_IN_ENB			0x74
+#define GPIO_DRV1			0x48
+#define GPIO_DRV0			0x50
+#define GPIO_PULLSEL			0x58
+#define GPIO_PULLENB			0x60
+#define GPIO_ALTFNEX			0x7c
+
+#define GPIO_SLEW_DISABLE_DEFAULT	0x44
+#define GPIO_DRV1_DISABLE_DEFAULT	0x4C
+#define GPIO_DRV0_DISABLE_DEFAULT	0x54
+#define GPIO_PULLSEL_DISABLE_DEFAULT	0x5C
+#define GPIO_PULLENB_DISABLE_DEFAULT	0x64
+#define GPIO_INPUTENB_DISABLE_DEFAULT	0x78
+
+#define ALIVE_PWRGATE			0x1000
+
+#define ALIVE_MOD_RESET			0x1004 /* detect mode reset */
+#define ALIVE_MOD_SET			0x1008 /* detect mode set */
+#define ALIVE_MOD_READ			0x100C /* detect mode set read */
+
+#define ALIVE_MOD_EDGE_SET		0x102C
+
+#define ALIVE_DET_RST			0x104C
+#define ALIVE_DET_SET			0x1050
+#define ALIVE_DET_READ			0x1054
+#define ALIVE_INT_ENB_RST		0x1058 /* interrupt reset : disable */
+#define ALIVE_INT_ENB_SET		0x105C /* interrupt set : enable */
+#define ALIVE_INT_ENB_READ		0x1060 /* interrupt set read */
+#define ALIVE_INT_STATUS		0x1064 /* interrupt detect pending and clear */
+#define ALIVE_OUT_ENB_RST		0x1074
+#define ALIVE_OUT_ENB_SET		0x1078
+#define ALIVE_OUT_ENB_READ		0x107C
+
+#define ALIVE_PULL_ENB_RST		0x1080
+#define ALIVE_PULL_ENB_SET		0x1084
+#define ALIVE_PULL_ENB_READ		0x1088
+
+#define ALIVE_PAD_OUT_RST		0x108C
+#define ALIVE_PAD_OUT_SET		0x1090
+#define ALIVE_PAD_OUT_READ		0x1094
+
+#define ALIVE_CLEAR_WAKEUP_STATUS	0x10A4
+#define ALIVE_SLEEP_WAKEUP_STATUS	0x10A8
+
+#define ALIVE_PAD_IN			0x111C /* PAD input */
+
+#define ALIVE_PULL_SEL_RST		0x1138
+#define ALIVE_PULL_SEL_SET		0x113C
+#define ALIVE_PULL_SEL_READ		0x1140
+
+#define ALIVE_DRV0_RST			0x1144
+#define ALIVE_DRV0_SET			0x1148
+#define ALIVE_DRV0_READ			0x114C
+#define ALIVE_DRV1_RST			0x1150
+#define ALIVE_DRV1_SET			0x1154
+#define ALIVE_DRV1_READ			0x1158
+
+#define ALIVE_ALTFN_SEL_LOW		0x810
+
+enum {
+	nx_gpio_padfunc_0 = 0ul,
+	nx_gpio_padfunc_1 = 1ul,
+	nx_gpio_padfunc_2 = 2ul,
+	nx_gpio_padfunc_3 = 3ul
+};
+
+enum {
+	nx_gpio_drvstrength_0 = 0ul,
+	nx_gpio_drvstrength_1 = 1ul,
+	nx_gpio_drvstrength_2 = 2ul,
+	nx_gpio_drvstrength_3 = 3ul
+};
+
+enum {
+	nx_gpio_pull_down = 0ul,
+	nx_gpio_pull_up = 1ul,
+	nx_gpio_pull_off = 2ul
+};
 
 /* gpio interrupt detect type */
 #define NX_GPIO_INTMODE_LOWLEVEL 0
@@ -48,6 +125,14 @@
 #define NX_GPIO_INTMODE_FALLINGEDGE 2
 #define NX_GPIO_INTMODE_RISINGEDGE 3
 #define NX_GPIO_INTMODE_BOTHEDGE 4
+
+/* alivegpio interrupt detect type */
+#define NX_ALIVE_DETECTMODE_ASYNC_LOWLEVEL 0
+#define NX_ALIVE_DETECTMODE_ASYNC_HIGHLEVEL 1
+#define NX_ALIVE_DETECTMODE_SYNC_FALLINGEDGE 2
+#define NX_ALIVE_DETECTMODE_SYNC_RISINGEDGE 3
+#define NX_ALIVE_DETECTMODE_SYNC_LOWLEVEL 4
+#define NX_ALIVE_DETECTMODE_SYNC_HIGHLEVEL 5
 
 #define PAD_GET_GROUP(pin) ((pin >> 0x5) & 0x07) /* Divide 32 */
 #define PAD_GET_BITNO(pin) (pin & 0x1F)
@@ -128,10 +213,6 @@
 		    IO_ALT_0,                                                  \
 	}
 
-#define nx_gpio_pull_down 0
-#define nx_gpio_pull_up 1
-#define nx_gpio_pull_off 2
-
 /* GPIO Module's Register List */
 struct nx_gpio_reg_set {
 	/* 0x00	: Output Register */
@@ -189,7 +270,7 @@ struct nx_gpio_reg_set {
 
 struct module_init_data {
 	struct list_head node;
-	void *bank_base;
+	void __iomem *bank_base;
 	int bank_type;		/* 0: none, 1: gpio, 2: alive */
 };
 

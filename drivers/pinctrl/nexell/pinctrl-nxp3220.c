@@ -23,243 +23,290 @@
 #include "pinctrl-nxp3220.h"
 
 static struct {
-	struct nx_gpio_reg_set *gpio_regs;
+	void __iomem *gpio_regs;
 	struct nx_gpio_reg_set gpio_save;
 } gpio_modules[NR_GPIO_MODULE];
+
+static void __iomem *alive_regs;
 
 /*
  * gpio functions
  */
 
-static void nx_gpio_setbit(u32 *p, u32 bit, bool enable)
+static void nx_gpio_setbit(void __iomem *addr, u32 bit, bool enable)
 {
-	u32 newvalue = readl(p);
+	u32 value = readl(addr);
 
-	newvalue &= ~(1UL << bit);
-	newvalue |= (u32)enable << bit;
+	value &= ~(1ul << bit);
+	value |= (u32)enable << bit;
 
-	writel(newvalue, p);
+	writel(value, addr);
 }
 
-static bool nx_gpio_getbit(u32 value, u32 bit)
+static bool nx_gpio_getbit(void __iomem *addr, u32 bit)
 {
-	return (bool)((value >> bit) & (1UL));
+	return (bool)((readl(addr) >> bit) & 1UL);
 }
 
-static void nx_gpio_setbit2(u32 *p, u32 bit, u32 value)
+static void nx_gpio_setbit2(void __iomem *addr, u32 bit, u32 bit_value)
 {
-	u32 newvalue = readl(p);
+	u32 value = readl(addr);
 
-	newvalue = (u32)(newvalue & ~(3UL << (bit * 2)));
-	newvalue = (u32)(newvalue | (value << (bit * 2)));
+	value = value & ~(3ul << (bit * 2));
+	value = value | (bit_value << (bit * 2));
 
-	writel(newvalue, p);
+	writel(value, addr);
 }
 
-static u32 nx_gpio_getbit2(u32 value, u32 bit)
+static u32 nx_gpio_getbit2(void __iomem *addr, u32 bit)
 {
-	return (u32)((u32)(value >> (bit * 2)) & 3UL);
+	return (readl(addr) >> (bit * 2)) & 3UL;
+}
+
+static u32 nx_alive_getbit(void __iomem *addr, u32 bit)
+{
+	return (readl(addr) >> bit) & 1UL;
+}
+
+static void nx_alive_setbit2(void __iomem *addr, u32 bit, u32 bit_value)
+{
+	u32 value = readl(addr);
+
+	value = (u32)(value & ~(3ul << (bit * 2)));
+	value = (u32)(value | (bit_value << (bit * 2)));
+
+	writel(value, addr);
+}
+
+static u32 nx_alive_getbit2(void __iomem *addr, u32 bit)
+{
+	return (readl(addr) >> (bit * 2)) & 3UL;
 }
 
 static bool nx_gpio_open_module(u32 idx)
 {
-	struct nx_gpio_reg_set *regs;
+	void __iomem *base = gpio_modules[idx].gpio_regs;
 
-	regs = gpio_modules[idx].gpio_regs;
-
-	writel(0xFFFFFFFF, &regs->gpio_slew_disable_default);
-	writel(0xFFFFFFFF, &regs->gpio_drv1_disable_default);
-	writel(0xFFFFFFFF, &regs->gpio_drv0_disable_default);
-	writel(0xFFFFFFFF, &regs->gpio_pullsel_disable_default);
-	writel(0xFFFFFFFF, &regs->gpio_pullenb_disable_default);
-	writel(0xFFFFFFFF, &regs->gpio_inenb_disable_default);
+	writel(0xFFFFFFFF, base + GPIO_SLEW_DISABLE_DEFAULT);
+	writel(0xFFFFFFFF, base + GPIO_DRV1_DISABLE_DEFAULT);
+	writel(0xFFFFFFFF, base + GPIO_DRV0_DISABLE_DEFAULT);
+	writel(0xFFFFFFFF, base + GPIO_PULLSEL_DISABLE_DEFAULT);
+	writel(0xFFFFFFFF, base + GPIO_PULLENB_DISABLE_DEFAULT);
+	writel(0xFFFFFFFF, base + GPIO_INPUTENB_DISABLE_DEFAULT);
 
 	return true;
 }
 
 static void nx_gpio_set_output_enable(u32 idx, u32 bitnum, bool enable)
 {
-	struct nx_gpio_reg_set *regs;
+	void __iomem *base = gpio_modules[idx].gpio_regs;
 
-	regs = gpio_modules[idx].gpio_regs;
-
-	nx_gpio_setbit(&regs->gpio_outenb, bitnum, enable);
+	nx_gpio_setbit(base + GPIO_OUT_ENB, bitnum, enable);
 }
 
 static bool nx_gpio_get_output_enable(u32 idx, u32 bitnum)
 {
-	struct nx_gpio_reg_set *regs;
+	void __iomem *base = gpio_modules[idx].gpio_regs;
 
-	regs = gpio_modules[idx].gpio_regs;
-
-	return nx_gpio_getbit(readl(&regs->gpio_outenb), bitnum);
+	return nx_gpio_getbit(base + GPIO_OUT_ENB, bitnum);
 }
 
 static void nx_gpio_set_output_value(u32 idx, u32 bitnum, bool value)
 {
-	struct nx_gpio_reg_set *regs;
+	void __iomem *base = gpio_modules[idx].gpio_regs;
 
-	regs = gpio_modules[idx].gpio_regs;
-
-	nx_gpio_setbit(&regs->gpio_out, bitnum, value);
+	nx_gpio_setbit(base + GPIO_OUT, bitnum, value);
 }
 
 static bool nx_gpio_get_input_value(u32 idx, u32 bitnum)
 {
-	struct nx_gpio_reg_set *regs;
+	void __iomem *base = gpio_modules[idx].gpio_regs;
 
-	regs = gpio_modules[idx].gpio_regs;
-
-	return nx_gpio_getbit(readl(&regs->gpio_pad), bitnum);
+	return nx_gpio_getbit(base + GPIO_PAD, bitnum);
 }
 
 static void nx_gpio_set_pad_function(u32 idx, u32 bitnum, int fn)
 {
-	struct nx_gpio_reg_set *regs;
+	void __iomem *base = gpio_modules[idx].gpio_regs;
 
-	regs = gpio_modules[idx].gpio_regs;
-
-	nx_gpio_setbit2(&regs->gpio_altfn[bitnum / 16], bitnum % 16, (u32)fn);
+	nx_gpio_setbit2(base + GPIO_ALTFN + (bitnum / 16) * 4,
+			bitnum % 16, (u32)fn);
 }
 
 static int nx_gpio_get_pad_function(u32 idx, u32 bitnum)
 {
-	struct nx_gpio_reg_set *regs;
+	void __iomem *base = gpio_modules[idx].gpio_regs;
 
-	regs = gpio_modules[idx].gpio_regs;
-
-	return nx_gpio_getbit2(
-	    readl(&regs->gpio_altfn[bitnum / 16]), bitnum % 16);
+	return nx_gpio_getbit2(base + GPIO_ALTFN + (bitnum / 16) * 4,
+			bitnum % 16);
 }
 
-static void nx_gpio_set_drive_strength(u32 idx, u32 bitnum, int drvstrength)
+static void nx_gpio_set_drive_strength(u32 idx, u32 bitnum, int drv)
 {
-	struct nx_gpio_reg_set *regs;
+	void __iomem *base = gpio_modules[idx].gpio_regs;
 
-	regs = gpio_modules[idx].gpio_regs;
-
-	nx_gpio_setbit(&regs->gpio_drv1, bitnum,
-		       (bool)(((u32)drvstrength >> 0) & 0x1));
-	nx_gpio_setbit(&regs->gpio_drv0, bitnum,
-		       (bool)(((u32)drvstrength >> 1) & 0x1));
+	nx_gpio_setbit(base + GPIO_DRV1, bitnum, ((u32)drv >> 0) & 0x1);
+	nx_gpio_setbit(base + GPIO_DRV0, bitnum, ((u32)drv >> 1) & 0x1);
 }
 
 static int nx_gpio_get_drive_strength(u32 idx, u32 bitnum)
 {
-	struct nx_gpio_reg_set *regs;
+	void __iomem *base = gpio_modules[idx].gpio_regs;
 	u32 value;
 
-	regs = gpio_modules[idx].gpio_regs;
-
-	value = nx_gpio_getbit(readl(&regs->gpio_drv0), bitnum) << 1;
-	value |= nx_gpio_getbit(readl(&regs->gpio_drv1), bitnum) << 0;
+	value = nx_gpio_getbit(base + GPIO_DRV0, bitnum) << 1;
+	value |= nx_gpio_getbit(base + GPIO_DRV1, bitnum) << 0;
 
 	return (int)value;
 }
 
 static void nx_gpio_set_pull_enable(u32 idx, u32 bitnum, int pullsel)
 {
-	struct nx_gpio_reg_set *regs;
-
-	regs = gpio_modules[idx].gpio_regs;
+	void __iomem *base = gpio_modules[idx].gpio_regs;
 
 	if (pullsel == nx_gpio_pull_down || pullsel == nx_gpio_pull_up) {
-		nx_gpio_setbit(&regs->gpio_pullsel, bitnum, (bool)pullsel);
-		nx_gpio_setbit(&regs->gpio_pullenb, bitnum, true);
-	} else
-		nx_gpio_setbit(&regs->gpio_pullenb, bitnum, false);
+		nx_gpio_setbit(base + GPIO_PULLSEL, bitnum, (bool)pullsel);
+		nx_gpio_setbit(base + GPIO_PULLENB, bitnum, true);
+	} else {
+		nx_gpio_setbit(base + GPIO_PULLENB, bitnum, false);
+	}
 }
 
 static int nx_gpio_get_pull_enable(u32 idx, u32 bitnum)
 {
-	struct nx_gpio_reg_set *regs;
+	void __iomem *base = gpio_modules[idx].gpio_regs;
 	bool enable;
 
-	regs = gpio_modules[idx].gpio_regs;
-	enable = nx_gpio_getbit(readl(&regs->gpio_pullenb), bitnum);
+	enable = nx_gpio_getbit(base + GPIO_PULLENB, bitnum);
 
 	if (enable == true)
-		return (int)nx_gpio_getbit(readl(&regs->gpio_pullsel), bitnum);
+		return (int)nx_gpio_getbit(base + GPIO_PULLSEL, bitnum);
 	else
-		return (nx_gpio_pull_off);
+		return nx_gpio_pull_off;
 }
 
 /*
- * alive functions
+ * alive alternative functions
  */
 
-static void nx_alive_set_pad_function(u32 bitnum, int fn)
+static void nx_alive_set_pad_function(void __iomem *base, u32 pin, int fn)
 {
-	/* TODO request to secure os */
+	if (fn > nx_gpio_padfunc_1) {
+		pr_debug("wrong pad function to alive pin %d\n", pin);
+		return;
+	}
+	nx_alive_setbit2(base + ALIVE_ALTFN_SEL_LOW, pin, fn);
+
+	pr_debug("%s base %p pin %u fn %u\n", __func__, base, pin, fn);
 }
 
-static int nx_alive_get_pad_function(u32 bitnum)
+static int nx_alive_get_pad_function(void __iomem *base, u32 pin)
 {
-	/* TODO request to secure os */
-	return 0;
-}
-
-static void nx_alive_set_drive_strength(u32 bitnum, int drvstrength)
-{
-	/* TODO request to secure os */
-}
-
-static int nx_alive_get_drive_strength(u32 bitnum)
-{
-	/* TODO request to secure os */
-	return 0;
+	return nx_alive_getbit2(base + ALIVE_ALTFN_SEL_LOW, pin);
 }
 
 /*
- * alive - PAD Configuration
+ * alive pad configurations
  */
 
-static void nx_alive_set_pull_enable(u32 bitnum, bool enable)
+static void nx_alive_set_drive_strength(void __iomem *base, u32 pin, int drv)
 {
-	/* TODO request to secure os */
+	u32 bit = 1UL << pin;
+	u32 drv0_reg = drv & 0x2 ? ALIVE_DRV0_SET : ALIVE_DRV0_RST;
+	u32 drv1_reg = drv & 0x1 ? ALIVE_DRV1_SET : ALIVE_DRV1_RST;
+
+	writel(bit, base + drv0_reg);
+	writel(bit, base + drv1_reg);
+
+	pr_debug("%s base %p pin %u drv %d\n", __func__, base, pin, drv);
 }
 
-static bool nx_alive_get_pull_enable(u32 bitnum)
+static int nx_alive_get_drive_strength(void __iomem *base, u32 pin)
 {
-	/* TODO request to secure os */
-	return 0;
+	u32 value;
+
+	value = nx_alive_getbit(base + ALIVE_DRV0_READ, pin) << 1;
+	value |= nx_alive_getbit(base + ALIVE_DRV1_READ, pin) << 0;
+
+	return value;
+}
+
+static void nx_alive_set_pull_mode(void __iomem *base, u32 pin, u32 mode)
+{
+	u32 bit = 1UL << pin;
+
+	if (mode == nx_gpio_pull_off) {
+		writel(bit, base + ALIVE_PULL_ENB_RST);
+		writel(bit, base + ALIVE_PULL_SEL_RST);
+	} else {
+		writel(bit, base + ALIVE_PULL_ENB_SET);
+		if (mode == nx_gpio_pull_down)
+			writel(bit, base + ALIVE_PULL_SEL_RST);
+		else
+			writel(bit, base + ALIVE_PULL_SEL_SET);
+	}
+
+	pr_debug("%s base %p pin %u mode %u\n", __func__, base, pin, mode);
+}
+
+static int nx_alive_get_pull_mode(void __iomem *base, u32 pin)
+{
+	u32 enable = nx_alive_getbit(base + ALIVE_PULL_ENB_READ, pin);
+
+	if (enable)
+		return nx_alive_getbit(base + ALIVE_PULL_SEL_READ, pin);
+	else
+		return nx_gpio_pull_off;
 }
 
 /*
- * Output Setting Function
+ * alive output setting functions
  */
 
-static void nx_alive_set_output_enable(u32 bitnum, bool enable)
+static void nx_alive_set_output_enable(void __iomem *base, u32 pin, bool enable)
 {
-	/* TODO request to secure os */
+	u32 bit = 1UL << pin;
+
+	if (enable)
+		writel(bit, base + ALIVE_OUT_ENB_SET);
+	else
+		writel(bit, base + ALIVE_OUT_ENB_RST);
 }
 
-static bool nx_alive_get_output_enable(u32 bitnum)
+static int nx_alive_get_output_enable(void __iomem *base, u32 pin)
 {
-	/* TODO request to secure os */
-	return false;
+	return nx_alive_getbit(base + ALIVE_OUT_ENB_READ, pin);
 }
 
-static void nx_alive_set_output_value(u32 bitnum, bool value)
+static void nx_alive_set_output_value(void __iomem *base, u32 pin, bool value)
 {
-	/* TODO request to secure os */
+	u32 bit = 1UL << pin;
+
+	if (value)
+		writel(bit, base + ALIVE_PAD_OUT_SET);
+	else
+		writel(bit, base + ALIVE_PAD_OUT_RST);
+
 }
 
-static bool nx_alive_get_input_value(u32 bitnum)
+static bool nx_alive_get_input_value(void __iomem *base, u32 pin)
 {
-	/* TODO request to secure os */
-	return false;
+	return nx_alive_getbit(base + ALIVE_PAD_IN, pin);
 }
 
-static u32 nx_alive_get_wakeup_status(void)
+static u32 nx_alive_get_wakeup_status(void __iomem *base)
 {
-	/* TODO request to secure os */
-	return 0;
+	return readl(base + ALIVE_SLEEP_WAKEUP_STATUS);
 }
 
-static void nx_alive_clear_wakeup_status(void)
+static void nx_alive_clear_wakeup_status(void __iomem *base)
 {
-	/* TODO request to secure os */
+	writel(1, base + ALIVE_CLEAR_WAKEUP_STATUS);
+}
+
+static void nx_alive_set_write_enable(void __iomem *base, bool enable)
+{
+	writel(enable, base + ALIVE_PWRGATE);
 }
 
 /*
@@ -300,7 +347,7 @@ void nx_soc_gpio_set_io_func(unsigned int io, unsigned int func)
 		break;
 	case PAD_GPIO_ALV:
 		IO_LOCK(grp);
-		nx_alive_set_pad_function(bit, func);
+		nx_alive_set_pad_function(alive_regs, bit, func);
 		IO_UNLOCK(grp);
 		break;
 	default:
@@ -337,7 +384,7 @@ unsigned int nx_soc_gpio_get_io_func(unsigned int io)
 		break;
 	case PAD_GPIO_ALV:
 		IO_LOCK(grp);
-		fn = nx_alive_get_pad_function(bit);
+		fn = nx_alive_get_pad_function(alive_regs, bit);
 		IO_UNLOCK(grp);
 		break;
 	default:
@@ -367,7 +414,7 @@ void nx_soc_gpio_set_io_dir(unsigned int io, int out)
 		break;
 	case PAD_GPIO_ALV:
 		IO_LOCK(grp);
-		nx_alive_set_output_enable(bit, out ? true : false);
+		nx_alive_set_output_enable(alive_regs, bit, out ? true : false);
 		IO_UNLOCK(grp);
 		break;
 	default:
@@ -396,7 +443,7 @@ int nx_soc_gpio_get_io_dir(unsigned int io)
 		break;
 	case PAD_GPIO_ALV:
 		IO_LOCK(grp);
-		dir = nx_alive_get_output_enable(bit) ? 1 : 0;
+		dir = nx_alive_get_output_enable(alive_regs, bit) ? 1 : 0;
 		IO_UNLOCK(grp);
 		break;
 	default:
@@ -426,7 +473,7 @@ void nx_soc_gpio_set_io_pull(unsigned int io, int val)
 		break;
 	case PAD_GPIO_ALV:
 		IO_LOCK(grp);
-		nx_alive_set_pull_enable(bit, val);
+		nx_alive_set_pull_mode(alive_regs, bit, val);
 		IO_UNLOCK(grp);
 		break;
 	default:
@@ -455,7 +502,7 @@ int nx_soc_gpio_get_io_pull(unsigned int io)
 		break;
 	case PAD_GPIO_ALV:
 		IO_LOCK(grp);
-		up = nx_alive_get_pull_enable(bit);
+		up = nx_alive_get_pull_mode(alive_regs, bit);
 		IO_UNLOCK(grp);
 		break;
 	default:
@@ -485,7 +532,7 @@ void nx_soc_gpio_set_io_drv(int io, int drv)
 		break;
 	case PAD_GPIO_ALV:
 		IO_LOCK(grp);
-		nx_alive_set_drive_strength(bit, drv);
+		nx_alive_set_drive_strength(alive_regs, bit, drv);
 		IO_UNLOCK(grp);
 		break;
 	default:
@@ -514,7 +561,7 @@ int nx_soc_gpio_get_io_drv(int io)
 		break;
 	case PAD_GPIO_ALV:
 		IO_LOCK(grp);
-		drv = nx_alive_get_drive_strength(bit);
+		drv = nx_alive_get_drive_strength(alive_regs, bit);
 		IO_UNLOCK(grp);
 		break;
 	default:
@@ -544,7 +591,7 @@ void nx_soc_gpio_set_out_value(unsigned int io, int high)
 		break;
 	case PAD_GPIO_ALV:
 		IO_LOCK(grp);
-		nx_alive_set_output_value(bit, high ? true : false);
+		nx_alive_set_output_value(alive_regs, bit, high ? true : false);
 		IO_UNLOCK(grp);
 		break;
 	default:
@@ -573,7 +620,7 @@ int nx_soc_gpio_get_in_value(unsigned int io)
 		break;
 	case PAD_GPIO_ALV:
 		IO_LOCK(grp);
-		val = nx_alive_get_input_value(bit) ? 1 : 0;
+		val = nx_alive_get_input_value(alive_regs, bit) ? 1 : 0;
 		IO_UNLOCK(grp);
 		break;
 	default:
@@ -679,13 +726,11 @@ static int nxp3220_gpio_resume(int idx)
 
 static int nxp3220_alive_suspend(void)
 {
-	/* TODO request to secure os */
 	return 0;
 }
 
 static int nxp3220_alive_resume(void)
 {
-	/* TODO request to secure os */
 	return 0;
 }
 
@@ -702,11 +747,18 @@ static int nxp3220_gpio_device_init(struct list_head *banks, int nr_banks)
 	i = 0;
 	list_for_each_entry(init_data, banks, node) {
 		if (init_data->bank_type == EINT_TYPE_GPIO) {
-			gpio_modules[i].gpio_regs =
-			    (struct nx_gpio_reg_set *)(init_data->bank_base);
+			gpio_modules[i].gpio_regs = init_data->bank_base;
 
 			nx_gpio_open_module(i);
 			i++;
+		} else if (init_data->bank_type == EINT_TYPE_WKUP) { /* alive */
+			alive_regs = init_data->bank_base;
+
+			/*
+			 * ALIVE Power Gate must enable for RTC register access.
+			 * must be clear wfi jump address
+			 */
+			nx_alive_set_write_enable(alive_regs, true);
 		}
 	}
 
@@ -967,41 +1019,136 @@ err_domains:
 
 static void irq_alive_ack(struct irq_data *irqd)
 {
-	/* TODO request to secure os */
+	struct nexell_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
+	void __iomem *base = bank->virt_base;
+	int bit = (int)(irqd->hwirq);
+
+	pr_debug("%s: irq=%d, hwirq=%d\n", __func__, irqd->irq, bit);
+	/* ack: irq pend clear */
+	writel(1 << bit, base + ALIVE_INT_STATUS);
 }
 
 static void irq_alive_mask(struct irq_data *irqd)
 {
-	/* TODO request to secure os */
+	struct nexell_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
+	void __iomem *base = bank->virt_base;
+	int bit = (int)(irqd->hwirq);
+
+	pr_debug("%s: irq=%d, hwirq=%d\n", __func__, irqd->irq, bit);
+	/* mask: irq reset (disable) */
+	writel(1 << bit, base + ALIVE_INT_ENB_RST);
 }
 
 static void irq_alive_unmask(struct irq_data *irqd)
 {
-	/* TODO request to secure os */
+	struct nexell_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
+	void __iomem *base = bank->virt_base;
+	int bit = (int)(irqd->hwirq);
+
+	pr_debug("%s: irq=%d, hwirq=%d\n", __func__, irqd->irq, bit);
+	/* mask: irq set (enable) */
+	writel(1 << bit, base + ALIVE_INT_ENB_SET);
 }
 
 static int irq_alive_set_type(struct irq_data *irqd, unsigned int type)
 {
-	/* TODO request to secure os */
+	struct nexell_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
+	void __iomem *base = bank->virt_base;
+	int bit = (int)(irqd->hwirq);
+	int offs = 0, i = 0;
+	int mode = 0;
+
+	pr_debug("%s: irq=%d, hwirq=%d, type=0x%x\n",
+			__func__, irqd->irq, bit, type);
+
+	switch (type) {
+	case IRQ_TYPE_NONE:
+		pr_warn("%s: No edge setting!\n", __func__);
+		break;
+	case IRQ_TYPE_EDGE_FALLING:
+		mode = NX_ALIVE_DETECTMODE_SYNC_FALLINGEDGE;
+		break;
+	case IRQ_TYPE_EDGE_RISING:
+		mode = NX_ALIVE_DETECTMODE_SYNC_RISINGEDGE;
+		break;
+	case IRQ_TYPE_EDGE_BOTH:
+		mode = NX_ALIVE_DETECTMODE_SYNC_FALLINGEDGE;
+		break; /* and Rising Edge */
+	case IRQ_TYPE_LEVEL_LOW:
+		mode = NX_ALIVE_DETECTMODE_ASYNC_LOWLEVEL;
+		break;
+	case IRQ_TYPE_LEVEL_HIGH:
+		mode = NX_ALIVE_DETECTMODE_ASYNC_HIGHLEVEL;
+		break;
+	default:
+		pr_err("%s: No such irq type %d", __func__, type);
+		return -1;
+	}
+
+	/* setting all alive detect mode set/reset register */
+	for (; i < 6; i++, offs += 0x0C) {
+		u32 reg = (i == mode ? ALIVE_MOD_SET : ALIVE_MOD_RESET);
+
+		writel(1 << bit, base + reg + offs);
+	}
+
+	/*
+	 * set risingedge mode for both edge
+	 */
+	if (IRQ_TYPE_EDGE_BOTH == type)
+		writel(1 << bit, base + ALIVE_MOD_EDGE_SET);
+
+	writel(1 << bit, base + ALIVE_DET_SET);
+	writel(1 << bit, base + ALIVE_INT_ENB_SET);
+	writel(1 << bit, base + ALIVE_PAD_OUT_RST);
 
 	return 0;
 }
 
+static u32 alive_wake_mask = 0xffffffff;
+
+u32 get_wake_mask(void)
+{
+	return alive_wake_mask;
+}
+
 static int irq_set_alive_wake(struct irq_data *irqd, unsigned int on)
 {
-	/* TODO request to secure os */
+	int bit = (int)(irqd->hwirq);
+
+	pr_info("alive wake bit[%d] %s for irq %d\n",
+			bit, on ? "enabled" : "disabled", irqd->irq);
+
+	if (!on)
+		alive_wake_mask |= bit;
+	else
+		alive_wake_mask &= ~bit;
 
 	return 0;
 }
 
 static void irq_alive_enable(struct irq_data *irqd)
 {
-	/* TODO request to secure os */
+	struct nexell_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
+	void __iomem *base = bank->virt_base;
+	int bit = (int)(irqd->hwirq);
+
+	pr_debug("%s: irq=%d, io=%s.%d\n",
+			__func__, bank->irq, bank->name, bit);
+	/* unmask:irq set (enable) */
+	writel(1 << bit, base + ALIVE_INT_ENB_SET);
 }
 
 static void irq_alive_disable(struct irq_data *irqd)
 {
-	/* TODO request to secure os */
+	struct nexell_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
+	void __iomem *base = bank->virt_base;
+	int bit = (int)(irqd->hwirq);
+
+	pr_debug("%s: irq=%d, io=%s.%d\n", __func__,
+			bank->irq, bank->name, bit);
+	/* mask:irq reset (disable) */
+	writel(1 << bit, base + ALIVE_INT_ENB_RST);
 }
 
 /*
@@ -1020,7 +1167,30 @@ static struct irq_chip nxp3220_alive_irq_chip = {
 
 static irqreturn_t nxp3220_alive_irq_handler(int irq, void *data)
 {
-	/* TODO request to secure os */
+	struct nexell_pin_bank *bank = data;
+	void __iomem *base = bank->virt_base;
+	u32 stat, mask;
+	unsigned int virq;
+	int bit;
+
+	mask = readl(base + ALIVE_INT_ENB_READ);
+	stat = readl(base + ALIVE_INT_STATUS) & mask;
+	bit = ffs(stat) - 1;
+
+	if (bit == -1) {
+		pr_err("Unknown alive irq=%d, status=0x%08x, mask=0x%08x\r\n",
+				irq, stat, mask);
+		writel(-1, base + ALIVE_INT_STATUS);
+		return IRQ_NONE;
+	}
+
+	virq = irq_linear_revmap(bank->irq_domain, bit);
+	pr_debug("alive irq=%d [%d] (hw %u), stat=0x%08x, mask=0x%08x\n",
+			irq, bit, virq, stat, mask);
+	if (!virq)
+		return IRQ_NONE;
+
+	generic_handle_irq(virq);
 
 	return IRQ_HANDLED;
 }
@@ -1053,8 +1223,14 @@ static int nxp3220_alive_irq_init(struct nexell_pinctrl_drv_data *d)
 
 	bank = d->ctrl->pin_banks;
 	for (i = 0; i < d->ctrl->nr_banks; ++i, ++bank) {
+		void __iomem *base = bank->virt_base;
+
 		if (bank->eint_type != EINT_TYPE_WKUP)
 			continue;
+
+		/* clear pending, disable irq detect */
+		writel(-1, base + ALIVE_INT_ENB_RST);
+		writel(-1, base + ALIVE_INT_STATUS);
 
 		ret =
 		  devm_request_irq(dev, bank->irq, nxp3220_alive_irq_handler,
@@ -1110,12 +1286,22 @@ static void nxp3220_suspend(struct nexell_pinctrl_drv_data *drvdata)
 			dev_err(drvdata->dev, "failed to suspend bank %d\n", i);
 	}
 
-	nx_alive_clear_wakeup_status();
+	nx_alive_clear_wakeup_status(alive_regs);
 }
 
 static const char * const wake_event_name[] = {
-	/* TODO secure os */
-	[0] = "ALIVE 0",
+	[0] = "FAKERTC",
+	[1] = "RTC",
+	[2] = "ALIVE 0",
+	[3] = "ALIVE 1",
+	[4] = "ALIVE 2",
+	[5] = "ALIVE 3",
+	[6] = "ALIVE 4",
+	[7] = "ALIVE 5",
+	[8] = "ALIVE 6",
+	[9] = "ALIVE 7",
+	[10] = "ALIVE 8",
+	[11] = "ALIVE 9",
 };
 
 #define	WAKE_EVENT_NUM	ARRAY_SIZE(wake_event_name)
@@ -1123,7 +1309,7 @@ static const char * const wake_event_name[] = {
 static void print_wake_event(void)
 {
 	int i = 0;
-	u32 wake_status = nx_alive_get_wakeup_status();
+	u32 wake_status = nx_alive_get_wakeup_status(alive_regs);
 
 	for (i = 0; i < WAKE_EVENT_NUM; i++) {
 		if (wake_status & (1 << i))
