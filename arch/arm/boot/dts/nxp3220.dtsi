@@ -422,7 +422,7 @@
 			clocks = <&cmu  CLK_TMU0_APB>;
 			clock-names = "tmu_apbif";
 			#include "nxp3220-tmu-sensor-conf.dtsi"
-			status = "disabled"
+			status = "disabled";
 		};
 
 		uart0: serial@20400000 {
