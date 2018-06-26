@@ -57,6 +57,13 @@
 	#size-cells = <0>;
 };
 
+&pwm {
+	status = "okay";
+	nexell,pwm-outputs = <0>, <1>, <2>, <3>;
+	assigned-clocks = <&cmu CLK_PWM0_APB>;
+	assigned-clock-rates = <166000000>;
+};
+
 &uart0 {
 	status = "okay";
 };
