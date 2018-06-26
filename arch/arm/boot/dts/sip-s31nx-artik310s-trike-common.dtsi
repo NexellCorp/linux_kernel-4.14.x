@@ -16,6 +16,12 @@
 	};
 };
 
+&adc {
+	status = "okay";
+	assigned-clocks = <&cmu CLK_ADC0_APB>;
+	assigned-clock-rates = <100000000>;
+};
+
 &dwmmc_2 {
 	cap-mmc-highspeed;
 	cd-gpios = <&gpio_b 24 0>;
