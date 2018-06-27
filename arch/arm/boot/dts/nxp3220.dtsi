@@ -22,6 +22,9 @@
 		i2c2 = &i2c_2;
 		i2c3 = &i2c_3;
 		i2c4 = &i2c_4;
+		spi0 = &spi_0;
+		spi1 = &spi_1;
+		spi2 = &spi_2;
 	};
 
 	cpus {
@@ -528,6 +531,51 @@
 			clock-frequency =  <100000000>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&uart6_bus>;
+			status = "disabled";
+		};
+
+		spi_0: spi@30000000 {
+			compatible = "nexell,nxp3220-dw-spi";
+			reg = <0x30000000 0x1000>;
+			interrupts = <GIC_SPI 93 IRQ_TYPE_NONE>;
+			clocks = <&cmu CLK_SPI0_CORE>,
+				<&cmu CLK_SPI0_APB>;
+			clock-names = "core", "apb";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			num-cs = <1>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&spi0_bus>;
+			status = "disabled";
+		};
+
+		spi_1: spi@20A90000 {
+			compatible = "nexell,nxp3220-dw-spi";
+			reg = <0x20a90000 0x1000>;
+			interrupts = <GIC_SPI 94 IRQ_TYPE_NONE>;
+			clocks = <&cmu CLK_SPI1_CORE>,
+				<&cmu CLK_SPI1_APB>;
+			clock-names = "core", "apb";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			num-cs = <1>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&spi1_bus>;
+			status = "disabled";
+		};
+
+		spi_2: spi@20aa0000 {
+			compatible = "nexell,nxp3220-dw-spi";
+			reg = <0x20aa0000 0x1000>;
+			interrupts = <GIC_SPI 95 IRQ_TYPE_NONE>;
+			clocks = <&cmu CLK_SPI2_CORE>,
+				<&cmu CLK_SPI2_APB>;
+			clock-names = "core", "apb";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			num-cs = <1>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&spi2_bus>;
 			status = "disabled";
 		};
 	};
