@@ -1102,6 +1102,28 @@
 			module = <0>;
 			status = "disabled";
 		};
+
+		watchdog_secure: watchdog@20810000 {
+			compatible = "nexell,nxp3220-wdt";
+			reg = <0x20810000 0x1000>;
+			interrupts = <GIC_SPI 89 IRQ_TYPE_NONE>;
+			clock-names = "watchdog";
+			clocks = <&cmu CLK_SECURE_WDT0_APB>;
+			assigned-clocks = <&cmu CLK_SECURE_WDT0_APB>;
+			assigned-clock-rates = <140000000>;
+			status = "disabled";
+		};
+
+		watchdog: watchdog@20800000 {
+			compatible = "nexell,nxp3220-wdt";
+			reg = <0x20800000 0x1000>;
+			interrupts = <GIC_SPI 125 IRQ_TYPE_NONE>;
+			clock-names = "watchdog";
+			clocks = <&cmu CLK_WDT0_APB>;
+			assigned-clocks = <&cmu CLK_WDT0_APB>;
+			assigned-clock-rates = <140000000>;
+			status = "disabled";
+		};
 	};
 };
 
