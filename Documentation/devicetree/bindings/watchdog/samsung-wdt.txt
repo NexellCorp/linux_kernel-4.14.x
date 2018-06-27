@@ -11,6 +11,7 @@ Required properties:
 	- "samsung,exynos5250-wdt" for Exynos5250
 	- "samsung,exynos5420-wdt" for Exynos5420
 	- "samsung,exynos7-wdt" for Exynos7
+	- "nexell,nxp3220-wdt" for NXP3220
 
 - reg : base physical address of the controller and length of memory mapped
 	region.

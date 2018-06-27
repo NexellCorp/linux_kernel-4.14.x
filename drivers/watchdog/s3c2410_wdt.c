@@ -68,6 +68,7 @@
 #define QUIRK_HAS_PMU_CONFIG			(1 << 0)
 #define QUIRK_HAS_RST_STAT			(1 << 1)
 #define QUIRK_HAS_WTCLRINT_REG			(1 << 2)
+#define QUIRK_HAS_NEXELL_CONFIG		(1 << 3)
 
 /* These quirks require that we have a PMU register map */
 #define QUIRKS_HAVE_PMUREG			(QUIRK_HAS_PMU_CONFIG | \
@@ -169,6 +170,10 @@ static const struct s3c2410_wdt_variant drv_data_exynos7 = {
 		  | QUIRK_HAS_WTCLRINT_REG,
 };
 
+static const struct s3c2410_wdt_variant drv_data_nx = {
+	.quirks = QUIRK_HAS_WTCLRINT_REG | QUIRK_HAS_NEXELL_CONFIG,
+};
+
 static const struct of_device_id s3c2410_wdt_match[] = {
 	{ .compatible = "samsung,s3c2410-wdt",
 	  .data = &drv_data_s3c2410 },
@@ -180,6 +185,8 @@ static const struct of_device_id s3c2410_wdt_match[] = {
 	  .data = &drv_data_exynos5420 },
 	{ .compatible = "samsung,exynos7-wdt",
 	  .data = &drv_data_exynos7 },
+	{ .compatible = "nexell,nxp3220-wdt",
+	  .data = &drv_data_nx },
 	{},
 };
 MODULE_DEVICE_TABLE(of, s3c2410_wdt_match);
@@ -195,7 +202,6 @@ static const struct platform_device_id s3c2410_wdt_ids[] = {
 MODULE_DEVICE_TABLE(platform, s3c2410_wdt_ids);
 
 /* functions */
-
 static inline unsigned int s3c2410wdt_max_timeout(struct clk *clock)
 {
 	unsigned long freq = clk_get_rate(clock);
@@ -285,7 +291,11 @@ static int s3c2410wdt_start(struct watchdog_device *wdd)
 		wtcon |= S3C2410_WTCON_INTEN;
 		wtcon &= ~S3C2410_WTCON_RSTEN;
 	} else {
-		wtcon &= ~S3C2410_WTCON_INTEN;
+		if (wdt->drv_data->quirks & QUIRK_HAS_NEXELL_CONFIG)
+			wtcon |= S3C2410_WTCON_INTEN;
+		else
+			wtcon &= ~S3C2410_WTCON_INTEN;
+
 		wtcon |= S3C2410_WTCON_RSTEN;
 	}
 

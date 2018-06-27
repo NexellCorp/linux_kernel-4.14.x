@@ -14,6 +14,7 @@ menuconfig ARCH_NEXELL
 	select USE_OF
 	select VIRT_TO_BUS
 	select HAVE_S3C2410_I2C if I2C
+	select HAVE_S3C2410_WATCHDOG if WATCHDOG
 
 if ARCH_NEXELL
 
