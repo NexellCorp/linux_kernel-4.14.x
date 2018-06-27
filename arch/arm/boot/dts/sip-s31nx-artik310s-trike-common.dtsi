@@ -64,6 +64,32 @@
 	assigned-clock-rates = <166000000>;
 };
 
+&spi_1 {
+	status = "okay";
+	assigned-clocks = <&cmu CLK_SPI1_APB>, <&cmu CLK_SPI1_CORE>;
+	assigned-clock-rates = <200000000>, <200000000>;
+	cs-gpios = <&gpio_a 9 0>;
+
+	spidev@0 {
+		compatible = "linux,spidev";
+		reg = <0>;
+		spi-max-frequency = <20000000>;
+	};
+};
+
+&spi_2 {
+	status = "okay";
+	assigned-clocks = <&cmu CLK_SPI2_APB>, <&cmu CLK_SPI2_CORE>;
+	assigned-clock-rates = <200000000>, <200000000>;
+	cs-gpios = <&gpio_a 13 0>;
+
+	spidev@0 {
+		compatible = "linux,spidev";
+		reg = <0>;
+		spi-max-frequency = <20000000>;
+	};
+};
+
 &uart0 {
 	status = "okay";
 };
