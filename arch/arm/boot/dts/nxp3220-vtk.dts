@@ -93,6 +93,10 @@
 	status = "okay";
 };
 
+&ehci {
+	status = "okay";
+};
+
 &pwm {
 	status = "okay";
 	assigned-clocks = <&cmu CLK_PWM0_APB>;
