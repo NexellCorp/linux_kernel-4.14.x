@@ -313,6 +313,16 @@
 			status = "disabled";
 		};
 
+		ehci: ehci@24080000 {
+			compatible = "generic-ehci";
+			reg = <0x24080000 0x100>;
+			interrupts = <GIC_SPI 120 IRQ_TYPE_NONE>;
+			clocks = <&cmu_usb CLK_USB_USB20HOST>;
+			phys = <&usb2phy 1>, <&usb2phy 2>;
+			phy-names = "usb0", "usb1";
+			status = "disabled";
+		};
+
 		i2c_0: i2c@20500000 {
 			compatible = "nexell,s3c2410-i2c";
 			reg = <0x20500000 0x100>;
