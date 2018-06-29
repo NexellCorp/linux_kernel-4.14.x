@@ -44,8 +44,6 @@ static const struct nexell_div_clock mm_div_clks[] __initconst = {
 static const struct nexell_gate_clock mm_gate_clks[] __initconst = {
 	GATE_MM(CLK_MM_AXI, "mm_axi", "div_mm_axi",
 	     MM_AXI + 0x10, 0, CLK_IGNORE_UNUSED, 0),
-	GATE_MM(CLK_MM_BLK_BIST, "mm_blk_bist", "div_mm_axi",
-	     MM_AXI + 0x10, 1, 0, 0),
 	GATE_MM(CLK_MM_ROTATOR_AXI, "mm_rotator_axi", "div_mm_axi",
 	     MM_AXI + 0x10, 2, 0, 0),
 	GATE_MM(CLK_MM_G2D_AXI, "mm_g2d_axi", "div_mm_axi",

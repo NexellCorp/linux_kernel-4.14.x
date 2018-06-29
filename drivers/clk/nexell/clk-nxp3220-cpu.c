@@ -51,8 +51,6 @@ static const struct nexell_div_clock cpu_div_clks[] __initconst = {
 static const struct nexell_gate_clock cpu_gate_clks[] __initconst = {
 	GATE_CPU(CLK_CPU_ARM, "cpu_arm", "div_cpu_arm",
 	     CPU_CPU0_ARM + 0x10, 0, 0, 0),
-	GATE_CPU(CLK_CPU_BLK_BIST, "cpu_blk_bist", "div_cpu_arm",
-	     CPU_CPU0_ARM + 0x10, 1, 0, 0),
 	GATE_CPU(CLK_CPU_AXI, "cpu_axi", "div_cpu_axi",
 	     CPU_CPU0_ARM + 0x10, 2, 0, 0),
 	GATE_CPU(CLK_CPU_AXIM, "cpu_axim", "div_cpu_axi",

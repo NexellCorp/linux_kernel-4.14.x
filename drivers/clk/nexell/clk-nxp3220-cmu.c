@@ -13,9 +13,7 @@
 #define SYS0_HSIF_AXI			0x0400
 #define CPU_BACKUP0			0x0600
 #define CSSYS0_HCLK			0x0800
-#define CSSYS0_SCAN			0x0A00
 #define BLK_CMU0_APB			0x0C00
-#define VIP_PADPLACE0_SCAN		0x0E00
 #define VIP_PADOUT0			0x1000
 #define VIP_PADOUT1			0x1200
 #define VIP_PADOUT2			0x1400
@@ -24,14 +22,11 @@
 #define HPM_SYS0			0x1A00
 #define UART0_CORE			0x1C00
 #define UART0_APB			0x1E00
-#define I2S0_SCAN			0x2000
 #define I2S0_CORE			0x2200
 #define I2S1_CORE			0x2400
 #define I2S2_CORE			0x2600
 #define I2S3_CORE			0x2800
 #define I2C0_APB			0x2A00
-#define MP2TSI0_SCAN			0x2C00
-#define SDMMC0_SCAN			0x2E00
 #define SDMMC0_CORE			0x3000
 #define SDMMC1_CORE			0x3200
 #define SDMMC2_CORE			0x3400
@@ -60,9 +55,7 @@
 #define SPDIFTX0_CORE			0x6200
 #define GMAC_RGMII0_TX			0x6400
 #define GMAC_RGMII0_PTP_REF		0x6600
-#define GMAC_RGMII0_SCAN		0x6800
 #define GMAC_RMII0_PTP_REF		0x6A00
-#define GMAC_RMII0_SCAN			0x6C00
 #define NANDC0_AXI			0x6E00
 #define MM0_AXI				0x7000
 #define VIP0_PADOUT0			0x7200
@@ -117,20 +110,10 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 		COMP_DIV_SRC(CSSYS0_HCLK)
 		COMP_GATE_SRC(CSSYS0_HCLK)
 	}, {
-		COMP_BASE_SRC(CLK_SRC_CSSYS0_SCAN, "src_cssys0_scan")
-		COMP_MUX_SRC(CSSYS0_SCAN)
-		COMP_DIV_SRC(CSSYS0_SCAN)
-		COMP_GATE_SRC(CSSYS0_SCAN)
-	}, {
 		COMP_BASE_SRC(CLK_SRC_BLK_CMU0_APB, "src_blk_cmu0_apb")
 		COMP_MUX_SRC(BLK_CMU0_APB)
 		COMP_DIV_SRC(BLK_CMU0_APB)
 		COMP_GATE_SRC(BLK_CMU0_APB)
-	}, {
-		COMP_BASE_SRC(CLK_SRC_VIP_PADPLACE0_SCAN, "src_vip_padplace0_scan")
-		COMP_MUX_SRC(VIP_PADPLACE0_SCAN)
-		COMP_DIV_SRC(VIP_PADPLACE0_SCAN)
-		COMP_GATE_SRC(VIP_PADPLACE0_SCAN)
 	}, {
 		COMP_BASE_SRC(CLK_SRC_VIP_PADOUT0, "src_vip_padout0")
 		COMP_MUX_SRC(VIP_PADOUT0)
@@ -172,11 +155,6 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 		COMP_DIV_SRC(UART0_APB)
 		COMP_GATE_SRC(UART0_APB)
 	}, {
-		COMP_BASE_SRC(CLK_SRC_I2S0_SCAN, "src_i2s0_scan")
-		COMP_MUX_SRC(I2S0_SCAN)
-		COMP_DIV_SRC(I2S0_SCAN)
-		COMP_GATE_SRC(I2S0_SCAN)
-	}, {
 		COMP_BASE_SRC(CLK_SRC_I2S0_CORE, "src_i2s0_core")
 		COMP_MUX_SRC(I2S0_CORE)
 		COMP_DIV_SRC(I2S0_CORE)
@@ -201,16 +179,6 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 		COMP_MUX_SRC(I2C0_APB)
 		COMP_DIV_SRC(I2C0_APB)
 		COMP_GATE_SRC(I2C0_APB)
-	}, {
-		COMP_BASE_SRC(CLK_SRC_MP2TSI0_SCAN, "src_mp2tsi0_scan")
-		COMP_MUX_SRC(MP2TSI0_SCAN)
-		COMP_DIV_SRC(MP2TSI0_SCAN)
-		COMP_GATE_SRC(MP2TSI0_SCAN)
-	}, {
-		COMP_BASE_SRC(CLK_SRC_SDMMC0_SCAN, "src_sdmmc0_scan")
-		COMP_MUX_SRC(SDMMC0_SCAN)
-		COMP_DIV_SRC(SDMMC0_SCAN)
-		COMP_GATE_SRC(SDMMC0_SCAN)
 	}, {
 		COMP_BASE_SRC(CLK_SRC_SDMMC0_CORE, "src_sdmmc0_core")
 		COMP_MUX_SRC(SDMMC0_CORE)
@@ -352,20 +320,10 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 		COMP_DIV_SRC(GMAC_RGMII0_PTP_REF)
 		COMP_GATE_SRC(GMAC_RGMII0_PTP_REF)
 	}, {
-		COMP_BASE_SRC(CLK_SRC_GMAC_RGMII0_SCAN, "src_gmac_rgmii0_scan")
-		COMP_MUX_SRC(GMAC_RGMII0_SCAN)
-		COMP_DIV_SRC(GMAC_RGMII0_SCAN)
-		COMP_GATE_SRC(GMAC_RGMII0_SCAN)
-	}, {
 		COMP_BASE_SRC(CLK_SRC_GMAC_RMII0_PTP_REF, "src_gmac_rmii0_ptp_ref")
 		COMP_MUX_SRC(GMAC_RMII0_PTP_REF)
 		COMP_DIV_SRC(GMAC_RMII0_PTP_REF)
 		COMP_GATE_SRC(GMAC_RMII0_PTP_REF)
-	}, {
-		COMP_BASE_SRC(CLK_SRC_GMAC_RMII0_SCAN, "src_gmac_rmii0_scan")
-		COMP_MUX_SRC(GMAC_RMII0_SCAN)
-		COMP_DIV_SRC(GMAC_RMII0_SCAN)
-		COMP_GATE_SRC(GMAC_RMII0_SCAN)
 	}, {
 		COMP_BASE_SRC(CLK_SRC_NANDC0_AXI, "src_nandc0_axi")
 		COMP_MUX_SRC(NANDC0_AXI)
@@ -425,12 +383,8 @@ static const struct nexell_div_clock sys_div_clks[] __initconst = {
 		"src_cpu_backup0", CPU_BACKUP0 + 0x64),
 	DIV_SYS(CLK_SYS_DIV_CSSYS0_HCLK, "div_sys_cssys0_hclk",
 		"src_cssys0_hclk", CSSYS0_HCLK + 0x60),
-	DIV_SYS(CLK_SYS_DIV_CSSYS0_SCAN, "div_sys_cssys0_scan",
-		"src_cssys0_scan", CSSYS0_SCAN + 0x60),
 	DIV_SYS(CLK_SYS_DIV_BLK_CMU0_APB, "div_sys_blk_cmu0_apb",
 		"src_blk_cmu0_apb", BLK_CMU0_APB + 0x60),
-	DIV_SYS(CLK_SYS_DIV_VIP_PADPLACE0_SCAN, "div_sys_vip_padplace0_scan",
-		"src_vip_padplace0_scan", VIP_PADPLACE0_SCAN + 0x60),
 	DIV_SYS(CLK_SYS_DIV_VIP_PADOUT0, "div_sys_vip_padout0",
 		"src_vip_padout0", VIP_PADOUT0 + 0x60),
 	DIV_SYS(CLK_SYS_DIV_VIP_PADOUT1, "div_sys_vip_padout1",
@@ -447,8 +401,6 @@ static const struct nexell_div_clock sys_div_clks[] __initconst = {
 		"src_uart0_core", UART0_CORE + 0x60),
 	DIV_SYS(CLK_SYS_DIV_UART0_APB, "div_sys_uart0_apb",
 		"src_uart_apb", UART0_APB + 0x60),
-	DIV_SYS(CLK_SYS_DIV_I2S0_SCAN, "div_sys_i2s0_scan",
-		"src_i2s0_scan", I2S0_SCAN + 0x60),
 	DIV_SYS(CLK_SYS_DIV_I2S0_CORE, "div_sys_i2s0_core",
 		"src_i2s0_core", I2S0_CORE + 0x60),
 	DIV_SYS(CLK_SYS_DIV_I2S1_CORE, "div_sys_i2s1_core",
@@ -459,10 +411,6 @@ static const struct nexell_div_clock sys_div_clks[] __initconst = {
 		"src_i2s3_core", I2S3_CORE + 0x60),
 	DIV_SYS(CLK_SYS_DIV_I2C0_APB, "div_sys_i2c0_apb",
 		"src_i2c0_apb", I2C0_APB + 0x60),
-	DIV_SYS(CLK_SYS_DIV_MP2TSI0_SCAN, "div_sys_mp2tsi0_scan",
-		"src_mp2tsi0_scan", MP2TSI0_SCAN + 0x60),
-	DIV_SYS(CLK_SYS_DIV_SDMMC0_SCAN, "div_sys_sdmmc0_scan",
-		"src_sdmmc0_scan", SDMMC0_SCAN + 0x60),
 	DIV_SYS(CLK_SYS_DIV_SDMMC0_CORE, "div_sys_sdmmc0_core",
 		"src_sdmmc0_core", SDMMC0_CORE + 0x60),
 	DIV_SYS(CLK_SYS_DIV_SDMMC1_CORE, "div_sys_sdmmc1_core",
@@ -519,14 +467,8 @@ static const struct nexell_div_clock sys_div_clks[] __initconst = {
 		"src_gmac_rgmii0_tx", GMAC_RGMII0_TX + 0x60),
 	DIV_SYS(CLK_SYS_DIV_GMAC_RGMII0_PTP_REF, "div_sys_gmac_rgmii0_ptp_ref",
 		"src_gmac_rgmii0_ptp_ref", GMAC_RGMII0_PTP_REF + 0x60),
-	DIV_SYS(CLK_SYS_DIV_GMAC_RGMII0_SCAN, "div_sys_gmac_rgmii0_scan",
-		"src_gmac_rgmii0_scan", GMAC_RGMII0_SCAN + 0x60),
 	DIV_SYS(CLK_SYS_DIV_GMAC_RMII0_PTP_REF, "div_sys_gmac_rmii0_ptp_ref",
 		"src_gmac_rmii0_ptp_ref", GMAC_RMII0_PTP_REF + 0x60),
-	DIV_SYS(CLK_SYS_DIV_GMAC_RMII0_SCAN, "div_sys_gmac_rmii0_scan",
-		"src_gmac_rmii0_scan", GMAC_RMII0_SCAN + 0x60),
-	DIV_SYS(CLK_SYS_DIV_GMAC_RMII0_SCAN_TRX, "div_sys_gmac_rmii0_scan_trx",
-		"div_sys_gmac_rmii0_scan", GMAC_RMII0_SCAN + 0x64),
 	DIV_SYS(CLK_SYS_DIV_NANDC0_AXI, "div_sys_nandc0_axi",
 		"src_nandc0_axi", NANDC0_AXI + 0x60),
 };
@@ -557,8 +499,6 @@ static const struct nexell_gate_clock sys_gate_clks[] __initconst = {
 		  SYS0_AXI + 0x10, 7, 0, 0),
 	GATE_SYS(CLK_MP2TSI1_AXI, "mp2tsi1_axi", "div_sys_sys0_axi",
 		  SYS0_AXI + 0x10, 8, 0, 0),
-	GATE_SYS(CLK_TOP_BIST0_AXI, "top_bist0_axi", "div_sys_sys0_axi",
-		  SYS0_AXI + 0x10, 9, 0, 0),
 	GATE_SYS(CLK_DMA0_AXI, "dma0_axi", "div_sys_sys0_axi",
 		  SYS0_AXI + 0x10, 10, 0, 0),
 	GATE_SYS(CLK_SSS0_AXI, "sss0_axi", "div_sys_sys0_axi",
@@ -689,13 +629,8 @@ static const struct nexell_gate_clock sys_gate_clks[] __initconst = {
 		  CPU_BACKUP0 + 0x10, 0, 0, 0),
 	GATE_SYS(CLK_CSSYS0_HCLK, "cssys0_hclk",
 		 "div_sys_cssys0_hclk", CSSYS0_HCLK + 0x10, 0, 0, 0),
-	GATE_SYS(CLK_CSSYS0_SCAN, "cssys0_scan",
-		 "div_sys_cssys0_scan", CSSYS0_SCAN + 0x10, 0, 0, 0),
 	GATE_SYS(CLK_BLK_CMU0_APB, "blk_cmu0_apb",
 		 "div_sys_blk_cmu0_apb", BLK_CMU0_APB + 0x10, 0, 0, 0),
-	GATE_SYS(CLK_VIP_PADPLACE0_SCAN, "vip_padplace0_scan",
-		 "div_sys_vip_padplace0_scan", VIP_PADPLACE0_SCAN + 0x10,
-		 0, 0, 0),
 	GATE_SYS(CLK_VIP_PADOUT0, "vip_padout0",
 		 "div_sys_vip_padout0", VIP_PADOUT0 + 0x10, 0, 0, 0),
 	GATE_SYS(CLK_VIP_PADOUT1, "vip_padout1",
@@ -736,14 +671,6 @@ static const struct nexell_gate_clock sys_gate_clks[] __initconst = {
 		 "div_sys_uart0_apb", UART0_APB + 0x10, 5, 0, 0),
 	GATE_SYS(CLK_UART6_APB, "uart6_apb",
 		 "div_sys_uart0_apb", UART0_APB + 0x10, 6, 0, 0),
-	GATE_SYS(CLK_I2S0_SCAN, "i2s0_scan",
-		 "div_sys_i2s0_scan", I2S0_SCAN + 0x10, 0, 0, 0),
-	GATE_SYS(CLK_I2S1_SCAN, "i2s1_scan",
-		 "div_sys_i2s0_scan", I2S0_SCAN + 0x10, 1, 0, 0),
-	GATE_SYS(CLK_I2S2_SCAN, "i2s2_scan",
-		 "div_sys_i2s0_scan", I2S0_SCAN + 0x10, 2, 0, 0),
-	GATE_SYS(CLK_I2S3_SCAN, "i2s3_scan",
-		 "div_sys_i2s0_scan", I2S0_SCAN + 0x10, 3, 0, 0),
 	GATE_SYS(CLK_I2S0_CORE, "i2s0_core",
 		 "div_sys_i2s0_core", I2S0_CORE + 0x10, 0, 0, 0),
 	GATE_SYS(CLK_I2S1_CORE, "i2s1_core",
@@ -762,16 +689,6 @@ static const struct nexell_gate_clock sys_gate_clks[] __initconst = {
 		 "div_sys_i2c0_apb", I2C0_APB + 0x10, 3, 0, 0),
 	GATE_SYS(CLK_I2C4_APB, "i2c4_apb",
 		 "div_sys_i2c0_apb", I2C0_APB + 0x10, 4, 0, 0),
-	GATE_SYS(CLK_MP2TSI0_SCAN, "mp2tsi0_scan",
-		 "div_sys_mp2tsi0_scan", MP2TSI0_SCAN + 0x10, 0, 0, 0),
-	GATE_SYS(CLK_MP2TSI1_SCAN, "mp2tsi1_scan",
-		 "div_sys_mp2tsi0_scan", MP2TSI0_SCAN + 0x10, 1, 0, 0),
-	GATE_SYS(CLK_SDMMC0_SCAN, "sdmmc0_scan",
-		 "div_sys_sdmmc0_scan", SDMMC0_SCAN + 0x10, 0, 0, 0),
-	GATE_SYS(CLK_SDMMC1_SCAN, "sdmmc1_scan",
-		 "div_sys_sdmmc0_scan", SDMMC0_SCAN + 0x10, 1, 0, 0),
-	GATE_SYS(CLK_SDMMC2_SCAN, "sdmmc2_scan",
-		 "div_sys_sdmmc0_scan", SDMMC0_SCAN + 0x10, 2, 0, 0),
 	GATE_SYS(CLK_SDMMC0_CORE, "sdmmc0_core",
 		 "div_sys_sdmmc0_core", SDMMC0_CORE + 0x10, 0, 0, 0),
 	GATE_SYS(CLK_SDMMC1_CORE, "sdmmc1_core",
@@ -842,16 +759,9 @@ static const struct nexell_gate_clock sys_gate_clks[] __initconst = {
 	GATE_SYS(CLK_GMAC_RGMII0_PTP_REF, "gmac_rgmii0_ptp_ref",
 		 "div_sys_gmac_rgmii0_ptp_ref", GMAC_RGMII0_PTP_REF + 0x10,
 		 0, 0, 0),
-	GATE_SYS(CLK_GMAC_RGMII0_SCAN, "gmac_rgmii0_scan",
-		 "div_sys_gmac_rgmii0_scan", GMAC_RGMII0_SCAN + 0x10,
-		 0, 0, 0),
 	GATE_SYS(CLK_GMAC_RMII0_PTP_REF, "gmac_rmii0_ptp_ref",
 		 "div_sys_gmac_rmii0_ptp_ref", GMAC_RMII0_PTP_REF + 0x10,
 		 0, 0, 0),
-	GATE_SYS(CLK_GMAC_RMII0_SCAN, "gmac_rmii0_scan",
-		 "div_sys_gmac_rmii0_scan", GMAC_RMII0_SCAN + 0x10, 0, 0, 0),
-	GATE_SYS(CLK_GMAC_RMII0_SCAN_TRX, "gmac_rmii0_scan_trx",
-		 "gmac_rmii0_scan", GMAC_RMII0_SCAN + 0x10, 1, 0, 0),
 	GATE_SYS(CLK_NANDC0_AXI, "nandc0_axi",
 		 "div_sys_nandc0_axi", NANDC0_AXI + 0x10, 0, 0, 0),
 };
