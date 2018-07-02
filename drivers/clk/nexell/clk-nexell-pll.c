@@ -23,6 +23,7 @@
 #define PLLCTRL_DIRTYFLAG_SHIFT	1
 #define PLLCTRL_DIRTYFLAG_MASK	BIT_MASK(PLLCTRL_DIRTYFLAG_SHIFT)
 #define PLLCTRL_RUN_CHANGE_SHIFT	0
+#define PLLCTRL_RUN_CHANGE_MASK	BIT_MASK(PLLCTRL_RUN_CHANGE_SHIFT)
 
 #define PLLDBG0			0x4
 
@@ -136,7 +137,7 @@ static int clk_pll_ready(struct clk_pll *pll)
 static inline void clk_pll_wait_ready(struct clk_pll *pll)
 {
 	/* TODO: add counter to prevent infinite loop */
-	while (!clk_pll_ready(pll))
+	while (clk_pll_ready(pll))
 		cpu_relax();
 }
 
@@ -241,7 +242,9 @@ static int nexell_clk_pll_set_rate(struct clk_hw *hw, unsigned long rate,
 			   PLLCFG2_K(pms.k) | pms.s);
 
 	regmap_update_bits(regmap, PLLCTRL, PLLCTRL_DIRTYFLAG_MASK,
-			   BIT(PLLCTRL_DIRTYFLAG_SHIFT) |
+			   BIT(PLLCTRL_DIRTYFLAG_SHIFT));
+
+	regmap_update_bits(regmap, PLLCTRL, PLLCTRL_RUN_CHANGE_MASK,
 			   BIT(PLLCTRL_RUN_CHANGE_SHIFT));
 
 	clk_pll_wait_ready(pll);
