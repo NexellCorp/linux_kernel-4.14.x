@@ -14,6 +14,27 @@
 	chosen {
 		stdout-path = &uart0;
 	};
+
+	sound0: sound0 {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "nxp3220 Audio Card ALC5658";
+		status = "okay";
+
+		simple-audio-card,dai-link@0 {
+			mclk-fs = <256>;
+			format = "i2s";
+			frame-master = <&sndcpu0>;
+			bitclock-master = <&sndcpu0>;
+
+			sndcpu0: cpu  {
+				sound-dai = <&i2s1 0>;
+			};
+
+			sndcodec0: codec {
+				sound-dai = <&alc5658>;
+			};
+		};
+	};
 };
 
 &adc {
@@ -45,6 +66,12 @@
 	status = "okay";
 	#address-cells = <1>;
 	#size-cells = <0>;
+
+	alc5658: alc5658@1a {
+		#sound-dai-cells = <0>;
+		compatible = "realtek,rt5659";
+		reg = <0x1a>;
+	};
 };
 
 &i2c_2 {
@@ -118,4 +145,11 @@
 	status = "okay";
 	otg,vbus-gpio = <&gpio_c 12 0>;
 	ehci,vbus-gpio = <&gpio_b 23 0>;
+};
+
+&i2s1 {
+	frame-bit = <32>;
+	sample-rate = <48000>;
+	assigned-clock-rates = <12288000>;
+	status = "okay";
 };
