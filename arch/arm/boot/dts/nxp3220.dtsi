@@ -536,6 +536,34 @@
 			status = "disabled";
 		};
 
+		m_can0: m_can@20c80000 {
+			compatible = "bosch,m_can";
+			reg = <0x20c80000 0x4000>, <0x20c90000 0x2200>;
+			reg-names = "m_can", "message_ram";
+			interrupts = <GIC_SPI 27 IRQ_TYPE_NONE>;
+			interrupt-names = "int0";
+			clocks = <&cmu CLK_CAN0_APB>, <&cmu CLK_CAN0_CORE>;
+			clock-names = "hclk", "cclk";
+			pinctrl-names = "default";
+			pinctrl-0 = <&mcan0_bus>;
+			bosch,mram-cfg = <0x0 0 0 64 0 0 32 32>;
+			status = "disabled";
+		};
+
+		m_can1: m_can@20ca0000 {
+			compatible = "bosch,m_can";
+			reg = <0x20ca0000 0x4000>, <0x20cb0000 0x2200>;
+			reg-names = "m_can", "message_ram";
+			interrupts = <GIC_SPI 29 IRQ_TYPE_NONE>;
+			interrupt-names = "int0";
+			clocks = <&cmu CLK_CAN1_APB>, <&cmu CLK_CAN1_CORE>;
+			clock-names = "hclk", "cclk";
+			pinctrl-names = "default";
+			pinctrl-0 = <&mcan1_bus>;
+			bosch,mram-cfg = <0x0 0 0 64 0 0 32 32>;
+			status = "disabled";
+		};
+
 		sys_reg_sys: syscon@20030000 {
 			compatible = "nexell,system-reg", "syscon",
 				     "simple-mfd";
