@@ -254,6 +254,20 @@
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
 
+	mcan0_bus: mcan0 {
+		nexell,pins = "gpiod-30", "gpiod-31";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	mcan1_bus: mcan1 {
+		nexell,pins = "gpioe-0", "gpioe-1";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
 	mmc0_clk: mmc0-clk {
 		nexell,pins = "gpiob-20";
 		nexell,pin-function = <NX_PIN_FUNC2>;
