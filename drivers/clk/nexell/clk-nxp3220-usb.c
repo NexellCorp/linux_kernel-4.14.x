@@ -15,7 +15,7 @@
 	__DIV(_id, NULL, cname, pname, o, 0, 8, 0, 0)
 
 static const struct nexell_div_clock usb_div_clks[] __initconst = {
-	DIV_USB(CLK_USB_AHB, "div_usb_ahb", "src_usb0_ahb",
+	DIV_USB(CLK_USB_DIV_AHB, "div_usb_ahb", "src_usb0_ahb",
 		USB_AHB + 0x60),
 };
 
