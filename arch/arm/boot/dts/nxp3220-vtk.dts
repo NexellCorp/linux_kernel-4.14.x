@@ -313,6 +313,18 @@
 	status = "okay";
 };
 
+&m_can0 {
+	assigned-clocks = <&cmu CLK_CAN0_CORE>;
+	assigned-clock-rates = <10000000>;
+	status = "okay";
+};
+
+&m_can1 {
+	assigned-clocks = <&cmu CLK_CAN1_CORE>;
+	assigned-clock-rates = <10000000>;
+	status = "okay";
+};
+
 &pwm {
 	status = "okay";
 	assigned-clocks = <&cmu CLK_PWM0_APB>;
