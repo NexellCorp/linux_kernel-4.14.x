@@ -25,6 +25,8 @@
 		spi0 = &spi_0;
 		spi1 = &spi_1;
 		spi2 = &spi_2;
+		ethernet0 = &gmac0;
+		ethernet1 = &gmac1;
 	};
 
 	cpus {
@@ -367,6 +369,47 @@
 			phys = <&usb2phy 1>, <&usb2phy 2>;
 			phy-names = "usb0", "usb1";
 			status = "disabled";
+		};
+
+		gmac0: ethernet@26100000 {
+			compatible = "nexell,nxp3220-dwmac";
+			reg = <0x26100000 0x8000>;
+			interrupts = <GIC_SPI 39 IRQ_TYPE_NONE>;
+			interrupt-names = "macirq0";
+			clocks = <&cmu CLK_GMAC_RGMII0_AXI>,
+				 <&cmu CLK_GMAC_RGMII0_APB>,
+				 <&cmu CLK_GMAC_RGMII0_TX>,
+				 <&cmu CLK_GMAC_RGMII0_PTP_REF>;
+			clock-names = "master_bus", "slave_bus", "tx", "ptp_ref";
+			status = "disabled";
+
+			snps,write-requests = <8>;
+			snps,read-requests = <8>;
+			snps,burst-map = <0x4>;
+			snps,txpbl = <16>;
+			snps,rxpbl = <16>;
+			snps,no-pbl-x8;
+			snps,fixed-burst;
+		};
+
+		gmac1: ethernet@126110000 {
+			compatible = "nexell,nxp3220-dwmac";
+			reg = <0x26110000 0x8000>;
+			interrupts = <GIC_SPI 42 IRQ_TYPE_NONE>;
+			interrupt-names = "macirq1";
+			clocks = <&cmu CLK_GMAC_RMII0_AXI>,
+				 <&cmu CLK_GMAC_RMII0_APB>,
+				 <&cmu CLK_GMAC_RMII0_PTP_REF>;
+			clock-names = "master_bus", "slave_bus", "ptp_ref";
+			status = "disabled";
+
+			snps,write-requests = <8>;
+			snps,read-requests = <8>;
+			snps,burst-map = <0x4>;
+			snps,txpbl = <16>;
+			snps,rxpbl = <16>;
+			snps,no-pbl-x8;
+			snps,fixed-burst;
 		};
 
 		i2c_0: i2c@20500000 {
