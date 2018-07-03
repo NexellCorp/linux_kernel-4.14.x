@@ -223,7 +223,7 @@ static snd_pcm_uframes_t nx_pcm_pointer(struct snd_pcm_substream *substream)
 	unsigned int buf_size;
 	unsigned int pos = 0;
 
-	if (prtd->flags | SND_DMAENGINE_PCM_FLAG_NO_RESIDUE)
+	if (prtd->flags & SND_DMAENGINE_PCM_FLAG_NO_RESIDUE)
 		return bytes_to_frames(substream->runtime, prtd->pos);
 
 	status = dmaengine_tx_status(prtd->dma_chan, prtd->cookie, &state);
