@@ -875,7 +875,10 @@ static void stmmac_adjust_link(struct net_device *dev)
 		/* At this stage, init the EEE if supported.
 		 * Never called in case of fixed_link.
 		 */
-		priv->eee_enabled = stmmac_eee_init(priv);
+		if (of_machine_is_compatible("nexell,nxp3220-dwmac"))
+			priv->eee_enabled = false;
+		else
+			priv->eee_enabled = stmmac_eee_init(priv);
 }
 
 /**

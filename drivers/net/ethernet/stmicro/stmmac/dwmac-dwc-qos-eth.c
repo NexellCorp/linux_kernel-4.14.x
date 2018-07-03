@@ -30,6 +30,11 @@
 #include "stmmac_platform.h"
 #include "dwmac4.h"
 
+#define DWMAC_125MHZ	125000000
+#define DWMAC_50MHZ	50000000
+#define DWMAC_25MHZ	25000000
+#define DWMAC_2_5MHZ	2500000
+
 struct tegra_eqos {
 	struct device *dev;
 	void __iomem *regs;
@@ -41,6 +46,21 @@ struct tegra_eqos {
 	struct clk *clk_rx;
 
 	struct gpio_desc *reset;
+};
+
+struct nxp3220_eqos {
+	struct device *dev;
+	void __iomem *regs;
+
+	struct reset_control *rst;
+	struct clk *clk_master;
+	struct clk *clk_slave;
+	struct clk *clk_tx;
+	struct clk *ptp_ref;
+
+	struct gpio_desc *phy_reset;
+	struct gpio_desc *phy_intr;
+	struct gpio_desc *phy_pme;
 };
 
 static int dwc_eth_dwmac_config_dt(struct platform_device *pdev,
@@ -399,6 +419,198 @@ static int tegra_eqos_remove(struct platform_device *pdev)
 	return 0;
 }
 
+static void nxp3220_qos_fix_speed(void *priv, unsigned int speed)
+{
+	struct nxp3220_eqos *eqos = priv;
+	unsigned long rate = DWMAC_125MHZ;
+	unsigned long rate_r;
+	int err;
+
+	switch (speed) {
+	case SPEED_1000:
+		rate = DWMAC_125MHZ;
+		break;
+
+	case SPEED_100:
+		rate = DWMAC_25MHZ;
+		break;
+
+	case SPEED_10:
+		rate = DWMAC_2_5MHZ;
+		break;
+
+	default:
+		dev_err(eqos->dev, "invalid speed %u\n", speed);
+		break;
+	}
+
+	if (IS_ERR_OR_NULL(eqos->clk_tx))
+		return;
+
+	err = clk_set_rate(eqos->clk_tx, rate);
+	if (err < 0)
+		dev_err(eqos->dev, "failed to set TX rate: %d\n", err);
+
+	rate_r = clk_get_rate(eqos->clk_tx);
+	if (rate_r != rate)
+		dev_err(eqos->dev, "failed to set TX rate to %lu(set %lu)\n",
+				rate, rate_r);
+
+}
+
+static void *nxp3220_qos_probe(struct platform_device *pdev,
+			      struct plat_stmmacenet_data *data,
+			      struct stmmac_resources *res)
+{
+	struct nxp3220_eqos *eqos;
+	struct device_node *np = pdev->dev.of_node;
+	struct device *dev = &pdev->dev;
+	int interface;
+	int err;
+
+	eqos = devm_kzalloc(dev, sizeof(*eqos), GFP_KERNEL);
+	if (!eqos) {
+		dev_err(dev, "eqos memory alloc failed\n");
+		err = -ENOMEM;
+		goto error;
+	}
+
+	eqos->dev = dev;
+	eqos->regs = res->addr;
+
+	/* FIFO wake */
+	writel(1, eqos->regs + 0x4000);
+
+	/* Master(AXI) Clock */
+	eqos->clk_master = devm_clk_get(dev, "master_bus");
+	if (IS_ERR(eqos->clk_master)) {
+		dev_dbg(dev, "master clock failed\n");
+		err = PTR_ERR(eqos->clk_master);
+		goto error;
+	}
+
+	err = clk_prepare_enable(eqos->clk_master);
+	if (err < 0)
+		goto error;
+
+	/* Slave(CSR) Clock */
+	eqos->clk_slave = devm_clk_get(dev, "slave_bus");
+	if (IS_ERR(eqos->clk_slave)) {
+		dev_err(dev, "slave clock get failed\n");
+		err = PTR_ERR(eqos->clk_slave);
+		goto disable_master;
+	}
+
+	data->stmmac_clk = eqos->clk_slave;
+
+	err = clk_prepare_enable(eqos->clk_slave);
+	if (err < 0) {
+		dev_err(dev, "slave clock enable failed\n");
+		goto disable_master;
+	}
+
+	/* PTP_REF Clock */
+	eqos->ptp_ref = devm_clk_get(dev, "ptp_ref");
+	if (IS_ERR(eqos->ptp_ref)) {
+		dev_err(dev, "ptp_ref clock get failed\n");
+		err = PTR_ERR(eqos->ptp_ref);
+		goto disable_slave;
+	}
+
+	err = clk_prepare_enable(eqos->ptp_ref);
+	if (err < 0) {
+		dev_err(dev, "ptp_ref clock error\n");
+		goto disable_slave;
+	}
+
+	dev_dbg(dev, " eqos slave : %lu\n", clk_get_rate(eqos->clk_slave));
+	dev_dbg(dev, " eqos master : %lu\n", clk_get_rate(eqos->clk_master));
+	dev_dbg(dev, " eqos ptp_ref : %lu\n", clk_get_rate(eqos->ptp_ref));
+
+	/* tx clk for rgmii only */
+	interface = of_get_phy_mode(np);
+	if (interface == PHY_INTERFACE_MODE_RGMII) {
+		eqos->clk_tx = devm_clk_get(dev, "tx");
+		if (IS_ERR(eqos->clk_tx)) {
+			dev_err(dev, "tx clock get failed\n");
+			err = PTR_ERR(eqos->clk_tx);
+			goto disable_slave;
+		}
+
+		err = clk_prepare_enable(eqos->clk_tx);
+		if (err < 0) {
+			dev_err(dev, "tx clock enable failed");
+			goto disable_slave;
+		}
+	}
+
+	eqos->phy_reset =
+		devm_gpiod_get(dev, "phy-reset", GPIOD_OUT_HIGH);
+	if (IS_ERR(eqos->phy_reset)) {
+		dev_err(dev, "cannot get phy reset\n");
+		err = PTR_ERR(eqos->phy_reset);
+		goto disable_tx;
+	}
+
+	gpiod_set_value(eqos->phy_reset, 0);
+	usleep_range(10000, 30000);
+	gpiod_set_value(eqos->phy_reset, 1);
+	usleep_range(10000, 30000);
+	gpiod_set_value(eqos->phy_reset, 0);
+
+	eqos->phy_intr = devm_gpiod_get(dev, "phy-intr", GPIOD_IN);
+	eqos->phy_pme = devm_gpiod_get(dev, "phy-pme", GPIOD_IN);
+
+	eqos->rst = devm_reset_control_get(dev, "eqos");
+	if (IS_ERR(eqos->rst)) {
+		dev_dbg(dev, "no eqos reset provided\n");
+	} else {
+		err = reset_control_assert(eqos->rst);
+		if (err < 0)
+			goto reset_phy;
+
+		usleep_range(2000, 4000);
+
+		err = reset_control_deassert(eqos->rst);
+		if (err < 0)
+			goto reset_phy;
+
+		usleep_range(2000, 4000);
+	}
+
+	data->fix_mac_speed = nxp3220_qos_fix_speed;
+	data->bsp_priv = eqos;
+
+out:
+	return eqos;
+
+reset_phy:
+	gpiod_set_value(eqos->phy_reset, 1);
+disable_tx:
+	clk_disable_unprepare(eqos->clk_tx);
+disable_slave:
+	clk_disable_unprepare(eqos->clk_slave);
+disable_master:
+	clk_disable_unprepare(eqos->clk_master);
+error:
+	eqos = ERR_PTR(err);
+	goto out;
+}
+
+static int nxp3220_qos_remove(struct platform_device *pdev)
+{
+	struct nxp3220_eqos *eqos = get_stmmac_bsp_priv(&pdev->dev);
+
+	if (!IS_ERR(eqos->rst))
+		reset_control_assert(eqos->rst);
+	gpiod_set_value(eqos->phy_reset, 1);
+	clk_disable_unprepare(eqos->clk_tx);
+	clk_disable_unprepare(eqos->clk_slave);
+	clk_disable_unprepare(eqos->clk_master);
+
+	return 0;
+}
+
 struct dwc_eth_dwmac_data {
 	void *(*probe)(struct platform_device *pdev,
 		       struct plat_stmmacenet_data *data,
@@ -414,6 +626,11 @@ static const struct dwc_eth_dwmac_data dwc_qos_data = {
 static const struct dwc_eth_dwmac_data tegra_eqos_data = {
 	.probe = tegra_eqos_probe,
 	.remove = tegra_eqos_remove,
+};
+
+static const struct dwc_eth_dwmac_data nxp3220_qos_data = {
+	.probe = nxp3220_qos_probe,
+	.remove = nxp3220_qos_remove,
 };
 
 static int dwc_eth_dwmac_probe(struct platform_device *pdev)
@@ -502,6 +719,7 @@ static int dwc_eth_dwmac_remove(struct platform_device *pdev)
 static const struct of_device_id dwc_eth_dwmac_match[] = {
 	{ .compatible = "snps,dwc-qos-ethernet-4.10", .data = &dwc_qos_data },
 	{ .compatible = "nvidia,tegra186-eqos", .data = &tegra_eqos_data },
+	{ .compatible = "nexell,nxp3220-dwmac", .data = &nxp3220_qos_data },
 	{ }
 };
 MODULE_DEVICE_TABLE(of, dwc_eth_dwmac_match);

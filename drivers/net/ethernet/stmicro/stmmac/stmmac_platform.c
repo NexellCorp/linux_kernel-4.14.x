@@ -322,6 +322,7 @@ static int stmmac_dt_phy(struct plat_stmmacenet_data *plat,
 		{ .compatible = "allwinner,sun8i-h3-emac" },
 		{ .compatible = "allwinner,sun8i-v3s-emac" },
 		{ .compatible = "allwinner,sun50i-a64-emac" },
+		{ .compatible = "nexell,nxp3220-dwmac" },
 		{},
 	};
 
