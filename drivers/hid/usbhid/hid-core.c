@@ -317,11 +317,12 @@ static void hid_irq_in(struct urb *urb)
 		hid_warn(urb->dev, "input irq status %d received\n",
 			 urb->status);
 	}
-	/* Before issuing a new URB request, check if the underlying HID device's
-	 * report buffer is not full. This is needed in the case application is not
-	 * able to keep up with the data rate.
-	 *
-	 */
+     /* Before issuing a new URB request, check if the underlying HID device's
+      * report buffer is not full. This is needed in the case application is not
+      * able to keep up with the data rate.
+      *
+      */
+#if defined(CONFIG_HIDRAW)
 	if (hidraw_check_more_request (hid)) {
 		status = usb_submit_urb(urb, GFP_ATOMIC);
 		if (status) {
@@ -337,7 +338,19 @@ static void hid_irq_in(struct urb *urb)
 	} else {
 		clear_bit(HID_IN_RUNNING, &usbhid->iofl);
 	}
-
+#else
+	status = usb_submit_urb(urb, GFP_ATOMIC);
+	if (status) {
+		clear_bit(HID_IN_RUNNING, &usbhid->iofl);
+		if (status != -EPERM) {
+			hid_err(hid, "can't resubmit intr, %s-%s/input%d, status %d\n",
+				hid_to_usb_dev(hid)->bus->bus_name,
+				hid_to_usb_dev(hid)->devpath,
+				usbhid->ifnum, status);
+			hid_io_error(hid);
+		}
+	}
+#endif
 }
 
 static int hid_submit_out(struct hid_device *hid)
@@ -1391,8 +1404,10 @@ static int usbhid_probe(struct usb_interface *intf, const struct usb_device_id *
 			hid_err(intf, "can't add hid device: %d\n", ret);
 		goto err_free;
 	}
+#if defined(CONFIG_HIDRAW)
 	hid->hidraw_ctrl_msg_usage = hidraw_control_msg_usage;
 	hid->hidraw_start_hid = hidraw_hid_start;
+#endif
 	return 0;
 err_free:
 	kfree(usbhid);
@@ -1672,6 +1687,7 @@ static void __exit hid_exit(void)
 	usbhid_quirks_exit();
 }
 
+#if defined(CONFIG_HIDRAW)
 /* This function will send a USB Vendor mode control message */
 int hidraw_control_msg_usage(struct hid_device *hid,
                              void *pvData)
@@ -1702,6 +1718,7 @@ void hidraw_hid_start(struct hid_device *hid)
     }
 }
 EXPORT_SYMBOL(hidraw_hid_start);
+#endif
 
 module_init(hid_init);
 module_exit(hid_exit);
