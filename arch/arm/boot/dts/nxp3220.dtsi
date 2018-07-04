@@ -230,7 +230,7 @@
 					  <&cmu CLK_SYS_DIV_I2C0_APB>,
 					  <&pll_0 0>;
 			assigned-clock-parents = <&pll_0 0>;
-			assigned-clock-rates = <0>, <100000000>, <0>;
+			assigned-clock-rates = <0>, <100000000>, <1000000000>;
 		};
 
 		cmu_cpu: clock-controller@22000000 {
