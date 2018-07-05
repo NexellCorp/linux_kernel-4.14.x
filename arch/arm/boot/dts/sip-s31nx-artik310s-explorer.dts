@@ -1,0 +1,96 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+/dts-v1/;
+#include <dt-bindings/gpio/gpio.h>
+#include "sip-s31nx-artik310s-trike-common.dtsi"
+
+/ {
+	model = "Samsung artik310s explorer board based on sip-s31nx";
+	compatible = "samsung,artik310s-trike", "samsung,artik310s",
+		   "nexell,nxp3220";
+};
+
+&sound0 {
+	simple-audio-card,name = "nxp3220 Audio Card Loopback";
+
+	simple-audio-card,dai-link@0 {
+		mclk-fs = <256>;
+		format = "i2s";
+		frame-master = <&sndcpu0>;
+		bitclock-master = <&sndcpu0>;
+
+		sndcpu0: cpu  {
+			sound-dai = <&i2s0 0>;
+		};
+
+		/delete-node/codec;
+		/* TODO: add dummy of null codec */
+	};
+
+	simple-audio-card,dai-link@1 {
+		mclk-fs = <256>;
+		format = "i2s";
+		frame-master = <&sndcpu1>;
+		bitclock-master = <&sndcpu1>;
+
+		sndcpu1: cpu  {
+			sound-dai = <&i2s1 0>;
+		};
+		/* TODO: add dummy or null codec */
+	};
+};
+
+&gmac0 {
+	status = "okay";
+
+	phy-reset-gpios = <&alive_0 9 GPIO_ACTIVE_LOW>;
+};
+
+&gmac1 {
+	status = "disabled";
+};
+
+&mmc2_clk {
+	nexell,pin-strength = <NX_PIN_STR1>;
+};
+
+&mmc2_cmd {
+	nexell,pin-strength = <NX_PIN_STR1>;
+};
+
+&mmc2_bus4 {
+	nexell,pin-strength = <NX_PIN_STR1>;
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&uart1 {
+	status = "disabled";
+};
+
+&uart3 {
+	status = "disabled";
+};
+
+&uart4 {
+	status = "okay";
+};
+
+&uart5 {
+	status = "okay";
+};
+
+&usb2phy {
+	status = "okay";
+	/delete-property/otg,vbus-gpio;
+	/delete-property/ehci,vbus-gpio;
+};
+
+&i2s0 {
+	frame-bit = <32>;
+	sample-rate = <48000>;
+	assigned-clock-rates = <12288000>;
+	status = "okay";
+};
