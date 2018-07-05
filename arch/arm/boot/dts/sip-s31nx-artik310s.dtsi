@@ -13,6 +13,36 @@
 		device_type = "memory";
 		reg = <0x40000000 0x1f000000>;
 	};
+
+	thermal-zones {
+		cpu_thermal: cpu-thermal {
+			thermal-sensors = <&tmuctrl_0>;
+			polling-delay-passive = <1000>;
+			polling-delay = <1000>;
+			trips {
+				cpu_alert0: cpu-alert-0 {
+					temperature = <90000>;
+					hysteresis = <0>;
+					type = "passive";
+				};
+				cpu_alert1: cpu-alert-1 {
+					temperature = <100000>;
+					hysteresis = <0>;
+					type = "passive";
+				};
+				cpu_alert2: cpu-alert-2 {
+					temperature = <110000>;
+					hysteresis = <0>;
+					type = "passive";
+				};
+				cpu-crit-0 {
+					temperature = <115000>;
+					hysteresis = <0>;
+					type = "critical";
+				};
+			};
+		};
+	};
 };
 
 &dwmmc_0 {
@@ -23,5 +53,9 @@
 	nexell,sample_shift = <0x04>;
 	card-detect-delay = <200>;
 	disable-wp;
+	status = "okay";
+};
+
+&tmuctrl_0 {
 	status = "okay";
 };
