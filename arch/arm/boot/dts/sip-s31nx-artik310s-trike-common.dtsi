@@ -157,6 +157,10 @@
 	assigned-clock-rates = <10000000>;
 };
 
+&ohci {
+	status = "okay";
+};
+
 &pwm {
 	status = "okay";
 	nexell,pwm-outputs = <0>, <1>, <2>, <3>;
