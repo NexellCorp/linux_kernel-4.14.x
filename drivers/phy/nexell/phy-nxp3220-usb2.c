@@ -121,6 +121,11 @@ static int nx_ehci_phy_power_on(struct nx_usb2_phy *p)
 	writel((readl(base + 0x54) & ~(0x3 << 5)) | (0x1 << 5), base + 0x54);
 
 	/*
+	 * HOST_i_nOhciClkCktRst
+	 */
+	writel(readl(base + 0x20) | (0x1 << 12), base + 0x20);
+
+	/*
 	 * POR(Power On Reset) of PHY fpr PORT0
 	 * SYSREG_USB_USB20PHY_HOST0_i_POR/SYSREG_USB_USB20PHY_HOST0_i_POR_ENB
 	 */
