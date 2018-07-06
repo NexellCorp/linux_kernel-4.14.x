@@ -564,6 +564,16 @@
 			status = "disabled";
 		};
 
+		ohci: ohci@24090000 {
+			compatible = "generic-ohci";
+			reg = <0x24090000 0x100>;
+			interrupts = <GIC_SPI 122 IRQ_TYPE_NONE>;
+			clocks = <&cmu_usb CLK_USB_USB20HOST>;
+			phys = <&usb2phy 1>, <&usb2phy 2>;
+			phy-names = "usb0", "usb1";
+			status = "disabled";
+		};
+
 		sys_reg_sys: syscon@20030000 {
 			compatible = "nexell,system-reg", "syscon",
 				     "simple-mfd";
