@@ -601,6 +601,21 @@
 			status = "disabled";
 		};
 
+		pdm: pdm@20c00000 {
+			compatible = "nexell,nxp3220-pdm";
+			#sound-dai-cells = <0>;
+			reg = <0x20c00000 0x1000>, <0x20c04000 0x4000>;
+			reg-names = "pdm", "sram";
+			clocks = <&cmu CLK_PDM0_AXI>,
+			       <&cmu CLK_PDM0_CORE>;
+			clock-names = "axi", "core";
+			interrupts = <GIC_SPI 67 IRQ_TYPE_NONE>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pdm_strobe>, <&pdm_lr0>, <&pdm_lr1>;
+			syscon = <&sys_reg_sys>;
+			status = "disabled";
+		};
+
 		sys_reg_sys: syscon@20030000 {
 			compatible = "nexell,system-reg", "syscon",
 				     "simple-mfd";
