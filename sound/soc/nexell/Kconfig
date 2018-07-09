@@ -12,3 +12,7 @@ config SND_NEXELL_I2S
 	tristate "Nexell I2S"
 	depends on SND_NEXELL
 	select SND_NEXELL_PCM
+
+config SND_NEXELL_NULL_CODEC
+	tristate "Nexell Null Codec"
+	depends on SND_NEXELL
