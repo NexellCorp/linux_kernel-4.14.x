@@ -575,6 +575,9 @@ static inline void serial8250_em485_rts_after_send(struct uart_8250_port *p)
 		p->port.mctrl &= ~TIOCM_RTS;
 	}
 	serial8250_out_MCR(p, mcr);
+
+	if (p->em485 && p->em485->assert_re)
+		p->em485->assert_re(p);
 }
 
 static enum hrtimer_restart serial8250_em485_handle_start_tx(struct hrtimer *t);
@@ -641,6 +644,7 @@ int serial8250_em485_init(struct uart_8250_port *p)
 	p->em485->start_tx_timer.function = &serial8250_em485_handle_start_tx;
 	p->em485->port = p;
 	p->em485->active_timer = NULL;
+	p->em485->assert_re = NULL;
 	serial8250_em485_rts_after_send(p);
 
 	return 0;

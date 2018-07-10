@@ -35,6 +35,9 @@
 
 /* Offsets for the DesignWare specific registers */
 #define DW_UART_USR	0x1f /* UART Status Register */
+#define DW_UART_TCR	0x2b /* UART TCR */
+#define DW_UART_DE_EN	0x2c /* UART DE */
+#define DW_UART_RE_EN	0x2d /* UART RE */
 #define DW_UART_CPR	0xf4 /* Component Parameter Register */
 #define DW_UART_UCV	0xf8 /* UART Component Version */
 
@@ -56,6 +59,11 @@
 
 /* DesignWare specific register fields */
 #define DW_UART_MCR_SIRE		BIT(6)
+
+/* RS485 Register bits */
+#define DW_UART_RS485_EN		(1 << 0)
+#define DW_UART_RS485_RE_POL		(1 << 1)
+#define DW_UART_RS485_DE_POL		(1 << 2)
 
 struct dw8250_data {
 	u8			usr_reg;
@@ -318,11 +326,18 @@ static void dw8250_set_ldisc(struct uart_port *p, struct ktermios *termios)
 	serial8250_do_set_ldisc(p, termios);
 }
 
+static void dw8250_assert_re(struct uart_8250_port *up)
+{
+	if (up->port.rs485.flags & SER_RS485_RTS_AFTER_SEND)
+		serial_out(up, DW_UART_RE_EN, 1);
+	else
+		serial_out(up, DW_UART_RE_EN, 0);
+}
+
 static int dw8250_rs485_config(struct uart_port *p,
 			       struct serial_rs485 *rs485)
 {
 	struct uart_8250_port *up = up_to_u8250p(p);
-
 	/* Clamp the delays to [0, 100ms] */
 	rs485->delay_rts_before_send = min(rs485->delay_rts_before_send, 100U);
 	rs485->delay_rts_after_send  = min(rs485->delay_rts_after_send, 100U);
@@ -335,11 +350,22 @@ static int dw8250_rs485_config(struct uart_port *p,
 	 */
 	if (rs485->flags & SER_RS485_ENABLED) {
 		int ret = serial8250_em485_init(up);
+		int tcr = 0;
 
 		if (ret) {
 			rs485->flags &= ~SER_RS485_ENABLED;
 			p->rs485.flags &= ~SER_RS485_ENABLED;
 		}
+
+		up->em485->assert_re = dw8250_assert_re;
+		dw8250_assert_re(up);
+
+		tcr = DW_UART_RS485_EN | DW_UART_RS485_DE_POL;
+		tcr &= ~DW_UART_RS485_RE_POL;
+
+		serial_out(up, DW_UART_TCR, tcr);
+		serial_out(up, DW_UART_DE_EN, 1);
+
 		return ret;
 	}
 

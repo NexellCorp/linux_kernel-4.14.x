@@ -84,6 +84,8 @@ struct uart_8250_em485 {
 	struct hrtimer		stop_tx_timer;  /* "rs485 stop tx" timer */
 	struct hrtimer		*active_timer;  /* pointer to active timer */
 	struct uart_8250_port	*port;          /* for hrtimer callbacks */
+
+	void		(*assert_re)(struct uart_8250_port *up);
 };
 
 /*
