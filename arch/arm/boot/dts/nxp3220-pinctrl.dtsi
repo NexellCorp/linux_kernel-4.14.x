@@ -402,9 +402,23 @@
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
 
+	uart0_485: uart0-485 {
+		nexell,pins = "gpiod-30", "gpiod-31";
+		nexell,pin-function = <NX_PIN_FUNC2>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
 	uart1_bus: uart1-bus {
 		nexell,pins = "gpiod-12", "gpiod-13";
 		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	uart1_485: uart1-485 {
+		nexell,pins = "gpioe-0", "gpioe-1";
+		nexell,pin-function = <NX_PIN_FUNC2>;
 		nexell,pin-pull = <NX_PIN_PULL_NONE>;
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
@@ -430,6 +444,13 @@
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
 
+	uart4_485: uart4-485 {
+		nexell,pins = "gpiod-20", "gpiod-21";
+		nexell,pin-function = <NX_PIN_FUNC2>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
 	uart4_hflow: uart4-hflow {
 		nexell,pins = "gpiod-20", "gpiod-21";
 		nexell,pin-function = <NX_PIN_FUNC1>;
@@ -443,6 +464,14 @@
 		nexell,pin-pull = <NX_PIN_PULL_NONE>;
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
+
+	uart5_485: uart5-485 {
+		nexell,pins = "gpiod-24", "gpiod-25";
+		nexell,pin-function = <NX_PIN_FUNC2>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
 
 	uart5_hflow: uart5-hflow {
 		nexell,pins = "gpiod-24", "gpiod-25";
