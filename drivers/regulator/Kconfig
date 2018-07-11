@@ -755,6 +755,13 @@ config REGULATOR_SKY81452
 	  This driver can also be built as a module. If so, the module
 	  will be called sky81452-regulator.
 
+config REGULATOR_SM5011
+	tristate "Silicon Mitus SM5011 voltage regulator"
+	depends on MFD_SM5011
+	help
+	  This driver supports Silicon Mitus SM5011 voltage output regulator
+	  via I2C bus. SM5011 has 5 Bucks and 20 LDOs output.
+
 config REGULATOR_STM32_VREFBUF
 	tristate "STMicroelectronics STM32 VREFBUF"
 	depends on ARCH_STM32 || COMPILE_TEST
