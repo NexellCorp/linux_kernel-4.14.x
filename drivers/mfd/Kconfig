@@ -1033,6 +1033,18 @@ config MFD_SM501_GPIO
 	 lines on the SM501. The platform data is used to supply the
 	 base number for the first GPIO line to register.
 
+config MFD_SM5011
+	tristate "Silicon Mitus SM5011 PMIC Support"
+	depends on I2C
+	depends on OF || COMPILE_TEST
+	select MFD_CORE
+	select REGMAP_I2C
+	select REGMAP_IRQ
+	select IRQ_DOMAIN
+	help
+	 Say yes if you want to enable the Silicon Mitus SM5011 which is a
+	 Power Management IC with and RTC on chip.
+
 config MFD_SKY81452
 	tristate "Skyworks Solutions SKY81452"
 	select MFD_CORE
