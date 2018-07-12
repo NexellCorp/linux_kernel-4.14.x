@@ -283,6 +283,15 @@ static int artik_zb_power_probe(struct platform_device *pdev)
 	}
 
 	if (artik_zb_boot_enable) {
+		pdata->on = 1;
+		ret = artik_zb_power_control(pdata, 0);
+		if (ret) {
+			dev_err(&pdev->dev, "Failed to turn power off\n");
+			ret = -ENODEV;
+			goto err_control;
+		}
+		msleep(5);
+
 		ret = artik_zb_power_control(pdata, 1);
 		if (ret) {
 			dev_err(&pdev->dev, "Failed to turn power on\n");
