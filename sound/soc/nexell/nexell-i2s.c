@@ -425,9 +425,19 @@ static int nx_i2s_startup(struct snd_pcm_substream *substream,
 	else
 		dmap = &i2s->dma_params[1];
 
+	nx_i2s_clk_enable(i2s);
+
 	snd_soc_dai_set_dma_data(dai, substream, dmap);
 
 	return 0;
+}
+
+static void nx_i2s_shutdown(struct snd_pcm_substream *substream,
+			    struct snd_soc_dai *dai)
+{
+	struct nx_i2s_data *i2s = snd_soc_dai_get_drvdata(dai);
+
+	nx_i2s_clk_disable(i2s);
 }
 
 static int nx_i2s_set_sysclk(struct snd_soc_dai *dai,
@@ -550,7 +560,6 @@ static int nx_i2s_trigger(struct snd_pcm_substream *substream,
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
-		nx_i2s_clk_enable(i2s);
 		nx_i2s_fifo_flush(i2s, stream);
 
 	case SNDRV_PCM_TRIGGER_RESUME:
@@ -560,12 +569,9 @@ static int nx_i2s_trigger(struct snd_pcm_substream *substream,
 
 	case SNDRV_PCM_TRIGGER_SUSPEND:
 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		nx_i2s_trx_stop(i2s, stream);
-		break;
-
 	case SNDRV_PCM_TRIGGER_STOP:
 		nx_i2s_trx_stop(i2s, stream);
-		nx_i2s_clk_disable(i2s);
+		break;
 
 	default:
 		return -EINVAL;
@@ -576,6 +582,7 @@ static int nx_i2s_trigger(struct snd_pcm_substream *substream,
 static struct snd_soc_dai_ops nx_i2s_ops = {
 	.set_fmt = nx_i2s_set_fmt,
 	.startup = nx_i2s_startup,
+	.shutdown = nx_i2s_shutdown,
 	.set_sysclk = nx_i2s_set_sysclk,
 	.hw_params = nx_i2s_hw_params,
 	.trigger = nx_i2s_trigger,
