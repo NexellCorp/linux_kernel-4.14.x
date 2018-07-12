@@ -459,7 +459,7 @@
 	};
 
 	uart6_hflow: uart6-hflow {
-		nexell,pins = "gpiod-28", "gpiob-29";
+		nexell,pins = "gpiod-28", "gpiod-29";
 		nexell,pin-function = <NX_PIN_FUNC1>;
 		nexell,pin-pull = <NX_PIN_PULL_NONE>;
 		nexell,pin-strength = <NX_PIN_STR0>;
