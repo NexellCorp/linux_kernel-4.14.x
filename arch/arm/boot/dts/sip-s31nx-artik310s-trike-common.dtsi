@@ -89,6 +89,14 @@
 	};
 };
 
+&gmac0_phyint {
+	nexell,pins = "alive-5";
+};
+
+&gmac0_pme {
+	nexell,pins = "alive-2";
+};
+
 &gmac1 {
 	status = "okay";
 
