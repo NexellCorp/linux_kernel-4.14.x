@@ -8,6 +8,14 @@
 	model = "Samsung artik310s explorer board based on sip-s31nx";
 	compatible = "samsung,artik310s-trike", "samsung,artik310s",
 		   "nexell,nxp3220";
+
+	snd_null: snd_null@0 {
+		#sound-dai-cells = <0>;
+		compatible = "nexell,snd-null-codec";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0 0>;
+	};
 };
 
 &sound0 {
@@ -23,20 +31,24 @@
 			sound-dai = <&i2s0 0>;
 		};
 
-		/delete-node/codec;
-		/* TODO: add dummy of null codec */
+		sndcodec0: codec {
+			sound-dai = <&snd_null>;
+		};
 	};
 
 	simple-audio-card,dai-link@1 {
 		mclk-fs = <256>;
 		format = "i2s";
-		frame-master = <&sndcpu1>;
-		bitclock-master = <&sndcpu1>;
+		frame-master = <&sndcodec1>;
+		bitclock-master = <&sndcodec1>;
 
 		sndcpu1: cpu  {
 			sound-dai = <&i2s1 0>;
 		};
-		/* TODO: add dummy or null codec */
+
+		sndcodec1: codec {
+			sound-dai = <&snd_null>;
+		};
 	};
 };
 
