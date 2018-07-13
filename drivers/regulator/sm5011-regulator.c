@@ -222,7 +222,17 @@ static struct platform_driver sm5011_pmic_driver = {
 	.id_table = sm5011_pmic_id,
 };
 
-module_platform_driver(sm5011_pmic_driver);
+static int __init sm5011_pmic_init(void)
+{
+	return platform_driver_register(&sm5011_pmic_driver);
+}
+subsys_initcall(sm5011_pmic_init);
+
+static void __exit sm5011_pmic_exit(void)
+{
+	platform_driver_unregister(&sm5011_pmic_driver);
+}
+module_exit(sm5011_pmic_exit);
 
 MODULE_DESCRIPTION("SM5011 Regulator Driver");
 MODULE_AUTHOR("Chanho Park <chanho61.park@samsung.com>");
