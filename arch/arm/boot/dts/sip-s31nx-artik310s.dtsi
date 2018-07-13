@@ -46,7 +46,7 @@
 
 	artik_zb_power {
 		compatible = "samsung,artik_zb_power";
-		/*vdd_zb-supply = <&VCC_LDO20>;*/     /* PVDD_LDO20_3P3 */
+		vdd_zb-supply = <&ldo20_reg>;     /* PVDD_LDO20_3P3 */
 		reset-gpio = <&gpio_c 16 0>;      /* AP_ZB_RSTn = GPC16 */
 		bootloader-gpio = <&gpio_b 19 0>; /* AP_ZIG_RBI = GPB19 */
 		status = "okay";
