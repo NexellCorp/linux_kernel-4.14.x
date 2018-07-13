@@ -55,6 +55,8 @@ static int artik_zb_power_control(struct artik_zb_power_platform_data *pdata,
 	if (onoff) {
 		ret = regulator_bulk_enable(pdata->num_supplies,
 				pdata->supplies);
+		gpiod_set_value(pdata->reset_gpio, 0);
+		msleep(5);
 		gpiod_set_value(pdata->reset_gpio, 1);
 		if (!IS_ERR_OR_NULL(pdata->bootloader_gpio))
 			gpiod_set_value(pdata->bootloader_gpio, 1);
@@ -283,15 +285,6 @@ static int artik_zb_power_probe(struct platform_device *pdev)
 	}
 
 	if (artik_zb_boot_enable) {
-		pdata->on = 1;
-		ret = artik_zb_power_control(pdata, 0);
-		if (ret) {
-			dev_err(&pdev->dev, "Failed to turn power off\n");
-			ret = -ENODEV;
-			goto err_control;
-		}
-		msleep(5);
-
 		ret = artik_zb_power_control(pdata, 1);
 		if (ret) {
 			dev_err(&pdev->dev, "Failed to turn power on\n");
