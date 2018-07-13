@@ -49,7 +49,7 @@
 };
 
 &dwmmc_2 {
-	cap-mmc-highspeed;
+	cap-sd-highspeed;
 	cd-gpios = <&gpio_b 24 0>;
 	cd-inverted;
 	nexell,drive_shift = <0x04>;
