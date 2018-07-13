@@ -19,6 +19,7 @@
   *
   */
 
+#include <linux/netdevice.h>
 #include "moal_cfg80211.h"
 #include "moal_uap_cfg80211.h"
 /** secondary channel is below */
@@ -1253,7 +1254,7 @@ woal_mon_if_setup(struct net_device *dev)
 	ENTER();
 	ether_setup(dev);
 	dev->netdev_ops = &woal_cfg80211_mon_if_ops;
-	dev->destructor = free_netdev;
+	dev->priv_destructor = free_netdev;
 	LEAVE();
 }
 
@@ -1274,7 +1275,7 @@ static int
 woal_cfg80211_add_mon_if(struct wiphy *wiphy,
 			 const char *name,
 			 unsigned char name_assign_type,
-			 u32 *flags, struct vif_params *params,
+			 struct vif_params *params,
 			 struct net_device **new_dev)
 #else
 /**
@@ -1432,7 +1433,7 @@ woal_virt_if_setup(struct net_device *dev)
 {
 	ENTER();
 	ether_setup(dev);
-	dev->destructor = free_netdev;
+	dev->priv_destructor = free_netdev;
 	LEAVE();
 }
 
@@ -1556,7 +1557,7 @@ int
 woal_cfg80211_add_virt_if(struct wiphy *wiphy,
 			  const char *name,
 			  unsigned char name_assign_type,
-			  enum nl80211_iftype type, u32 *flags,
+			  enum nl80211_iftype type,
 			  struct vif_params *params,
 			  struct net_device **new_dev)
 #else
@@ -1987,7 +1988,7 @@ woal_cfg80211_add_virtual_intf(struct wiphy *wiphy,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 7, 0)
 			       const
 #endif
-			       char *name, enum nl80211_iftype type, u32 *flags,
+			       char *name, enum nl80211_iftype type,
 			       struct vif_params *params)
 #else
 /**
@@ -2006,7 +2007,7 @@ struct wireless_dev *
 woal_cfg80211_add_virtual_intf(struct wiphy *wiphy,
 			       const char *name,
 			       unsigned char name_assign_type,
-			       enum nl80211_iftype type, u32 *flags,
+                   enum nl80211_iftype type,
 			       struct vif_params *params)
 #endif
 #endif
@@ -2020,7 +2021,7 @@ woal_cfg80211_add_virtual_intf(struct wiphy *wiphy,
 	case NL80211_IFTYPE_MONITOR:
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
 		ret = woal_cfg80211_add_mon_if(wiphy, name, name_assign_type,
-					       flags, params, &ndev);
+					       params, &ndev);
 #else
 		ret = woal_cfg80211_add_mon_if(wiphy, name, flags, params,
 					       &ndev);
@@ -2032,7 +2033,7 @@ woal_cfg80211_add_virtual_intf(struct wiphy *wiphy,
 	case NL80211_IFTYPE_P2P_GO:
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
 		ret = woal_cfg80211_add_virt_if(wiphy, name, name_assign_type,
-						type, flags, params, &ndev);
+						type, params, &ndev);
 #else
 		ret = woal_cfg80211_add_virt_if(wiphy, name, type, flags,
 						params, &ndev);

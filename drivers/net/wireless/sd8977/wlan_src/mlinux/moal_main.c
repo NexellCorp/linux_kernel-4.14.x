@@ -4093,6 +4093,7 @@ woal_open(struct net_device *dev)
 int
 woal_close(struct net_device *dev)
 {
+	struct cfg80211_scan_info info;
 	moal_private *priv = (moal_private *)netdev_priv(dev);
 #if defined(STA_SUPPORT) && defined(STA_CFG80211)
 	unsigned long flags;
@@ -4108,7 +4109,7 @@ woal_close(struct net_device *dev)
 		woal_clear_conn_params(priv);
 	spin_lock_irqsave(&priv->phandle->scan_req_lock, flags);
 	if (IS_STA_CFG80211(cfg80211_wext) && priv->phandle->scan_request) {
-		cfg80211_scan_done(priv->phandle->scan_request, MTRUE);
+		cfg80211_scan_done(priv->phandle->scan_request, &info);
 		priv->phandle->scan_request = NULL;
 		priv->phandle->scan_priv = NULL;
 	}
@@ -4128,7 +4129,7 @@ woal_close(struct net_device *dev)
 		woal_stop_bg_scan(priv, MOAL_IOCTL_WAIT);
 		priv->bg_scan_start = MFALSE;
 		priv->bg_scan_reported = MFALSE;
-		cfg80211_sched_scan_stopped(priv->wdev->wiphy);
+		cfg80211_sched_scan_stopped(priv->wdev->wiphy, 0);
 		priv->sched_scanning = MFALSE;
 	}
 #endif
@@ -5713,7 +5714,7 @@ woal_reassociation_thread(void *data)
 	moal_thread *pmoal_thread = data;
 	moal_private *priv = NULL;
 	moal_handle *handle = (moal_handle *)pmoal_thread->handle;
-	wait_queue_t wait;
+	wait_queue_entry_t wait;
 	int i;
 	BOOLEAN reassoc_timer_req;
 	mlan_802_11_ssid req_ssid;
@@ -6298,7 +6299,7 @@ woal_store_firmware_dump(moal_handle *phandle, mlan_event *pmevent)
 		LEAVE();
 		return;
 	}
-	vfs_write(pfile_fwdump, pmevent->event_buf, pmevent->event_len, &pos);
+	kernel_write(pfile_fwdump, pmevent->event_buf, pmevent->event_len, &pos);
 	filp_close(pfile_fwdump, NULL);
 	LEAVE();
 	return;
@@ -6816,7 +6817,7 @@ woal_dump_mlan_hex(moal_private *priv, t_u8 *buf, struct file *pfile)
 	ptr += woal_save_hex_dump(ROW_SIZE_16, info.mlan_adapter,
 				  info.mlan_adapter_size, MTRUE, ptr);
 	ptr += sprintf(ptr, "<--mlan_adapter End-->\n");
-	vfs_write(pfile, buf, ptr - (char *)buf, &pfile->f_pos);
+	kernel_write(pfile, buf, ptr - (char *)buf, &pfile->f_pos);
 	len += ptr - (char *)buf;
 #ifdef SDIO_MULTI_PORT_TX_AGGR
 	if (info.mpa_buf && info.mpa_buf_size) {
@@ -6828,7 +6829,7 @@ woal_dump_mlan_hex(moal_private *priv, t_u8 *buf, struct file *pfile)
 		ptr += woal_save_hex_dump(ROW_SIZE_16, info.mpa_buf,
 					  info.mpa_buf_size, MTRUE, ptr);
 		ptr += sprintf(ptr, "<--mlan_mpa_buf End-->\n");
-		vfs_write(pfile, buf, ptr - (char *)buf, &pfile->f_pos);
+		kernel_write(pfile, buf, ptr - (char *)buf, &pfile->f_pos);
 		len += ptr - (char *)buf;
 	}
 #endif
@@ -6841,7 +6842,7 @@ woal_dump_mlan_hex(moal_private *priv, t_u8 *buf, struct file *pfile)
 		ptr += woal_save_hex_dump(ROW_SIZE_16, info.mlan_priv[i],
 					  info.mlan_priv_size[i], MTRUE, ptr);
 		ptr += sprintf(ptr, "<--mlan_private(%d) End-->\n", i);
-		vfs_write(pfile, buf, ptr - (char *)buf, &pfile->f_pos);
+		kernel_write(pfile, buf, ptr - (char *)buf, &pfile->f_pos);
 		len += ptr - (char *)buf;
 	}
 
@@ -6966,7 +6967,7 @@ woal_save_dump_info_to_file(char *dir_name, char *file_name, t_u8 *buf,
 	fs = get_fs();
 	set_fs(KERNEL_DS);
 	pos = 0;
-	vfs_write(pfile, buf, buf_len, &pos);
+	kernel_write(pfile, buf, buf_len, &pos);
 	filp_close(pfile, NULL);
 	set_fs(fs);
 
@@ -7025,16 +7026,16 @@ woal_dump_drv_info(moal_handle *phandle, t_u8 *dir_name)
 
 	len = woal_dump_moal_drv_info(phandle, drv_buf);
 	total_len += len;
-	vfs_write(pfile, drv_buf, len, &pfile->f_pos);
+	kernel_write(pfile, drv_buf, len, &pfile->f_pos);
 
 	len = woal_dump_mlan_drv_info(woal_get_priv(phandle, MLAN_BSS_ROLE_ANY),
 				      drv_buf);
 	total_len += len;
-	vfs_write(pfile, drv_buf, len, &pfile->f_pos);
+	kernel_write(pfile, drv_buf, len, &pfile->f_pos);
 
 	len = woal_dump_moal_hex(phandle, drv_buf);
 	total_len += len;
-	vfs_write(pfile, drv_buf, len, &pfile->f_pos);
+	kernel_write(pfile, drv_buf, len, &pfile->f_pos);
 
 	len = woal_dump_mlan_hex(woal_get_priv(phandle, MLAN_BSS_ROLE_ANY),
 				 drv_buf, pfile);
@@ -9120,7 +9121,7 @@ woal_cleanup_module(void)
 					cfg80211_sched_scan_stopped(handle->
 								    priv[i]->
 								    wdev->
-								    wiphy);
+								    wiphy, 0);
 					handle->priv[i]->sched_scanning =
 						MFALSE;
 				}

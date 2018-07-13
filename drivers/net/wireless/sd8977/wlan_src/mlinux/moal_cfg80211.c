@@ -914,7 +914,7 @@ done:
 int
 woal_cfg80211_change_virtual_intf(struct wiphy *wiphy,
 				  struct net_device *dev,
-				  enum nl80211_iftype type, u32 *flags,
+				  enum nl80211_iftype type,
 				  struct vif_params *params)
 {
 	int ret = 0;

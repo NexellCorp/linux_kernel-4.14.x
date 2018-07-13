@@ -22,6 +22,7 @@
 #include <linux/path.h>
 #include <linux/namei.h>
 #include <linux/mount.h>
+#include <linux/sched/signal.h>
 
 #include "bt_drv.h"
 #include "mbt_char.h"

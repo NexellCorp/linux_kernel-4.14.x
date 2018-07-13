@@ -593,7 +593,7 @@ bt_save_dump_info_to_file(char *dir_name, char *file_name, u8 *buf, u32 buf_len)
 	fs = get_fs();
 	set_fs(KERNEL_DS);
 	pos = 0;
-	vfs_write(pfile, (const char __user *)buf, buf_len, &pos);
+	kernel_write(pfile, (const char __user *)buf, buf_len, &pos);
 	filp_close(pfile, NULL);
 	set_fs(fs);
 
@@ -2839,7 +2839,7 @@ bt_service_main_thread(void *data)
 	bt_thread *thread = data;
 	bt_private *priv = thread->priv;
 	bt_adapter *adapter = priv->adapter;
-	wait_queue_t wait;
+	wait_queue_entry_t wait;
 	struct sk_buff *skb;
 	ENTER();
 	bt_activate_thread(thread);

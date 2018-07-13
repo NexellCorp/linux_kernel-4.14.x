@@ -26,6 +26,7 @@
 #include <linux/mmc/sdio.h>
 #include <linux/mmc/sdio_func.h>
 #include <linux/mmc/card.h>
+#include <linux/sched/types.h>
 
 #ifdef CONFIG_OF
 #include <linux/of.h>

@@ -170,7 +170,8 @@ static int woal_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 int woal_cfg80211_sched_scan_start(struct wiphy *wiphy,
 				   struct net_device *dev,
 				   struct cfg80211_sched_scan_request *request);
-int woal_cfg80211_sched_scan_stop(struct wiphy *wiphy, struct net_device *dev);
+int woal_cfg80211_sched_scan_stop(struct wiphy *wiphy, struct net_device *dev,
+					u64 reqid);
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 2, 0) || defined(COMPAT_WIRELESS)
@@ -4668,7 +4669,8 @@ done:
  * @return                      0 -- success, otherwise fail
  */
 int
-woal_cfg80211_sched_scan_stop(struct wiphy *wiphy, struct net_device *dev)
+woal_cfg80211_sched_scan_stop(struct wiphy *wiphy, struct net_device *dev,
+		u64 reqid)
 {
 	moal_private *priv = (moal_private *)woal_get_netdev_priv(dev);
 	ENTER();
@@ -4713,7 +4715,7 @@ woal_cfg80211_resume(struct wiphy *wiphy)
 					cfg80211_sched_scan_results(handle->
 								    priv[i]->
 								    wdev->
-								    wiphy);
+								    wiphy, 0);
 					handle->priv[i]->last_event = 0;
 					PRINTM(MIOCTL,
 					       "Report sched scan result in cfg80211 resume\n");
@@ -6361,6 +6363,7 @@ woal_cfg80211_update_ft_ies(struct wiphy *wiphy, struct net_device *dev,
 	mlan_ds_misc_assoc_rsp assoc_rsp;
 	IEEEtypes_AssocRsp_t *passoc_rsp = NULL;
 	mlan_bss_info bss_info;
+	struct cfg80211_roam_info roam_info;
 
 	ENTER();
 
@@ -6419,12 +6422,19 @@ woal_cfg80211_update_ft_ies(struct wiphy *wiphy, struct net_device *dev,
 				(IEEEtypes_AssocRsp_t *)assoc_rsp.
 				assoc_resp_buf;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 0, 0) || defined(COMPAT_WIRELESS)
-			cfg80211_roamed(priv->netdev, NULL, priv->cfg_bssid,
+		/*	cfg80211_roamed(priv->netdev, NULL, priv->cfg_bssid,
 					priv->sme_current.ie,
 					priv->sme_current.ie_len,
 					passoc_rsp->ie_buffer,
 					assoc_rsp.assoc_resp_len -
 					ASSOC_RESP_FIXED_SIZE, GFP_KERNEL);
+					*/
+			/*roam_info.bss = priv->cfg_bssid; It must be fixed. */
+			roam_info.req_ie = priv->sme_current.ie;
+			roam_info.req_ie_len = priv->sme_current.ie_len;
+			roam_info.resp_ie = passoc_rsp->ie_buffer;
+			roam_info.resp_ie_len = assoc_rsp.assoc_resp_len - ASSOC_RESP_FIXED_SIZE;
+			cfg80211_roamed(priv->netdev, &roam_info, GFP_KERNEL);
 #else
 			cfg80211_roamed(priv->netdev, priv->cfg_bssid,
 					priv->sme_current.ie,
@@ -6690,6 +6700,7 @@ woal_start_roaming(moal_private *priv)
 	int ret = 0;
 	mlan_ds_misc_assoc_rsp assoc_rsp;
 	IEEEtypes_AssocRsp_t *passoc_rsp = NULL;
+	struct cfg80211_roam_info roam_info;
 
 	ENTER();
 	if (priv->ft_roaming_triggered_by_driver) {
@@ -6820,10 +6831,19 @@ woal_start_roaming(moal_private *priv)
 		}
 #endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 0, 0) || defined(COMPAT_WIRELESS)
-		cfg80211_roamed(priv->netdev, NULL, priv->cfg_bssid, ie, ie_len,
+
+	/*	cfg80211_roamed(priv->netdev, NULL, priv->cfg_bssid, ie, ie_len,
 				passoc_rsp->ie_buffer,
 				assoc_rsp.assoc_resp_len -
-				ASSOC_RESP_FIXED_SIZE, GFP_KERNEL);
+				ASSOC_RESP_FIXED_SIZE, GFP_KERNEL); */
+		/*roam_info.bss = priv->cfg_bssid; It must be fixed. */
+		roam_info.req_ie = ie;
+		roam_info.req_ie_len = ie_len;
+		roam_info.resp_ie = passoc_rsp->ie_buffer;
+		roam_info.resp_ie_len = assoc_rsp.assoc_resp_len - ASSOC_RESP_FIXED_SIZE;
+		cfg80211_roamed(priv->netdev, &roam_info, GFP_KERNEL);
+
+
 #else
 		cfg80211_roamed(priv->netdev, priv->cfg_bssid, ie, ie_len,
 				passoc_rsp->ie_buffer,
@@ -7358,7 +7378,8 @@ woal_register_cfg80211(moal_private *priv)
 	wiphy->flags |= WIPHY_FLAG_HAVE_AP_SME;
 #endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 2, 0) || defined(COMPAT_WIRELESS)
-	wiphy->flags |= WIPHY_FLAG_SUPPORTS_SCHED_SCAN;
+/*  wiphy->flags |= WIPHY_FLAG_SUPPORTS_SCHED_SCAN; */
+	/* WIPHY_FLAG_SUPPORTS_SCHED_SCAN is out on cfg80211.h */
 	wiphy->max_sched_scan_ssids = MRVDRV_MAX_SSID_LIST_LENGTH;
 	wiphy->max_sched_scan_ie_len = MAX_IE_SIZE;
 	wiphy->max_match_sets = MRVDRV_MAX_SSID_LIST_LENGTH;

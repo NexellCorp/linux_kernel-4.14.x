@@ -18,10 +18,6 @@
 # ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
 # this warranty disclaimer.
 
-COMPATDIR=/lib/modules/$(KERNELVERSION_X86)/build/compat-wireless-3.2-rc1-1/include
-CC=		$(CROSS_COMPILE)gcc -I$(COMPATDIR)
-LD=		$(CROSS_COMPILE)ld
-BACKUP=		/root/backup
 YMD=		`date +%Y%m%d%H%M`
 
 #############################################################################
@@ -105,13 +101,11 @@ CONFIG_USERSPACE_32BIT_OVER_KERNEL_64BIT=n
 #############################################################################
 
 MODEXT = ko
-EXTRA_CFLAGS += -I./drivers/net/wireless/sd8977/wlan_src/mlan
+EXTRA_CFLAGS += -Idrivers/net/wireless/sd8977/wlan_src/mlan
 EXTRA_CFLAGS += -DLINUX
-
-
 ifeq ($(CONFIG_EMBEDDED_SUPP_AUTH), y)
-EXTRA_CFLAGS += -I./drivers/net/wireless/sd8977/wlan_src/mlan/esa
-EXTRA_CFLAGS += -I./drivers/net/wireless/sd8977/wlan_src/mlan/esa/common
+EXTRA_CFLAGS += -Idrivers/net/wireless/sd8977/wlan_src/mlan/esa
+EXTRA_CFLAGS += -Idrivers/net/wireless/sd8977/wlan_src/mlan/esa/common
 endif
 
 
@@ -230,7 +224,7 @@ ifeq ($(GCC_VERSION),1)
 	EXTRA_CFLAGS += -Wno-packed-bitfield-compat
 endif
 
-ifeq ($(CONFIG_MRVL_SDIO_OOB_IRQ),y)
+ifeq ($(CONFIG_MRVL_SDIO_OOB_IRQ),m)
 	EXTRA_CFLAGS += -DSDIO_OOB_IRQ
 endif
 

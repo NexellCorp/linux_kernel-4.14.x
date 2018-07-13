@@ -1412,7 +1412,7 @@ moal_recv_event(IN t_void *pmoal_handle, IN pmlan_event pmevent)
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 35) || defined(COMPAT_WIRELESS)
 			cfg80211_cqm_rssi_notify(priv->netdev,
 						 NL80211_CQM_RSSI_THRESHOLD_EVENT_LOW,
-						 GFP_KERNEL);
+						 0, GFP_KERNEL);
 			priv->last_event |= EVENT_BCN_RSSI_LOW;
 #endif
 			if (!hw_test && priv->roaming_enabled)
@@ -1434,7 +1434,7 @@ moal_recv_event(IN t_void *pmoal_handle, IN pmlan_event pmevent)
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 35) || defined(COMPAT_WIRELESS)
 				cfg80211_cqm_rssi_notify(priv->netdev,
 							 NL80211_CQM_RSSI_THRESHOLD_EVENT_HIGH,
-							 GFP_KERNEL);
+							 0, GFP_KERNEL);
 #endif
 				woal_set_rssi_threshold(priv,
 							MLAN_EVENT_ID_FW_BCN_RSSI_HIGH,
@@ -1656,7 +1656,7 @@ moal_recv_event(IN t_void *pmoal_handle, IN pmlan_event pmevent)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 2, 0) || defined(COMPAT_WIRELESS)
 		if (IS_STA_CFG80211(cfg80211_wext)) {
 			if (priv->sched_scanning) {
-				cfg80211_sched_scan_stopped(priv->wdev->wiphy);
+				cfg80211_sched_scan_stopped(priv->wdev->wiphy, 0); /* Must be fixed */
 				PRINTM(MEVENT, "Sched_Scan stopped\n");
 				priv->sched_scanning = MFALSE;
 			}
@@ -1672,7 +1672,7 @@ moal_recv_event(IN t_void *pmoal_handle, IN pmlan_event pmevent)
 			    !priv->phandle->cfg80211_suspend) {
 				woal_inform_bss_from_scan_result(priv, NULL,
 								 MOAL_NO_WAIT);
-				cfg80211_sched_scan_results(priv->wdev->wiphy);
+				cfg80211_sched_scan_results(priv->wdev->wiphy, 0); /* Must be fixed */
 				priv->last_event = 0;
 				PRINTM(MEVENT,
 				       "Reporting Sched_Scan results\n");

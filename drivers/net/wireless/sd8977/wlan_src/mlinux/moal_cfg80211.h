@@ -77,7 +77,7 @@ t_u8 woal_band_cfg_to_ieee_band(t_u32 band);
 int woal_cfg80211_change_virtual_intf(struct wiphy *wiphy,
 				      struct net_device *dev,
 				      enum nl80211_iftype type,
-				      u32 *flags, struct vif_params *params);
+				      struct vif_params *params);
 
 int woal_cfg80211_set_wiphy_params(struct wiphy *wiphy, u32 changed);
 
@@ -216,7 +216,6 @@ struct wireless_dev *woal_cfg80211_add_virtual_intf(struct wiphy *wiphy,
 						    unsigned char
 						    name_assign_type,
 						    enum nl80211_iftype type,
-						    u32 *flags,
 						    struct vif_params *params);
 #else
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 7, 0)
