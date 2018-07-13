@@ -51,6 +51,34 @@
 		bootloader-gpio = <&gpio_b 19 0>; /* AP_ZIG_RBI = GPB19 */
 		status = "okay";
 	};
+
+	sd8x_rfkill: sd8x-rfkill {
+		 compatible = "mrvl,sd8x-rfkill";
+		 sd-host = <&dwmmc_1>;
+		 pd-gpio = <&alive_0 4 0>; /* AliveGPIO4=AP_COMBO_PDN output*/
+		 gpios = <&alive_0 3 1>; /* AliveGPIO3=COMBE_HOST_WAKE, input */
+		 status = "okay";
+	};
+
+	sd8xxx-wlan {
+		 drvdbg  = <0x37>;
+		 drv_mode = <0x5>;
+		 cfg80211_wext = <0xf>;
+		 sta_name = "wlan";
+		 wfd_name = "p2p";
+		 max_vir_bss = <1>;
+		 cal_data_cfg = "mrvl/WlanCalData_ext.conf";
+		 fw_name = "mrvl/sdsd8977_combo_v2.bin";
+		 reg_alpha2 = "US";
+		 p2p_enh = <1>;
+		 inact_tmo = <300>;
+		 txpwrlimit_cfg = "mrvl/txpwrlimit_cfg.bin";
+	};
+
+	sd8xxx-bt {
+		 init_cfg = "mrvl/bt_init_cfg.conf";
+		 cal_cfg = "mrvl/bt_cal_data.conf";
+	};
 };
 
 &cpu0 {
@@ -309,6 +337,13 @@
 		nexell,pin-pull = <NX_PIN_PULL_NONE>;
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
+
+	cfg_wlanhostwake: cfg-wlanhostwake {
+		nexell,pins = "alive-3";
+		nexell,pin-function = <NX_PIN_FUNC0>;
+		nexell,pin-pull = <NX_PIN_PULL_UP>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
 };
 
 &tmuctrl_0 {
@@ -318,4 +353,21 @@
 &uart6 {
 	status = "okay";
 	pinctrl-0 = <&uart6_bus &uart6_hflow>;
+};
+
+&dwmmc_1 {
+	status = "okay";
+	num-slots = <1>;
+	bus-width = <4>;
+	cap-sd-highspeed;
+
+	broken-cd;
+	clock-frequency = <200000000>;
+	supports-detect-complete;
+
+	nexell,drive_shift = <0x2>;
+	nexell,sample_shift = <0x2>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc1_clk &mmc1_cmd &mmc1_bus4 &cfg_wlanhostwake>;
 };
