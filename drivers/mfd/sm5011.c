@@ -160,7 +160,23 @@ static struct i2c_driver sm5011_i2c_driver = {
 	.probe_new = sm5011_i2c_probe,
 };
 
-module_i2c_driver(sm5011_i2c_driver);
+static int __init sm5011_i2c_init(void)
+{
+	int ret;
+
+	ret = i2c_add_driver(&sm5011_i2c_driver);
+	if (ret != 0)
+		pr_err("Failed to register wm831x I2C driver: %d\n", ret);
+
+	return ret;
+}
+subsys_initcall(sm5011_i2c_init);
+
+static void __exit sm5011_i2c_exit(void)
+{
+	i2c_del_driver(&sm5011_i2c_driver);
+}
+module_exit(sm5011_i2c_exit);
 
 MODULE_DESCRIPTION("SM5011 multi-function core driver");
 MODULE_AUTHOR("Chanho Park <chanho61.park@samsung.com>");
