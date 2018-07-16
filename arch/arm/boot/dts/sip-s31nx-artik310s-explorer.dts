@@ -6,7 +6,7 @@
 
 / {
 	model = "Samsung artik310s explorer board based on sip-s31nx";
-	compatible = "samsung,artik310s-trike", "samsung,artik310s",
+	compatible = "samsung,artik310s-explorer", "samsung,artik310s",
 		   "nexell,nxp3220";
 
 	snd_null: snd_null@0 {
