@@ -2722,6 +2722,7 @@ woal_cfg80211_scan(struct wiphy *wiphy, struct net_device *dev,
 	struct ieee80211_channel *chan;
 	int ret = 0, i;
 	unsigned long flags;
+	struct cfg80211_scan_info info;
 
 	ENTER();
 
@@ -2754,7 +2755,8 @@ woal_cfg80211_scan(struct wiphy *wiphy, struct net_device *dev,
 	if (priv->fake_scan_complete || !woal_is_scan_result_expired(priv)) {
 		PRINTM(MEVENT, "Reporting fake scan results\n");
 		woal_inform_bss_from_scan_result(priv, NULL, MOAL_IOCTL_WAIT);
-		cfg80211_scan_done(request, MFALSE);
+		info.aborted = MFALSE;
+		cfg80211_scan_done(request, &info);
 		return ret;
 	}
 	memset(&bss_info, 0, sizeof(bss_info));
@@ -2764,7 +2766,8 @@ woal_cfg80211_scan(struct wiphy *wiphy, struct net_device *dev,
 			PRINTM(MEVENT, "Block scan in mlan module\n");
 			woal_inform_bss_from_scan_result(priv, NULL,
 							 MOAL_IOCTL_WAIT);
-			cfg80211_scan_done(request, MFALSE);
+			info.aborted = MFALSE;
+			cfg80211_scan_done(request, &info);
 			return ret;
 		}
 	}
@@ -2906,7 +2909,8 @@ woal_cfg80211_scan(struct wiphy *wiphy, struct net_device *dev,
 done:
 	if (ret) {
 		spin_lock_irqsave(&priv->phandle->scan_req_lock, flags);
-		cfg80211_scan_done(request, MTRUE);
+		info.aborted = MTRUE;
+		cfg80211_scan_done(request, &info);
 		priv->phandle->scan_request = NULL;
 		priv->phandle->scan_priv = NULL;
 		spin_unlock_irqrestore(&priv->phandle->scan_req_lock, flags);

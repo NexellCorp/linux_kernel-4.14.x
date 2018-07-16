@@ -4554,6 +4554,7 @@ woal_cancel_scan(moal_private *priv, t_u8 wait_option)
 	mlan_status ret = MLAN_STATUS_SUCCESS;
 	moal_handle *handle = priv->phandle;
 	moal_private *scan_priv = handle->scan_priv;
+	struct cfg80211_scan_info info;
 #ifdef STA_CFG80211
 	unsigned long flags;
 #endif
@@ -4576,10 +4577,13 @@ woal_cancel_scan(moal_private *priv, t_u8 wait_option)
 	spin_lock_irqsave(&handle->scan_req_lock, flags);
 	if (IS_STA_CFG80211(cfg80211_wext) && handle->scan_request) {
 	    /** some supplicant can not handle SCAN abort event */
-		if (scan_priv->bss_type == MLAN_BSS_TYPE_STA)
-			cfg80211_scan_done(handle->scan_request, MTRUE);
-		else
-			cfg80211_scan_done(handle->scan_request, MFALSE);
+		if (scan_priv->bss_type == MLAN_BSS_TYPE_STA) {
+			info.aborted = MTRUE;
+			cfg80211_scan_done(handle->scan_request, &info);
+		} else {
+			info.aborted = MFALSE;
+			cfg80211_scan_done(handle->scan_request, &info);
+		}
 		handle->scan_request = NULL;
 	}
 	spin_unlock_irqrestore(&handle->scan_req_lock, flags);

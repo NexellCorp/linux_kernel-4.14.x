@@ -1147,6 +1147,7 @@ moal_recv_event(IN t_void *pmoal_handle, IN pmlan_event pmevent)
 #if defined(SDIO_SUSPEND_RESUME)
 	mlan_ds_ps_info pm_info;
 #endif
+	struct cfg80211_scan_info info;
 
 	ENTER();
 
@@ -1256,10 +1257,11 @@ moal_recv_event(IN t_void *pmoal_handle, IN pmlan_event pmevent)
 					spin_lock_irqsave(&priv->phandle->
 							  scan_req_lock, flags);
 					if (priv->phandle->scan_request) {
+						info.aborted = MFALSE;
 						cfg80211_scan_done(priv->
 								   phandle->
 								   scan_request,
-								   MFALSE);
+								   &info);
 						priv->phandle->scan_request =
 							NULL;
 					}

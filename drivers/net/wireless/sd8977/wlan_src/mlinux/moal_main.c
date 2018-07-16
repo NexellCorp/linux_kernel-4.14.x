@@ -9053,7 +9053,7 @@ woal_cleanup_module(void)
 #if defined(STA_SUPPORT) && defined(STA_CFG80211)
 	unsigned long flags;
 #endif
-
+	struct cfg80211_scan_info info;
 	ENTER();
 
 	PRINTM(MMSG, "wlan: Unloading MWLAN driver\n");
@@ -9099,8 +9099,9 @@ woal_cleanup_module(void)
 						  flags);
 				if (IS_STA_CFG80211(cfg80211_wext) &&
 				    handle->scan_request) {
+					info.aborted = MTRUE;
 					cfg80211_scan_done(handle->scan_request,
-							   MTRUE);
+							   &info);
 					handle->scan_request = NULL;
 					handle->scan_priv = NULL;
 				}
