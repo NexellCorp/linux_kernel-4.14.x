@@ -26,6 +26,9 @@
 #define SDMMC_DRV_PHASE			0x408
 #define SDMMC_SMP_PHASE			0x40c
 
+#define SRAM_AWAKE                      0x1
+#define SRAM_SLEEP                      0x0
+
 #define DWMMC_PRE_DIV			4
 
 struct dw_mci_nexell_priv_data {
@@ -39,6 +42,8 @@ static int dw_mci_nexell_priv_init(struct dw_mci *host)
 
 	mci_writel(host, DRV_PHASE, priv->drv_phase);
 	mci_writel(host, SMP_PHASE, priv->smp_phase);
+
+	mci_writel(host, SRAM, SRAM_AWAKE);
 
 	host->bus_hz /= DWMMC_PRE_DIV;
 
