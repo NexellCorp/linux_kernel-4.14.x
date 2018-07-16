@@ -1079,4 +1079,9 @@ dtstree		:= $(srctree)/$(src)
 dtb-$(CONFIG_OF_ALL_DTBS) := $(patsubst $(dtstree)/%.dts,%.dtb, $(wildcard $(dtstree)/*.dts))
 
 always		:= $(dtb-y)
+subdir-y	:= overlays
 clean-files	:= *.dtb
+
+ifeq ($(CONFIG_ARCH_NEXELL),y)
+	DTC_FLAGS	?= -@ -H epapr
+endif
