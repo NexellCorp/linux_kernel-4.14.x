@@ -50,6 +50,25 @@ static int dw_mci_nexell_priv_init(struct dw_mci *host)
 	return 0;
 }
 
+static void dw_mci_nexell_set_ios(struct dw_mci *host, struct mmc_ios *ios)
+{
+	u32 mode = 0;
+
+	switch (ios->bus_width) {
+	case MMC_BUS_WIDTH_1:
+		mode = 0;
+		break;
+	case MMC_BUS_WIDTH_4:
+		mode = 1;
+		break;
+	case MMC_BUS_WIDTH_8:
+		mode = 2;
+		break;
+	}
+
+	mci_writel(host, MODE, mode);
+}
+
 #ifdef CONFIG_PM
 static int dw_mci_nexell_runtime_resume(struct device *dev)
 {
@@ -94,6 +113,7 @@ static const struct dw_mci_drv_data nexell_drv_data = {
 	.num_caps		= ARRAY_SIZE(nexell_dwmmc_caps),
 	.init			= dw_mci_nexell_priv_init,
 	.parse_dt		= dw_mci_nexell_parse_dt,
+	.set_ios		= dw_mci_nexell_set_ios,
 };
 
 static const struct of_device_id dw_mci_nexell_match[] = {
