@@ -218,6 +218,20 @@
 	status = "okay";
 };
 
+&uart4 {
+	status = "okay";
+	pinctrl-0 = <&uart4_bus &uart4_485>;
+	linux,rs485-enabled-at-boot-time;
+	rs485-rts-active-low;
+};
+
+&uart5 {
+	status = "okay";
+	pinctrl-0 = <&uart5_bus &uart5_485>;
+	linux,rs485-enabled-at-boot-time;
+	rs485-rts-active-low;
+};
+
 &usb2phy {
 	status = "okay";
 	otg,vbus-gpio = <&gpio_c 12 0>;
