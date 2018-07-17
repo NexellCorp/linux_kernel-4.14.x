@@ -322,6 +322,29 @@
 			       <&cmu CLK_SRC_CODA960_0_CORE>;
 		};
 
+		drm: drm@25140000 {
+			compatible = "nexell,nxp3220-drm";
+			reg = <0x25140000 0x1000>, <0x25140800 0x1000>;
+			reg-names = "mlc.0", "dpc.0";
+			interrupts = <GIC_SPI 38 IRQ_TYPE_NONE>;
+			assigned-clocks = <&cmu_mm CLK_MM_DPC_AXI>;
+			assigned-clock-rates = <200000000>;
+			clocks = <&cmu_mm CLK_MM_DPC_AXI>,
+			       <&cmu_mm CLK_MM_DPC_X1>,
+			       <&cmu_mm CLK_MM_DPC_X2>;
+			clock-names = "axi", "clk_x1", "clk_x2";
+			plane-names = "primary", "video";
+			status = "disabled";
+		};
+
+		drm_rgb: drm_rgb@25140000 {
+			compatible = "nexell,nxp3220-drm-rgb";
+			syscon = <&sys_reg_sys>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&dp_vclk &dp_vsync &dp_hsync &dp_de &dp_blue &dp_green &dp_red>;
+			status = "disabled";
+		};
+
 		dwmmc_0: dwmmc@26080000 {
 			compatible = "nexell,nxp3220-dw-mshc";
 			interrupts = <GIC_SPI 82 IRQ_TYPE_NONE>;
