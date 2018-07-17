@@ -552,11 +552,9 @@ static void *nxp3220_qos_probe(struct platform_device *pdev,
 		goto disable_tx;
 	}
 
-	gpiod_set_value(eqos->phy_reset, 0);
-	usleep_range(10000, 30000);
-	gpiod_set_value(eqos->phy_reset, 1);
 	usleep_range(10000, 30000);
 	gpiod_set_value(eqos->phy_reset, 0);
+	usleep_range(10000, 30000);
 
 	eqos->phy_intr = devm_gpiod_get(dev, "phy-intr", GPIOD_IN);
 	eqos->phy_pme = devm_gpiod_get(dev, "phy-pme", GPIOD_IN);
