@@ -1,0 +1,11 @@
+config VIDEO_NEXELL
+	bool "Nexell SoC series V4l2 Subsystem driver"
+	depends on VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API
+	depends on ARCH_NXP3220 || ARCH_SIP_S31NX || COMPILE_TEST
+	depends on OF && COMMON_CLK
+	depends on RESET_CONTROLLER
+	select VIDEOBUF2_DMA_CONTIG
+	help
+	  Say Y here to enable Nexell video devices for Nexell SoC.
+	  This subsystem includes capture devices. Nexell V4L2 drivers supports
+	  only dmabuf type.
