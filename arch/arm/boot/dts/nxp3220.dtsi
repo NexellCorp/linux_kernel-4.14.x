@@ -349,8 +349,6 @@
 			interrupts = <GIC_SPI 123 IRQ_TYPE_NONE>;
 			clocks = <&cmu_usb CLK_USB_USB20OTG>;
 			clock-names = "otg";
-			pinctrl-names = "default";
-			pinctrl-0 = <&otg_vbus_en>;
 			phys = <&usb2phy 0>;
 			phy-names = "usb2-phy";
 			dr_mode = "otg";

@@ -227,6 +227,8 @@
 
 &dwc2otg {
 	status = "okay";
+	pinctrl-0 = <&otg_vbus_en>;
+	pinctrl-names = "default";
 };
 
 &ehci {
