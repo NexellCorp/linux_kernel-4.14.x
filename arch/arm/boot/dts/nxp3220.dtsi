@@ -603,7 +603,7 @@
 				0x201a0000 0x1000
 				0x201b0000 0x1000
 				0x201c0000 0x1000
-				0x2008c000 0x2000>;
+				0x2008c400 0x1c00>;
 			#address-cells = <1>;
 			#size-cells = <1>;
 			interrupts = <GIC_SPI 45 IRQ_TYPE_NONE>,
