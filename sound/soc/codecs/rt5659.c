@@ -34,6 +34,10 @@
 #include "rl6231.h"
 #include "rt5659.h"
 
+static const struct reg_sequence rt5659_patch[] = {
+	{ 0x0010, 0x30c0 },
+};
+
 static const struct reg_default rt5659_reg[] = {
 	{ 0x0000, 0x0000 },
 	{ 0x0001, 0x4848 },
@@ -4049,6 +4053,9 @@ static int rt5659_i2c_probe(struct i2c_client *i2c,
 	}
 
 	rt5659_calibrate(rt5659);
+
+	regmap_multi_reg_write(rt5659->regmap, rt5659_patch,
+		ARRAY_SIZE(rt5659_patch));
 
 	/* line in diff mode*/
 	if (rt5659->pdata.in1_diff)
