@@ -958,7 +958,7 @@ static int wireless_process_ioctl(struct net *net, struct iwreq *iwr,
 	}
 	/* Old driver API : call driver ioctl handler */
 	if (dev->netdev_ops->ndo_do_ioctl)
-		return dev->netdev_ops->ndo_do_ioctl(dev, ifr, cmd);
+		return dev->netdev_ops->ndo_do_ioctl(dev, (struct ifreq *)iwr, cmd);
 	return -EOPNOTSUPP;
 }
 
