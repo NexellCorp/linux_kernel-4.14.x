@@ -19,6 +19,13 @@
 	sound0: sound0 {
 		compatible = "simple-audio-card";
 		simple-audio-card,name = "nxp3220 Audio Card ALC5658";
+		simple-audio-card,widgets =
+			"Headphone", "Out Jack",
+			"Microphone", "In Jack";
+		simple-audio-card,routing =
+			"IN1P", "MICBIAS1",
+			"IN1P", "In Jack",
+			"IN1P", "Main Mic";
 		status = "okay";
 
 		simple-audio-card,dai-link@0 {
