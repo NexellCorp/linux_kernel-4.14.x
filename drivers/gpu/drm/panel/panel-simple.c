@@ -1613,6 +1613,28 @@ static const struct panel_desc qd43003c0_40 = {
 	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
 };
 
+static const struct drm_display_mode samsung_lms700kf23_mode = {
+	.clock = 24500,
+	.hdisplay = 800,
+	.hsync_start = 800 + 3,
+	.hsync_end = 800 + 3 + 13,
+	.htotal = 800 + 3 + 13 + 8,
+	.vdisplay = 480,
+	.vsync_start = 480 + 1,
+	.vsync_end = 480 + 1 + 7,
+	.vtotal = 480 + 1 + 7 + 5,
+	.vrefresh = 60,
+};
+
+static const struct panel_desc samsung_lms700kf23 = {
+	.modes = &samsung_lms700kf23_mode,
+	.num_modes = 1,
+	.size = {
+		.width = 152,
+		.height = 91,
+	},
+};
+
 static const struct drm_display_mode samsung_lsn122dl01_c01_mode = {
 	.clock = 271560,
 	.hdisplay = 2560,
@@ -2087,6 +2109,9 @@ static const struct of_device_id platform_of_match[] = {
 	}, {
 		.compatible = "qiaodian,qd43003c0-40",
 		.data = &qd43003c0_40,
+	}, {
+		.compatible = "samsung,lms700kf23",
+		.data = &samsung_lms700kf23,
 	}, {
 		.compatible = "samsung,lsn122dl01-c01",
 		.data = &samsung_lsn122dl01_c01,
