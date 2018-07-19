@@ -1528,8 +1528,18 @@ static inline void __stop_tx(struct uart_8250_port *p)
 		 * shift register are empty. It is for device driver to enable
 		 * interrupt on TEMT.
 		 */
-		if ((lsr & BOTH_EMPTY) != BOTH_EMPTY)
-			return;
+
+		if ((lsr & BOTH_EMPTY) != BOTH_EMPTY) {
+			if (lsr & UART_LSR_THRE) {
+				unsigned char lcr = serial_in(p, UART_LCR);
+
+				serial_out(p, UART_LCR, lcr);
+				lsr = serial_in(p, UART_LSR);
+
+				if (!(lsr & UART_LSR_TEMT))
+					return;
+			}
+		}
 
 		em485->active_timer = NULL;
 
