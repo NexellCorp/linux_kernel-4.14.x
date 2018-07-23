@@ -39,14 +39,14 @@
 	simple-audio-card,dai-link@1 {
 		mclk-fs = <256>;
 		format = "i2s";
-		frame-master = <&sndcodec1>;
-		bitclock-master = <&sndcodec1>;
+		frame-master = <&sndcodec2>;
+		bitclock-master = <&sndcodec2>;
 
-		sndcpu1: cpu  {
+		sndcpu2: cpu  {
 			sound-dai = <&i2s1 0>;
 		};
 
-		sndcodec1: codec {
+		sndcodec2: codec {
 			sound-dai = <&snd_null>;
 		};
 	};

@@ -16,9 +16,16 @@
 		stdout-path = &uart0;
 	};
 
-	sound0: sound0 {
+	/* Null codec for PDM reference i2s */
+	snd_null_codec0: snd_null_codec@0 {
+		#sound-dai-cells = <0>;
+		compatible = "nexell,snd-null-codec";
+		status = "okay";
+	};
+
+	sound0: sound@0 {
 		compatible = "simple-audio-card";
-		simple-audio-card,name = "nxp3220 Audio Card ALC5658";
+		simple-audio-card,name = "Artik310 Audio Card ALC5658";
 		simple-audio-card,widgets =
 			"Headphone", "Out Jack",
 			"Microphone", "In Jack";
@@ -43,6 +50,33 @@
 			};
 		};
 	};
+
+	sound1: sound@1 {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "Artik310 PDM Card";
+		status = "okay";
+
+		simple-audio-card,dai-link@0 {
+			mclk-fs = <256>;
+			format = "i2s";
+			frame-master = <&sndcodec1>;
+			bitclock-master = <&sndcodec1>;
+
+			sndcpu1: cpu {
+				 sound-dai = <&i2s0 0>;
+			};
+
+			sndcodec1: codec {
+				sound-dai = <&snd_null_codec0>;
+			};
+		};
+	};
+
+	sound-pdm {
+		compatible = "nexell,nxp3220-pdm-card";
+		snd-controller = <&pdm>;
+	};
+
 };
 
 &adc {
@@ -181,6 +215,14 @@
 	status = "okay";
 };
 
+&pdm {
+	ref-iis = <0>;
+	sample-rate = <16000>;
+	assigned-clocks = <&cmu CLK_PDM0_AXI>;
+	assigned-clock-rates = <200000000>;
+	status = "okay";
+};
+
 &pwm {
 	status = "okay";
 	nexell,pwm-outputs = <0>, <1>, <2>, <3>;
@@ -248,6 +290,16 @@
 	status = "okay";
 	otg,vbus-gpio = <&gpio_c 12 0>;
 	ehci,vbus-gpio = <&gpio_b 23 0>;
+};
+
+&i2s0_bus {
+	nexell,pin-pull = <NX_PIN_PULL_UP>;
+};
+
+&i2s0 {
+	frame-bit = <32>;
+	sample-rate = <48000>;
+	status = "okay";
 };
 
 &i2s1 {
