@@ -219,6 +219,7 @@ nxp3220_clk_register_composite_one(struct nexell_clk_data *ctx,
 
 		div_ops = &clk_divider_ops;
 		div->reg = ctx->reg + comp->div_offset;
+		div->width = comp->div_width;
 		div->shift = comp->div_shift;
 		div->flags = comp->div_flags;
 		div->lock = &ctx->lock;
