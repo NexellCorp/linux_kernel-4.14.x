@@ -554,7 +554,7 @@ static const struct nexell_gate_clock sys_gate_clks[] __initconst = {
 	GATE_SYS(CLK_CAN1_APB, "can1_apb", "div_sys_sys0_apb",
 		  SYS0_AXI + 0x14, 3, 0, 0),
 	GATE_SYS(CLK_TMU0_APB, "tmu0_apb", "div_sys_sys0_apb",
-		  SYS0_AXI + 0x14, 4, 0, 0),
+		  SYS0_AXI + 0x14, 4, CLK_IS_CRITICAL, 0),
 	GATE_SYS(CLK_DMA0_APB, "dma0_apb", "div_sys_sys0_apb",
 		  SYS0_AXI + 0x14, 5, 0, 0),
 	GATE_SYS(CLK_SSS0_APB, "sss0_apb", "div_sys_sys0_apb",
