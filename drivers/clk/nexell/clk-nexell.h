@@ -189,7 +189,7 @@ struct nexell_composite_clock {
 	.mux_offset	= o,				\
 	.mux_shift	= s,				\
 	.mux_width	= w,				\
-	.mux_flags	= (mf) | CLK_SET_RATE_NO_REPARENT, \
+	.mux_flags	= mf,				\
 
 #define COMP_MUX_NONE					\
 	.has_mux	= false,			\
