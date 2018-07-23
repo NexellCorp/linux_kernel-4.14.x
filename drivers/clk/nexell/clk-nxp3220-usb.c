@@ -40,7 +40,7 @@ static void __init nxp3220_cmu_usb_init(struct device_node *np)
 
 	reg = of_iomap(np, 0);
 	if (!reg) {
-		pr_err("%s: Failed to get base ausbess\n", __func__);
+		pr_err("%s: Failed to get base address\n", __func__);
 		return;
 	}
 
