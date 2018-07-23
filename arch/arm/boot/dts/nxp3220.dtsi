@@ -228,11 +228,48 @@
 			       <&cmu_ddr CLK_DDR_DIV_PLL_DDR0>,
 			       <&cmu_ddr CLK_DDR_DIV_PLL_DDR1>;
 
-			assigned-clocks = <&cmu CLK_SRC_I2C0_APB>,
-					  <&cmu CLK_SYS_DIV_I2C0_APB>,
-					  <&pll_0 0>;
-			assigned-clock-parents = <&pll_0 0>;
-			assigned-clock-rates = <0>, <100000000>, <1000000000>;
+			assigned-clocks = <&pll_0 0>,
+					  <&cmu CLK_SRC_TIMER0_TCLK0>,
+					  <&cmu CLK_SRC_TIMER0_TCLK1>,
+					  <&cmu CLK_SRC_SDMMC0_CORE>,
+					  <&cmu CLK_SRC_SDMMC1_CORE>,
+					  <&cmu CLK_SRC_SDMMC2_CORE>,
+					  <&cmu CLK_SRC_I2C0_APB>,
+					  <&cmu CLK_SRC_USB0_AHB>,
+					  <&cmu CLK_SRC_GMAC_RGMII0_PTP_REF>,
+					  <&cmu CLK_SRC_GMAC_RGMII0_TX>,
+					  <&cmu CLK_SRC_GMAC_RMII0_PTP_REF>,
+					  <&cmu CLK_SYS_DIV_SYS0_HSIF_APB>,
+					  <&cmu CLK_SYS_DIV_SYS0_HSIF_AXI>,
+					  <&cmu CLK_SYS_DIV_I2C0_APB>;
+			assigned-clock-parents = <0>,
+						 <&pll_0 0>,
+						 <&pll_0 0>,
+						 <&cmu CLK_PLL1_DIV>,
+						 <&pll_0 0>,
+						 <&pll_0 0>,
+						 <&pll_0 0>,
+						 <&pll_0 0>,
+						 <&pll_0 0>,
+						 <&pll_0 0>,
+						 <&pll_0 0>,
+						 <0>,
+						 <0>,
+						 <0>;
+			assigned-clock-rates = <1000000000>,
+					       <0>,
+					       <0>,
+					       <400000000>,
+					       <200000000>,
+					       <200000000>,
+					       <0>,
+					       <250000000>,
+					       <25000000>,
+					       <125000000>,
+					       <25000000>,
+					       <125000000>,
+					       <250000000>,
+					       <100000000>;
 		};
 
 		cmu_cpu: clock-controller@22000000 {
@@ -289,9 +326,6 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0x26080000 0x1000>;
-			assigned-clocks = <&cmu CLK_SRC_SDMMC0_CORE>,
-					  <&pll_0 0>;
-			assigned-clock-parents = <&pll_0 0>;
 			clock-frequency = <400000000>;
 			clock-names = "biu", "ciu";
 			clocks = <&cmu CLK_SDMMC0_AHB>,
@@ -309,10 +343,7 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0x26090000 0x1000>;
-			assigned-clocks = <&cmu CLK_SRC_SDMMC1_CORE>,
-					  <&pll_0 0>;
-			assigned-clock-parents = <&pll_0 0>;
-			clock-frequency = <400000000>;
+			clock-frequency = <200000000>;
 			clock-names = "biu", "ciu";
 			clocks = <&cmu CLK_SDMMC1_AHB>,
 			         <&cmu CLK_SDMMC1_CORE>;
@@ -329,10 +360,7 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0x260a0000 0x1000>;
-			assigned-clocks = <&cmu CLK_SRC_SDMMC2_CORE>,
-					  <&pll_0 0>;
-			assigned-clock-parents = <&pll_0 0>;
-			clock-frequency = <400000000>;
+			clock-frequency = <200000000>;
 			clock-names = "biu","ciu";
 			clocks = <&cmu CLK_SDMMC2_AHB>,
 			         <&cmu CLK_SDMMC2_CORE>;
