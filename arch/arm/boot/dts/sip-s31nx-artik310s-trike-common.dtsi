@@ -59,6 +59,7 @@
 	cap-sd-highspeed;
 	cd-gpios = <&gpio_b 24 0>;
 	cd-inverted;
+	clock-frequency = <200000000>;
 	nexell,drive_shift = <0x01>;
 	nexell,sample_shift = <0x00>;
 	card-detect-delay = <200>;
@@ -170,6 +171,10 @@
 	status = "okay";
 	assigned-clocks = <&cmu CLK_CAN1_CORE>;
 	assigned-clock-rates = <10000000>;
+};
+
+&mmc2_clk {
+	nexell,pin-strength = <NX_PIN_STR1>;
 };
 
 &ohci {
