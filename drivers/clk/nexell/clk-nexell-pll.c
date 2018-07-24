@@ -136,9 +136,14 @@ static int clk_pll_ready(struct clk_pll *pll)
 
 static inline void clk_pll_wait_ready(struct clk_pll *pll)
 {
-	/* TODO: add counter to prevent infinite loop */
-	while (clk_pll_ready(pll))
-		cpu_relax();
+	int count = 1000;
+	while (clk_pll_ready(pll) && count >= 0) {
+		udelay(1);
+		count--;
+	}
+
+	if (count < 0)
+		pr_warn("failed to wait a pll can be stable\n");
 }
 
 static long pll_round_rate(struct clk_pll *pll, unsigned long rate,
