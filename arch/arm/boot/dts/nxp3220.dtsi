@@ -123,6 +123,11 @@
 		arm,cpu-registers-not-fw-configured;
 	};
 
+	nx_v4l2: nx-v4l2 {
+		compatible = "nexell,nx-v4l2";
+		status = "disabled";
+	};
+
 	soc: soc {
 		compatible = "simple-bus";
 		#address-cells = <1>;
