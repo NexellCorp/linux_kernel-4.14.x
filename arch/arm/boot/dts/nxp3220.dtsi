@@ -953,6 +953,12 @@
 			module = <0>;
 			status = "disabled";
 		};
+
+		clipper: clipper@25100000 {
+			compatible = "nexell,nxp3220-clipper";
+			module = <0>;
+			status = "disabled";
+		};
 	};
 };
 
