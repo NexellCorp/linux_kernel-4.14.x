@@ -2,6 +2,7 @@
 
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 #include <dt-bindings/clock/nxp3220-clk.h>
+#include <dt-bindings/media/nxp3220-vip.h>
 
 / {
 	compatible = "nexell,nxp3220";
@@ -939,6 +940,17 @@
 			assigned-clock-rates = <250000000>;
 			clocks = <&cmu_usb CLK_USB_AHB>, <&cmu_usb CLK_USB_SYSREG_APB>;
 			clock-names = "ahb", "apb";
+			status = "disabled";
+		};
+
+		vip: vip@25100000 {
+			compatible = "nexell,nxp3220-vip";
+			reg = <0x25100000 0x1000>;
+			interrupts = <GIC_SPI 124 IRQ_TYPE_NONE>;
+			clock-names = "vip_axi", "vip_apb";
+			clocks = <&cmu_mm CLK_MM_VIP_AXI>,
+			       <&cmu_mm CLK_MM_VIP_APB>;
+			module = <0>;
 			status = "disabled";
 		};
 	};
