@@ -608,4 +608,20 @@
 		nexell,pin-pull = <NX_PIN_PULL_NONE>;
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
+
+	vid_data_clk: vid-data-clk {
+		nexell,pins = "gpioa-0", "gpioa-1", "gpioa-2", "gpioa-3",
+			      "gpioa-4", "gpioa-5", "gpioa-6", "gpioa-7",
+			      "gpioa-8", "gpioa-9", "gpioa-10", "gpioa-13";
+		nexell,pin-function = <NX_PIN_FUNC3>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	vid_sync: vid-sync {
+		nexell,pins = "gpioa-11", "gpioa-12";
+		nexell,pin-function = <NX_PIN_FUNC3>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
 };
