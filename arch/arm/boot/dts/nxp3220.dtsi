@@ -959,6 +959,12 @@
 			module = <0>;
 			status = "disabled";
 		};
+
+		decimator: decimator@25100000 {
+			compatible = "nexell,nx3220-decimator";
+			module = <0>;
+			status = "disabled";
+		};
 	};
 };
 
