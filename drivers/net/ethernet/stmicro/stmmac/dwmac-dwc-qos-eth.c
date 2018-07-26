@@ -478,9 +478,6 @@ static void *nxp3220_qos_probe(struct platform_device *pdev,
 	eqos->dev = dev;
 	eqos->regs = res->addr;
 
-	/* FIFO wake */
-	writel(1, eqos->regs + 0x4000);
-
 	/* Master(AXI) Clock */
 	eqos->clk_master = devm_clk_get(dev, "master_bus");
 	if (IS_ERR(eqos->clk_master)) {
@@ -522,6 +519,9 @@ static void *nxp3220_qos_probe(struct platform_device *pdev,
 		dev_err(dev, "ptp_ref clock error\n");
 		goto disable_slave;
 	}
+
+	/* FIFO wake */
+	writel(1, eqos->regs + 0x4000);
 
 	dev_dbg(dev, " eqos slave : %lu\n", clk_get_rate(eqos->clk_slave));
 	dev_dbg(dev, " eqos master : %lu\n", clk_get_rate(eqos->clk_master));
