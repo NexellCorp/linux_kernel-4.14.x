@@ -581,8 +581,7 @@ static void nx_pdm_sync_clk(struct nx_pdm_data *pdm)
 	if (IS_ERR(pdm->syscon))
 		return;
 
-	if (pdm->sync_type != pdm_sync_none)
-		val = pdm->ref_iis & 0x3;
+	val = pdm->ref_iis & 0x3;
 
 	if (pdm->sync_type == pdm_sync_mclk)
 		val |= 1 << 2;
