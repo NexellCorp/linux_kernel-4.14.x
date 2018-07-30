@@ -794,6 +794,8 @@
 			clock-names = "core", "apb";
 			#address-cells = <1>;
 			#size-cells = <0>;
+			dmas = <&pdma0 0>, <&pdma0 1>;
+			dma-names = "tx", "rx";
 			num-cs = <1>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&spi0_bus>;
@@ -809,6 +811,8 @@
 			clock-names = "core", "apb";
 			#address-cells = <1>;
 			#size-cells = <0>;
+			dmas = <&pdma1 0>, <&pdma1 1>;
+			dma-names = "tx", "rx";
 			num-cs = <1>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&spi1_bus>;
@@ -824,6 +828,8 @@
 			clock-names = "core", "apb";
 			#address-cells = <1>;
 			#size-cells = <0>;
+			dmas = <&pdma0 2>, <&pdma0 3>;
+			dma-names = "tx", "rx";
 			num-cs = <1>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&spi2_bus>;
