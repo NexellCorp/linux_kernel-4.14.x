@@ -118,6 +118,13 @@ static void nx_gpio_set_output_value(u32 idx, u32 bitnum, bool value)
 	nx_gpio_setbit(base + GPIO_OUT, bitnum, value);
 }
 
+static bool nx_gpio_get_output_value(u32 idx, u32 bitnum)
+{
+	void __iomem *base = gpio_modules[idx].gpio_regs;
+
+	return nx_gpio_getbit(base + GPIO_OUT, bitnum);
+}
+
 static bool nx_gpio_get_input_value(u32 idx, u32 bitnum)
 {
 	void __iomem *base = gpio_modules[idx].gpio_regs;
@@ -600,7 +607,7 @@ void nx_soc_gpio_set_out_value(unsigned int io, int high)
 	};
 }
 
-int nx_soc_gpio_get_in_value(unsigned int io)
+static int nx_soc_gpio_get_in_value(unsigned int io)
 {
 	unsigned int grp = PAD_GET_GROUP(io);
 	unsigned int bit = PAD_GET_BITNO(io);
@@ -627,6 +634,52 @@ int nx_soc_gpio_get_in_value(unsigned int io)
 		pr_err("fail gpio io:%d, group:%d (%s)\n", io, grp, __func__);
 		break;
 	};
+
+	return val;
+}
+
+static int nx_soc_gpio_get_out_value(unsigned int io)
+{
+	unsigned int grp = PAD_GET_GROUP(io);
+	unsigned int bit = PAD_GET_BITNO(io);
+	int val = -1;
+
+	pr_debug("%s (%d.%02d)\n", __func__, grp, bit);
+
+	switch (io & ~(32 - 1)) {
+	case PAD_GPIO_A:
+	case PAD_GPIO_B:
+	case PAD_GPIO_C:
+	case PAD_GPIO_D:
+	case PAD_GPIO_E:
+		IO_LOCK(grp);
+		val = nx_gpio_get_output_value(grp, bit) ? 1 : 0;
+		IO_UNLOCK(grp);
+		break;
+	case PAD_GPIO_ALV:
+		IO_LOCK(grp);
+		val = nx_alive_get_input_value(alive_regs, bit) ? 1 : 0;
+		IO_UNLOCK(grp);
+		break;
+	default:
+		pr_err("fail gpio io:%d, group:%d (%s)\n", io, grp, __func__);
+		break;
+	};
+
+	return val;
+}
+
+int nx_soc_gpio_get_value(unsigned int io)
+{
+	int val, dir;
+
+	dir = nx_soc_gpio_get_io_dir(io);
+	if (dir == 1)	/* Output */
+		val = nx_soc_gpio_get_out_value(io);
+	else if (dir == 0)	/* Input */
+		val = nx_soc_gpio_get_in_value(io);
+	else
+		val = -1;
 
 	return val;
 }

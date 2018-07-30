@@ -277,13 +277,13 @@ static void nexell_get_group_status(struct pinctrl_dev *pctldev,
 		seq_printf(s, "\t: Func(%d), Dir(%d), Val(%d), Pull(%d), Drv(%d)",
 				nx_soc_gpio_get_io_func(offset),
 				nx_soc_gpio_get_io_dir(offset),
-				nx_soc_gpio_get_in_value(offset),
+				nx_soc_gpio_get_value(offset),
 				nx_soc_gpio_get_io_pull(offset),
 				nx_soc_gpio_get_io_drv(offset));
 	} else {
 		seq_printf(s, "\t: Func(N), Dir(%d), Val(%d), Pull(%d), Drv(N)",
 				nx_soc_gpio_get_io_dir(offset),
-				nx_soc_gpio_get_in_value(offset),
+				nx_soc_gpio_get_value(offset),
 				nx_soc_gpio_get_io_pull(offset));
 	}
 }
@@ -426,7 +426,7 @@ static int nexell_soc_read_pin(unsigned int io,
 
 	switch (cfg_type) {
 	case PINCFG_TYPE_DAT:
-		*data = nx_soc_gpio_get_in_value(io);
+		*data = nx_soc_gpio_get_value(io);
 		break;
 	case PINCFG_TYPE_PULL:
 		*data = nx_soc_gpio_get_io_pull(io);
@@ -572,7 +572,7 @@ static int nx_gpio_get(struct gpio_chip *gc, unsigned int offset)
 	int io;
 
 	io = bank->grange.pin_base + offset;
-	data = nx_soc_gpio_get_in_value(io);
+	data = nx_soc_gpio_get_value(io);
 
 	return data;
 }

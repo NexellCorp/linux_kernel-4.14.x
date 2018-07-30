@@ -191,7 +191,7 @@ int nx_soc_gpio_get_io_pull(unsigned int io);
 void nx_soc_gpio_set_io_drv(int gpio, int mode);
 int nx_soc_gpio_get_io_drv(int gpio);
 void nx_soc_gpio_set_out_value(unsigned int io, int high);
-int nx_soc_gpio_get_in_value(unsigned int io);
+int nx_soc_gpio_get_value(unsigned int io);
 int nx_soc_is_gpio_pin(unsigned int io);
 
 #endif	/* __PINCTRL_NEXELL_H */
