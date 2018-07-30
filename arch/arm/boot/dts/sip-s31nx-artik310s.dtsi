@@ -307,21 +307,18 @@
 				regulator-name = "VDD_BT_WLAN_IO_3P3";
 				regulator-min-microvolt = <3300000>;
 				regulator-max-microvolt = <3300000>;
-				regulator-always-on;
 			};
 
 			ldo17_reg: LDO17 {
 				regulator-name = "VDD_BT_WLAN_2P2";
 				regulator-min-microvolt = <2200000>;
 				regulator-max-microvolt = <2200000>;
-				regulator-always-on;
 			};
 
 			ldo18_reg: LDO18 {
 				regulator-name = "VDD_BT_WLAN_1P8";
 				regulator-min-microvolt = <1800000>;
 				regulator-max-microvolt = <1800000>;
-				regulator-always-on;
 			};
 
 			ldo20_reg: LDO20 {
