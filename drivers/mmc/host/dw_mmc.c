@@ -3154,6 +3154,15 @@ static void dw_mci_parse_custom_dt(struct dw_mci *host)
 		 dev_info(dev, "%s: supports detect complete\n",
 				   mmc_hostname(slot->mmc));
 	}
+
+	if (of_find_property(np, "no-prescan-powerup", NULL)) {
+		struct dw_mci_slot *slot = host->slot;
+		if (!slot)
+			return;
+		slot->mmc->caps2 |= MMC_CAP2_NO_PRESCAN_POWERUP;
+		dev_info(dev, "%s: add MMC_CAP2_NO_PRESCAN_POWERUP, mmc->caps2=0x%x\n",
+				mmc_hostname(slot->mmc), slot->mmc->caps);
+	}
 }
 #else /* CONFIG_OF */
 static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
