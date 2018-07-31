@@ -367,6 +367,7 @@
 	broken-cd;
 	clock-frequency = <200000000>;
 	supports-detect-complete;
+	no-prescan-powerup;
 
 	nexell,drive_shift = <0x2>;
 	nexell,sample_shift = <0x2>;
