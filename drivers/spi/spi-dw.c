@@ -247,6 +247,10 @@ static irqreturn_t interrupt_transfer(struct dw_spi *dws)
 		spi_umask_intr(dws, SPI_INT_TXEI);
 	}
 
+	/* Clear RXFIFO full status */
+	if (irq_status & SPI_INT_RXFI)
+		dw_readl(dws, DW_SPI_ICR);
+
 	return IRQ_HANDLED;
 }
 
