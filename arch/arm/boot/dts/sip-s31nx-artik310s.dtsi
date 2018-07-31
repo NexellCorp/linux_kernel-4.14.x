@@ -57,6 +57,9 @@
 		 sd-host = <&dwmmc_1>;
 		 pd-gpio = <&alive_0 4 0>; /* AliveGPIO4=AP_COMBO_PDN output*/
 		 gpios = <&alive_0 3 1>; /* AliveGPIO3=COMBE_HOST_WAKE, input */
+		 vdd_bt_wlna_io_3p3-supply = <&ldo16_reg>;  /* PVDD_LDO16_3P3 */
+		 vdd_bt_wlna_2p2-supply = <&ldo17_reg>;     /* PVDD_LDO17_2P2 */
+		 vdd_bt_wlna_1p8-supply = <&ldo18_reg>;     /* PVDD_LDO18_1P8 */
 		 status = "okay";
 	};
 
