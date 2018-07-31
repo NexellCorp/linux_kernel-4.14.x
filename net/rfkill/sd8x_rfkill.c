@@ -139,74 +139,78 @@ static struct sd8x_rfkill_platform_data
  */
 static int sd8x_pwr_ctrl(struct sd8x_rfkill_platform_data *pdata, int on)
 {
+	int err;
  	int gpio_power_down = pdata->gpio_power_down;
-	int gpio_bt_wlan_1p8 = pdata->gpio_bt_wlan_1p8;
-	int gpio_wlan_2p2 = pdata->gpio_wlan_2p2;
 	pr_info("%s: on=%d\n", __func__, on);
 
-	if (gpio_power_down >= 0) {
+	if (gpio_power_down >= 0)
 		if (gpio_request(gpio_power_down, "sd8xxx power down")) {
 			pr_info("gpio power down %d request failed\n", gpio_power_down);
 			return -1;
 		}
-	}
-	if (gpio_bt_wlan_1p8 >= 0) {
-		if (gpio_request(gpio_bt_wlan_1p8, "sd8xxx bt_wlan_1p8")) {
-			pr_info("gpio bt_wlan_1p8 %d request failed\n",
-				gpio_bt_wlan_1p8);
-			return -1;
-		}
-	}
-	if (gpio_wlan_2p2 >= 0) {
-		if (gpio_request(gpio_wlan_2p2, "sd8xxx wlan_2p2")) {
-			pr_info("gpio wlan_2p2 %d request failed\n",
-				gpio_wlan_2p2);
-			return -1;
-		}
-	}
+
+	if (pdata->is_on == 1 && on)
+		pr_info("%s: already on. skip to turn on\n", __func__);
+
+	if (pdata->is_on != 1  && !on)
+		pr_info("%s: already off. skip to turn off\n", __func__);
 
 	if (on) {
+		/* PMIC_EN must be asserted a minimum of 100 ms to guarantee that
+		 * VCORE and AVDD18 are discharged to less than 0.2V for the POR
+		 * to generate properly after PMIC_EN is deasserted.
+		 */
+		msleep(100);
 
-		if (gpio_power_down >= 0) {
-			gpio_direction_output(gpio_power_down, 0);
-			if (gpio_bt_wlan_1p8 >= 0)
-				gpio_direction_output(gpio_bt_wlan_1p8, 0);
-			if (gpio_wlan_2p2 >= 0)
-				gpio_direction_output(gpio_wlan_2p2, 0);
-			msleep(10);
-			if (gpio_wlan_2p2 >= 0)
-				gpio_direction_output(gpio_wlan_2p2, 1);
-			if (gpio_bt_wlan_1p8 >= 0)
-				gpio_direction_output(gpio_bt_wlan_1p8, 1);
-			msleep(10);
-			gpio_direction_output(gpio_power_down, 1);
+		err = regulator_enable(pdata->reg_3v3);
+		if (err) {
+			pr_err("%s: failed to enable regulator (3v3): %d", __func__, err);
+			return err;
 		}
-
-			msleep(1);
+		msleep(1);
+		/* VPA must be good (90%) before AVDD18 starts ramping up. */
+		err = regulator_enable(pdata->reg_2v2);
+		if (err) {
+			pr_err("%s: failed to enable regulator (2v2): %d", __func__, err);
+			return err;
+		}
+		msleep(1);
+		err = regulator_enable(pdata->reg_1v8);
+		if (err) {
+			pr_err("%s: failed to enable regulator (1v8): %d", __func__, err);
+			return err;
+		}
+		msleep(10);
+		gpio_direction_output(gpio_power_down, 1);
 	} else {
-		if (gpio_power_down >= 0) {
-			gpio_direction_output(gpio_power_down, 0);
-			if (gpio_bt_wlan_1p8 >= 0)
-				gpio_direction_output(gpio_bt_wlan_1p8, 0);
-			if (gpio_wlan_2p2 >= 0)
-				gpio_direction_output(gpio_wlan_2p2, 0);
+		gpio_direction_output(gpio_power_down, 0);
+		msleep(1);
+		err = regulator_disable(pdata->reg_3v3);
+		if (err) {
+			pr_err("%s: failed to disable regulator (3v3): %d", __func__, err);
+			return err;
+		}
+		msleep(1);
+		/* In this case, VPA will ramp-down before AVDD18 in order for
+		 * the RF PA to turn off (depends on the control logic generated
+		 * from AVDD18)
+		 */
+		err = regulator_disable(pdata->reg_2v2);
+		if (err) {
+			pr_err("%s: failed to disable regulator (2v2): %d", __func__, err);
+			return err;
+		}
+		msleep(1);
+		err = regulator_disable(pdata->reg_1v8);
+		if (err) {
+			pr_err("%s: failed to disable regulator (1v8): %d", __func__, err);
+			return err;
 		}
 	}
 	printk("### power_down=%d ####\n", gpio_get_value(gpio_power_down));
-	if (gpio_bt_wlan_1p8 >= 0)
-		printk("### bt_wlan_1p8=%d ####\n",
-			gpio_get_value(gpio_bt_wlan_1p8));
-	if (gpio_wlan_2p2 >= 0)
-		printk("### wlan_2p2=%d ####\n",
-			gpio_get_value(gpio_wlan_2p2));
 
 	if (gpio_power_down >= 0)
 		gpio_free(gpio_power_down);
-	if (gpio_bt_wlan_1p8 >= 0)
-		gpio_free(gpio_bt_wlan_1p8);
-	if (gpio_wlan_2p2>= 0)
-		gpio_free(gpio_wlan_2p2);
-
 	return 0;
 }
 
@@ -522,6 +526,7 @@ static int sd8x_rfkill_probe_dt(struct platform_device *pdev)
 	struct platform_device *sdh_pdev;
 	struct dw_mci *host;
 	int sdh_phandle, gpio;
+	int err;
 
 	/* Get PD/RST pins status */
 	pdata->pinctrl = devm_pinctrl_get(&pdev->dev);
@@ -595,20 +600,31 @@ static int sd8x_rfkill_probe_dt(struct platform_device *pdev)
 		pdata->gpio_power_down = gpio;
 	}
 
-	gpio = of_get_named_gpio(np, "bt-wlan-1p8-gpio", 0);
-	if (unlikely(gpio < 0)) {
-		dev_err(&pdev->dev, "bt-wlan-1p8-gpio undefined\n");
-		pdata->gpio_bt_wlan_1p8 = -1;
-	} else {
-		pdata->gpio_bt_wlan_1p8 = gpio;
+	pdata->reg_3v3 = devm_regulator_get(&pdev->dev, "vdd_bt_wlna_io_3p3");
+	err = PTR_ERR_OR_ZERO(pdata->reg_3v3);
+	if (err) {
+		if (err != -EPROBE_DEFER)
+			dev_err(&pdev->dev, "Failed to request regulator: %d",
+				err);
+		return err;
 	}
 
-	gpio = of_get_named_gpio(np, "wlan-2p2-gpio", 0);
-	if (unlikely(gpio < 0)) {
-		dev_err(&pdev->dev, "wlan-2p2-gpio undefined\n");
-		pdata->gpio_wlan_2p2 = -1;
-	} else {
-		pdata->gpio_wlan_2p2 = gpio;
+	pdata->reg_2v2 = devm_regulator_get(&pdev->dev, "vdd_bt_wlna_2p2");
+	err = PTR_ERR_OR_ZERO(pdata->reg_2v2);
+	if (err) {
+		if (err != -EPROBE_DEFER)
+			dev_err(&pdev->dev, "Failed to request regulator: %d",
+				err);
+		return err;
+	}
+
+	pdata->reg_1v8 = devm_regulator_get(&pdev->dev, "vdd_bt_wlna_1p8");
+	err = PTR_ERR_OR_ZERO(pdata->reg_1v8);
+	if (err) {
+		if (err != -EPROBE_DEFER)
+			dev_err(&pdev->dev, "Failed to request regulator: %d",
+				err);
+		return err;
 	}
 
 	return 0;
@@ -662,7 +678,7 @@ static int sd8x_rfkill_probe(struct platform_device *pdev)
 	 * devices by default
 	 * TODO: enhance it if there is different choose in future
 	 */
-	sd8x_pwr_ctrl(pdata, 0);
+	/* sd8x_pwr_ctrl(pdata, 0); */
 	pdata->is_on = 0;
 
 	/*
