@@ -59,15 +59,7 @@
 };
 
 &mmc2_clk {
-	nexell,pin-strength = <NX_PIN_STR3>;
-};
-
-&mmc2_cmd {
-	nexell,pin-strength = <NX_PIN_STR3>;
-};
-
-&mmc2_bus4 {
-	nexell,pin-strength = <NX_PIN_STR3>;
+	nexell,pin-strength = <NX_PIN_STR1>;
 };
 
 &spi_2 {
