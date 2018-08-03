@@ -8,6 +8,7 @@ static int nx_otg_phy_power_on(struct nx_usb2_phy *p)
 {
 	struct nx_usb2_phy_pdata *pdata = p->pdata;
 	void __iomem *base = pdata->base;
+	int vbus_tune = p->vbus_tune_val;
 
 	dev_dbg(pdata->dev, "power on '%s'\n", p->label);
 
@@ -15,6 +16,21 @@ static int nx_otg_phy_power_on(struct nx_usb2_phy *p)
 	 * Must be enabled 'adb400 blk usb cfg' and 'data adb'
 	 * 'adb400 blk usb cfg' and 'data adb' is shared EHCI
 	 */
+
+	/*
+	 * Set OTGTUNE[9:6] :
+	 * This bus adjusts the voltage level for the VBUS Valid threshold
+	 * 111: + 9%
+	 * 110: + 6%
+	 * 101: + 3%
+	 * 100: Design default
+	 * 011: - 3%
+	 * 010: - 6%
+	 * 001: - 9%
+	 * 000: - 12%
+	 */
+	writel(readl(base + 0x88) & ~(7 << 6), base + 0x88);
+	writel(readl(base + 0x88) | ((vbus_tune & 7) << 6), base + 0x88);
 
 	/*
 	 * PHY POR release
@@ -227,7 +243,9 @@ static struct nx_usb2_phy nxp3220_usb2_phys[] = {
 	{
 		.label = "dwc2otg",
 		.vbus_gpio = "otg,vbus-gpio",
+		.vbus_tune = "otg,vbus-tune",
 		.bus_width = 16,
+		.vbus_tune_val = 4,
 		.power_on = nx_otg_phy_power_on,
 		.power_off = nx_otg_phy_power_off,
 	},

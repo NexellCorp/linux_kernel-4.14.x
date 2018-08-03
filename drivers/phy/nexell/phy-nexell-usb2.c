@@ -23,8 +23,10 @@ struct nx_usb2_phy {
 	void __iomem *base;
 	const char *label;
 	const char *vbus_gpio;
+	const char *vbus_tune;
 	int port;
 	int bus_width;
+	int vbus_tune_val;
 	struct nx_usb2_phy_pdata *pdata;
 	int (*probe)(struct nx_usb2_phy *p);
 	int (*power_on)(struct nx_usb2_phy *p);
@@ -229,6 +231,10 @@ static int nx_usb2_phy_probe(struct platform_device *pdev)
 			if (ret)
 				continue;
 		}
+
+		if (p->vbus_tune)
+			of_property_read_u32(dev->of_node,
+					p->vbus_tune, &p->vbus_tune_val);
 
 		pdata->phys[i] = p;
 		phy_set_bus_width(p->phy, p->bus_width);
