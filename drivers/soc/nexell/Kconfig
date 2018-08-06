@@ -1,0 +1,6 @@
+#
+# Nexell SoC drivers
+#
+if ARCH_SIP_S31NX || ARCH_NXP3220
+source "drivers/soc/nexell/nxp3220/Kconfig"
+endif
