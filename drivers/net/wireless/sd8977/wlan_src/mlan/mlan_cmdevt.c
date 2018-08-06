@@ -485,7 +485,6 @@ wlan_process_hostcmd_cfg(IN pmlan_private pmpriv, IN t_u16 cfg_type,
 	HostCmd_DS_GEN *pcmd = MNULL;
 	HostCmd_DS_802_11_CFG_DATA *pcfg_cmd = MNULL;
 	mlan_adapter *pmadapter = MNULL;
-	mlan_callbacks *pcb = (mlan_callbacks *)&pmadapter->callbacks;
 
 	ENTER();
 	if (!pmpriv) {
@@ -494,6 +493,7 @@ wlan_process_hostcmd_cfg(IN pmlan_private pmpriv, IN t_u16 cfg_type,
 		return MLAN_STATUS_FAILURE;
 	}
 	pmadapter = pmpriv->adapter;
+	mlan_callbacks *pcb = (mlan_callbacks *)&pmadapter->callbacks;
 	ret = pcb->moal_malloc(pmadapter->pmoal_handle,
 			       sizeof(mlan_ds_misc_cmd), MLAN_MEM_DEF,
 			       (t_u8 **)&hostcmd);
