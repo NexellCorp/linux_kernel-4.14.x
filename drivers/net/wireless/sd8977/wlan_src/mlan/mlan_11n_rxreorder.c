@@ -3,7 +3,7 @@
  *  @brief This file contains the handling of RxReordering in wlan
  *  driver.
  *
- *  Copyright (C) 2008-2016, Marvell International Ltd.
+ *  Copyright (C) 2008-2018, Marvell International Ltd.
  *
  *  This software file (the "File") is distributed by Marvell International
  *  Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -77,18 +77,26 @@ wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer pmbuf)
  *
  *  @param priv     A pointer to mlan_private
  *  @param payload  A pointer to rx packet payload
+ *  @param rx_reor_tbl_ptr       pointer to RxReorderTbl
  *
  *  @return         MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
  */
 static mlan_status
-wlan_11n_dispatch_pkt(t_void *priv, t_void *payload)
+wlan_11n_dispatch_pkt(t_void *priv, t_void *payload,
+		      RxReorderTbl *rx_reor_tbl_ptr)
 {
 	mlan_status ret = MLAN_STATUS_SUCCESS;
-#ifdef STA_SUPPORT
 	pmlan_adapter pmadapter = ((pmlan_private)priv)->adapter;
-#endif
+
 	ENTER();
 	if (payload == (t_void *)RX_PKT_DROPPED_IN_FW) {
+		LEAVE();
+		return ret;
+	}
+	if (ISSUPP_RSN_REPLAY_DETECTION(pmadapter->fw_cap_info) &&
+	    rx_reor_tbl_ptr &&
+	    wlan_is_rsn_replay_attack((mlan_private *)priv, payload,
+				      rx_reor_tbl_ptr)) {
 		LEAVE();
 		return ret;
 	}
@@ -194,7 +202,8 @@ wlan_11n_dispatch_pkt_until_start_win(t_void *priv,
 							    pmpriv->
 							    rx_pkt_lock);
 		if (rx_tmp_ptr)
-			wlan_11n_dispatch_pkt(priv, rx_tmp_ptr);
+			wlan_11n_dispatch_pkt(priv, rx_tmp_ptr,
+					      rx_reor_tbl_ptr);
 	}
 
 	pmpriv->adapter->callbacks.moal_spin_lock(pmpriv->adapter->pmoal_handle,
@@ -276,7 +285,7 @@ wlan_11n_scan_and_dispatch(t_void *priv, RxReorderTbl *rx_reor_tbl_ptr)
 							    pmoal_handle,
 							    pmpriv->
 							    rx_pkt_lock);
-		wlan_11n_dispatch_pkt(priv, rx_tmp_ptr);
+		wlan_11n_dispatch_pkt(priv, rx_tmp_ptr, rx_reor_tbl_ptr);
 	}
 
 	pmpriv->adapter->callbacks.moal_spin_lock(pmpriv->adapter->pmoal_handle,
@@ -494,11 +503,6 @@ wlan_11n_create_rxreorder_tbl(mlan_private *priv, t_u8 *ta, int tid,
 				if (sta_ptr)
 					last_seq = sta_ptr->rx_seq[tid];
 			}
-			if (priv->bss_mode == MLAN_BSS_MODE_IBSS) {
-				sta_ptr = wlan_get_station_entry(priv, ta);
-				if (sta_ptr)
-					last_seq = sta_ptr->rx_seq[tid];
-			}
 			PRINTM(MINFO, "UAP/ADHOC:last_seq=%d start_win=%d\n",
 			       last_seq, new_node->start_win);
 		} else {
@@ -644,8 +648,6 @@ t_u8
 wlan_is_addba_reject(mlan_private *priv, t_u8 tid)
 {
 #ifdef STA_SUPPORT
-	if (priv->bss_mode == MLAN_BSS_MODE_IBSS)
-		return priv->ibss_addba_reject[tid];
 #endif
 	return priv->addba_reject[tid];
 }
@@ -696,8 +698,6 @@ wlan_cmd_11n_addba_rspgen(mlan_private *priv,
 		>> BLOCKACKPARAM_TID_POS;
 	if (wlan_is_addba_reject(priv, tid)
 #ifdef STA_SUPPORT
-	    || ((priv->bss_mode == MLAN_BSS_MODE_IBSS)
-		&& !wlan_is_11n_enabled(priv, pevt_addba_req->peer_mac_addr))
 	    || ((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_STA)
 		&& priv->wps.session_enable)
 #endif
@@ -775,6 +775,54 @@ wlan_cmd_11n_delba(mlan_private *priv, HostCmd_DS_COMMAND *cmd, void *pdata_buf)
 }
 
 /**
+ *  @bref This function check PN numbers to detect replay counter attack
+ *  @param pmpriv                pointer to mlan_private
+ *  @param payload               pointer to mlan_buffer
+ *  @param rx_reor_tbl_ptr       pointer to RxReorderTbl
+ *
+ *  @return                      MTRUE/MFALSE
+ */
+t_u8
+wlan_is_rsn_replay_attack(mlan_private *pmpriv, t_void *payload,
+			  RxReorderTbl *rx_reor_tbl_ptr)
+{
+	RxPD *prx_pd = MNULL;
+	pmlan_buffer pmbuf = MNULL;
+	pmlan_adapter pmadapter = pmpriv->adapter;
+
+	ENTER();
+
+	pmbuf = (pmlan_buffer)payload;
+
+	prx_pd = (RxPD *)(pmbuf->pbuf + pmbuf->data_offset);
+
+	if (!(prx_pd->flags & RXPD_FLAG_PN_CHECK_SUPPORT)) {
+		LEAVE();
+		return MFALSE;
+	}
+
+	if ((prx_pd->hi_rx_count32 == rx_reor_tbl_ptr->hi_curr_rx_count32 &&
+	     prx_pd->lo_rx_count16 <= rx_reor_tbl_ptr->lo_curr_rx_count16)
+	    || (rx_reor_tbl_ptr->hi_curr_rx_count32 != 0xffffffff &&
+		prx_pd->hi_rx_count32 < rx_reor_tbl_ptr->hi_curr_rx_count32)) {
+		PRINTM(MERROR,
+		       "Drop packet because of invalid PN value. Last PN:0x%x 0x%x,New PN:0x%x 0x%x\n",
+		       rx_reor_tbl_ptr->hi_curr_rx_count32,
+		       rx_reor_tbl_ptr->lo_curr_rx_count16,
+		       prx_pd->hi_rx_count32, prx_pd->lo_rx_count16);
+		wlan_free_mlan_buffer(pmadapter, pmbuf);
+		LEAVE();
+		return MTRUE;
+	}
+
+	rx_reor_tbl_ptr->lo_curr_rx_count16 = prx_pd->lo_rx_count16;
+	rx_reor_tbl_ptr->hi_curr_rx_count32 = prx_pd->hi_rx_count32;
+
+	LEAVE();
+	return MFALSE;
+}
+
+/**
  *  @brief This function will identify if RxReodering is needed for the packet
  *          and will do the reordering if required before sending it to kernel
  *
@@ -802,7 +850,7 @@ mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid,
 		wlan_11n_get_rxreorder_tbl((mlan_private *)priv, tid, ta);
 	if (!rx_reor_tbl_ptr || rx_reor_tbl_ptr->win_size <= 1) {
 		if (pkt_type != PKT_TYPE_BAR)
-			wlan_11n_dispatch_pkt(priv, payload);
+			wlan_11n_dispatch_pkt(priv, payload, rx_reor_tbl_ptr);
 
 		LEAVE();
 		return ret;
@@ -813,7 +861,7 @@ mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid,
 			wlan_start_flush_data(priv, rx_reor_tbl_ptr);
 		}
 		if ((pkt_type == PKT_TYPE_AMSDU) && !rx_reor_tbl_ptr->amsdu) {
-			wlan_11n_dispatch_pkt(priv, payload);
+			wlan_11n_dispatch_pkt(priv, payload, rx_reor_tbl_ptr);
 			LEAVE();
 			return ret;
 		}
@@ -834,12 +882,13 @@ mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid,
 						/** drop duplicate packet */
 						ret = MLAN_STATUS_FAILURE;
 					} else {
-						/** forward the packet to kernel */
+			/** forward the packet to kernel */
 						rx_reor_tbl_ptr->last_seq =
 							seq_num;
 						if (pkt_type != PKT_TYPE_BAR)
 							wlan_11n_dispatch_pkt
-								(priv, payload);
+								(priv, payload,
+								 rx_reor_tbl_ptr);
 					}
 					LEAVE();
 					return ret;
@@ -1078,12 +1127,17 @@ mlan_11n_delete_bastream_tbl(mlan_private *priv, int tid,
 		}
 		wlan_11n_delete_rxreorder_tbl_entry(priv, rx_reor_tbl_ptr);
 	} else {
-		ptxtbl = wlan_11n_get_txbastream_tbl(priv, tid, peer_mac);
+		wlan_request_ralist_lock(priv);
+		ptxtbl = wlan_11n_get_txbastream_tbl(priv, tid, peer_mac,
+						     MFALSE);
 		if (!ptxtbl) {
 			PRINTM(MWARN, "TID, RA not found in table!\n");
+			wlan_release_ralist_lock(priv);
 			LEAVE();
 			return;
 		}
+		wlan_11n_delete_txbastream_tbl_entry(priv, ptxtbl);
+		wlan_release_ralist_lock(priv);
 		tid_down = wlan_get_wmm_tid_down(priv, tid);
 		ra_list = wlan_wmm_get_ralist_node(priv, tid_down, peer_mac);
 		if (ra_list) {
@@ -1095,12 +1149,14 @@ mlan_11n_delete_bastream_tbl(mlan_private *priv, int tid,
 				else
 					ra_list->del_ba_count++;
 				ra_list->packet_count = 0;
+/** after delba, we will try to set up BA again after sending 1k packets*/
+#define MIN_BA_SETUP_PACKET_REQIRED     1024
 				ra_list->ba_packet_threshold =
+					MIN_BA_SETUP_PACKET_REQIRED +
 					wlan_get_random_ba_threshold(priv->
 								     adapter);
 			}
 		}
-		wlan_11n_delete_txbastream_tbl_entry(priv, ptxtbl);
 	}
 
 	LEAVE();
@@ -1134,8 +1190,9 @@ wlan_ret_11n_addba_resp(mlan_private *priv, HostCmd_DS_COMMAND *resp)
 
 	tid = (padd_ba_rsp->block_ack_param_set & BLOCKACKPARAM_TID_MASK)
 		>> BLOCKACKPARAM_TID_POS;
-	/* Check if we had rejected the ADDBA, if yes then do not create the
-	   stream */
+	/* Check  if we had rejected the ADDBA, if yes then do not create the
+	 * stream
+	 */
 	if (padd_ba_rsp->status_code == BA_RESULT_SUCCESS) {
 		PRINTM(MCMND,
 		       "ADDBA RSP: " MACSTR
@@ -1501,27 +1558,8 @@ wlan_update_ampdu_rxwinsize(pmlan_adapter pmadapter, t_u8 coex_flag)
 #endif
 
 			} else {
-#ifdef STA_SUPPORT
-				if (priv->bss_type == MLAN_BSS_TYPE_STA)
-					priv->add_ba_param.rx_win_size =
-						MLAN_STA_AMPDU_DEF_RXWINSIZE;
-#endif
-#ifdef WIFI_DIRECT_SUPPORT
-				if (priv->bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
-					priv->add_ba_param.rx_win_size =
-						pmadapter->psdio_device->
-						ampdu_info->
-						ampdu_wfd_txrxwinsize;
-#endif
-				if (priv->bss_type == MLAN_BSS_TYPE_NAN)
-					priv->add_ba_param.rx_win_size =
-						MLAN_NAN_AMPDU_DEF_TXRXWINSIZE;
-#ifdef UAP_SUPPORT
-				if (priv->bss_type == MLAN_BSS_TYPE_UAP)
-					priv->add_ba_param.rx_win_size =
-						pmadapter->psdio_device->
-						ampdu_info->ampdu_uap_rxwinsize;
-#endif
+				priv->add_ba_param.rx_win_size =
+					priv->user_rxwinsize;
 			}
 			if (pmadapter->coex_win_size &&
 			    pmadapter->coex_rx_win_size)
@@ -1543,7 +1581,7 @@ wlan_update_ampdu_rxwinsize(pmlan_adapter pmadapter, t_u8 coex_flag)
 }
 
 /**
- *  @brief check coex for
+ *  @brief This function updates ampdu rx_win_size
  *
  *  @param pmadapter    A pointer to mlan_adapter
  *

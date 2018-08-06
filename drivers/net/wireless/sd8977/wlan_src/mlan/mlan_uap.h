@@ -3,7 +3,7 @@
  *  @brief This file contains related macros, enum, and struct
  *  of uap functionalities
  *
- *  Copyright (C) 2009-2016, Marvell International Ltd.
+ *  Copyright (C) 2009-2018, Marvell International Ltd.
  *
  *  This software file (the "File") is distributed by Marvell International
  *  Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -29,21 +29,22 @@ Change log:
 
 #ifdef BIG_ENDIAN_SUPPORT
 /** Convert TxPD to little endian format from CPU format */
-#define uap_endian_convert_TxPD(x)                                  \
-	{                                                               \
-		(x)->tx_pkt_length = wlan_cpu_to_le16((x)->tx_pkt_length);  \
-		(x)->tx_pkt_offset = wlan_cpu_to_le16((x)->tx_pkt_offset);  \
-		(x)->tx_pkt_type = wlan_cpu_to_le16((x)->tx_pkt_type);      \
-		(x)->tx_control = wlan_cpu_to_le32((x)->tx_control);        \
+#define uap_endian_convert_TxPD(x)                                          \
+	{                                                                   \
+	    (x)->tx_pkt_length = wlan_cpu_to_le16((x)->tx_pkt_length);      \
+	    (x)->tx_pkt_offset = wlan_cpu_to_le16((x)->tx_pkt_offset);      \
+	    (x)->tx_pkt_type   = wlan_cpu_to_le16((x)->tx_pkt_type);        \
+	    (x)->tx_control    = wlan_cpu_to_le32((x)->tx_control);         \
+        (x)->tx_control_1  = wlan_cpu_to_le32((x)->tx_control_1);         \
 	}
-
 /** Convert RxPD from little endian format to CPU format */
-#define uap_endian_convert_RxPD(x)                                  \
-	{                                                               \
-		(x)->rx_pkt_length = wlan_le16_to_cpu((x)->rx_pkt_length);  \
-		(x)->rx_pkt_offset = wlan_le16_to_cpu((x)->rx_pkt_offset);  \
-		(x)->rx_pkt_type = wlan_le16_to_cpu((x)->rx_pkt_type);      \
-		(x)->seq_num = wlan_le16_to_cpu((x)->seq_num);              \
+#define uap_endian_convert_RxPD(x)                                          \
+	{                                                                   \
+	    (x)->rx_pkt_length = wlan_le16_to_cpu((x)->rx_pkt_length);      \
+	    (x)->rx_pkt_offset = wlan_le16_to_cpu((x)->rx_pkt_offset);      \
+	    (x)->rx_pkt_type   = wlan_le16_to_cpu((x)->rx_pkt_type);        \
+	    (x)->seq_num       = wlan_le16_to_cpu((x)->seq_num);            \
+        (x)->rx_info       = wlan_le32_to_cpu((x)->rx_info);            \
 	}
 #else
 /** Convert TxPD to little endian format from CPU format */
@@ -55,7 +56,8 @@ Change log:
 mlan_status wlan_uap_get_channel(IN pmlan_private pmpriv);
 
 mlan_status wlan_uap_set_channel(IN pmlan_private pmpriv,
-				 IN t_u8 uap_band_cfg, IN t_u8 channel);
+				 IN Band_Config_t uap_band_cfg,
+				 IN t_u8 channel);
 
 mlan_status wlan_uap_get_beacon_dtim(IN pmlan_private pmpriv);
 

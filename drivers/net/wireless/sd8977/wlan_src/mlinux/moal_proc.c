@@ -2,7 +2,7 @@
   *
   * @brief This file contains functions for proc file.
   *
-  * Copyright (C) 2008-2016, Marvell International Ltd.
+  * Copyright (C) 2008-2018, Marvell International Ltd.
   *
   * This software file (the "File") is distributed by Marvell International
   * Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -36,13 +36,8 @@ Change log:
 #ifdef CONFIG_PROC_FS
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 26)
 #define PROC_DIR	NULL
-#ifdef MULTI_INTERFACE
-#define MWLAN_PROC_DIR  "mwlan_sdio/"
-#define MWLAN_PROC  "mwlan_sdio"
-#else
 #define MWLAN_PROC_DIR  "mwlan/"
 #define MWLAN_PROC  "mwlan"
-#endif
 /** Proc top level directory entry */
 struct proc_dir_entry *proc_mwlan;
 int proc_dir_entry_use_count;
@@ -74,7 +69,7 @@ extern int drv_mode;
  *  @brief Proc read function for info
  *
  *  @param sfp      pointer to seq_file structure
- *  @param data
+ *  @param data     void pointer to data
  *
  *  @return         Number of output data
  */
@@ -125,7 +120,7 @@ woal_info_proc_read(struct seq_file *sfp, void *data)
 		seq_printf(sfp, "driver_name = " "\"uap\"\n");
 		woal_uap_get_version(priv, fmt, sizeof(fmt) - 1);
 		if (MLAN_STATUS_SUCCESS !=
-		    woal_uap_get_stats(priv, MOAL_PROC_WAIT, &ustats)) {
+		    woal_uap_get_stats(priv, MOAL_IOCTL_WAIT, &ustats)) {
 			MODULE_PUT;
 			LEAVE();
 			return -EFAULT;
@@ -137,7 +132,7 @@ woal_info_proc_read(struct seq_file *sfp, void *data)
 	if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_STA) {
 		woal_get_version(handle, fmt, sizeof(fmt) - 1);
 		if (MLAN_STATUS_SUCCESS !=
-		    woal_get_bss_info(priv, MOAL_PROC_WAIT, &info)) {
+		    woal_get_bss_info(priv, MOAL_IOCTL_WAIT, &info)) {
 			MODULE_PUT;
 			LEAVE();
 			return -EFAULT;
@@ -418,37 +413,32 @@ woal_config_write(struct file *f, const char __user * buf, size_t count,
 			woal_mlan_debug_info(priv);
 			woal_moal_debug_info(priv, NULL, MFALSE);
 
-			woal_dump_firmware_info(handle);
+			woal_dump_firmware_info_v3(handle);
 		}
 	}
 
-	if (handle->card_info->v15_update) {
-		if (!strncmp(databuf, "fwdump_file=", strlen("fwdump_file="))) {
-			int len = copy_len - strlen("fwdump_file=");
-			gfp_t flag;
-			if (len) {
-				kfree(handle->fwdump_fname);
-				flag = (in_atomic() ||
-					irqs_disabled())? GFP_ATOMIC :
-					GFP_KERNEL;
-				handle->fwdump_fname = kzalloc(len, flag);
-				if (handle->fwdump_fname)
-					memcpy(handle->fwdump_fname,
-					       databuf + strlen("fwdump_file="),
-					       len - 1);
-			}
+	if (!strncmp(databuf, "fwdump_file=", strlen("fwdump_file="))) {
+		int len = copy_len - strlen("fwdump_file=");
+		gfp_t flag;
+		if (len) {
+			kfree(handle->fwdump_fname);
+			flag = (in_atomic() ||
+				irqs_disabled())? GFP_ATOMIC : GFP_KERNEL;
+			handle->fwdump_fname = kzalloc(len, flag);
+			if (handle->fwdump_fname)
+				memcpy(handle->fwdump_fname,
+				       databuf + strlen("fwdump_file="),
+				       len - 1);
 		}
-		if (!strncmp(databuf, "fw_reload", strlen("fw_reload"))) {
-			if (!strncmp
-			    (databuf, "fw_reload=", strlen("fw_reload="))) {
-				line += strlen("fw_reload") + 1;
-				config_data =
-					(t_u32)woal_string_to_number(line);
-			} else
-				config_data = FW_RELOAD_SDIO_INBAND_RESET;
-			PRINTM(MMSG, "Request fw_reload=%d\n", config_data);
-			woal_request_fw_reload(handle, config_data);
-		}
+	}
+	if (!strncmp(databuf, "fw_reload", strlen("fw_reload"))) {
+		if (!strncmp(databuf, "fw_reload=", strlen("fw_reload="))) {
+			line += strlen("fw_reload") + 1;
+			config_data = (t_u32)woal_string_to_number(line);
+		} else
+			config_data = FW_RELOAD_SDIO_INBAND_RESET;
+		PRINTM(MMSG, "Request fw_reload=%d\n", config_data);
+		woal_request_fw_reload(handle, config_data);
 	}
 	MODULE_PUT;
 	LEAVE();
@@ -459,7 +449,7 @@ woal_config_write(struct file *f, const char __user * buf, size_t count,
  *  @brief config proc read function
  *
  *  @param sfp      pointer to seq_file structure
- *  @param data
+ *  @param data     Void pointer to data
  *
  *  @return         number of output data
  */
@@ -719,8 +709,7 @@ woal_create_proc_entry(moal_private *priv)
 			atomic_inc(&(priv->phandle->proc_mwlan->count));
 #endif
 		} else {
-			/* Failure. mwlan may not exist. Try to create that
-			   first */
+			/* Failure. mwlan may not exist. Try to create that first */
 			priv->phandle->proc_mwlan =
 				proc_mkdir(MWLAN_PROC, PROC_DIR);
 			if (!priv->phandle->proc_mwlan) {

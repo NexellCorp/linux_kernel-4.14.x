@@ -2,7 +2,7 @@
  *
  *  @brief This file contains MLAN event handling.
  *
- *  Copyright (C) 2008-2016, Marvell International Ltd.
+ *  Copyright (C) 2008-2018, Marvell International Ltd.
  *
  *  This software file (the "File") is distributed by Marvell International
  *  Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -173,6 +173,7 @@ wlan_parse_tdls_event(pmlan_private priv, pmlan_buffer pevent)
 			if (sta_ptr->external_tdls) {
 				PRINTM(MMSG,
 				       "Receive TDLS TEAR DOWN event, Disable TDLS LINK\n");
+				pmadapter->tdls_status = TDLS_TEAR_DOWN;
 				memset(pmadapter, &tdls_oper, 0,
 				       sizeof(tdls_oper));
 				tdls_oper.tdls_action = WLAN_TDLS_DISABLE_LINK;
@@ -214,18 +215,9 @@ wlan_parse_tdls_event(pmlan_private priv, pmlan_buffer pevent)
 				wlan_cleanup_reorder_tbl(priv,
 							 tdls_event->
 							 peer_mac_addr);
-				pmadapter->callbacks.moal_spin_lock(pmadapter->
-								    pmoal_handle,
-								    priv->wmm.
-								    ra_list_spinlock);
 				wlan_11n_cleanup_txbastream_tbl(priv,
 								tdls_event->
 								peer_mac_addr);
-				pmadapter->callbacks.
-					moal_spin_unlock(pmadapter->
-							 pmoal_handle,
-							 priv->wmm.
-							 ra_list_spinlock);
 			}
 			wlan_delete_station_entry(priv,
 						  tdls_event->peer_mac_addr);
@@ -343,6 +335,73 @@ wlan_send_tdls_tear_down_request(pmlan_private priv)
 	return;
 }
 
+/**
+ *  @brief This function will handle the generic NAN event for further wlan action
+ *   based on the Event subtypes
+ *
+ *  @param pmpriv     A pointer to mlan_private
+ *  @param evt_buf    A pointer to mlan_event
+ *  @param pmbuf    A pointer to mlan buffer
+ *
+ *  @return         N/A
+ */
+static void
+wlan_process_nan_event(pmlan_private pmpriv, pmlan_buffer pmbuf)
+{
+	t_u8 *evt_buf = MNULL;
+	mlan_event *pevent;
+	mlan_status ret = MLAN_STATUS_SUCCESS;
+	event_nan_generic *nan_event = (event_nan_generic *)
+		(pmbuf->pbuf + pmbuf->data_offset + sizeof(mlan_event_id));
+	pmlan_adapter pmadapter = pmpriv->adapter;
+	pmlan_callbacks pcb = &pmadapter->callbacks;
+
+	ENTER();
+
+	ret = pcb->moal_malloc(pmadapter->pmoal_handle, MAX_EVENT_SIZE,
+			       MLAN_MEM_DEF, &evt_buf);
+	if (ret != MLAN_STATUS_SUCCESS || !evt_buf) {
+		LEAVE();
+		return;
+	}
+
+	pevent = (pmlan_event)evt_buf;
+
+	pevent->bss_index = pmpriv->bss_index;
+	if (wlan_le16_to_cpu(nan_event->event_sub_type) ==
+	    NAN_EVT_SUBTYPE_SD_EVENT ||
+	    wlan_le16_to_cpu(nan_event->event_sub_type) ==
+	    NAN_EVT_SUBTYPE_SDF_TX_DONE) {
+		pevent->event_id = MLAN_EVENT_ID_DRV_PASSTHRU;
+		pevent->event_len = pmbuf->data_len;
+		memcpy(pmadapter, (t_u8 *)pevent->event_buf,
+		       pmbuf->pbuf + pmbuf->data_offset, pevent->event_len);
+		wlan_recv_event(pmpriv, pevent->event_id, pevent);
+		pcb->moal_mfree(pmadapter->pmoal_handle, evt_buf);
+	} else {
+		t_u8 test_mac[MLAN_MAC_ADDR_LENGTH]
+		= { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55 };
+		pevent->event_id = MLAN_EVENT_ID_DRV_CONNECTED;
+		pevent->event_len = MLAN_MAC_ADDR_LENGTH;
+		memcpy(pmpriv->adapter, (t_u8 *)pevent->event_buf,
+		       test_mac, MLAN_MAC_ADDR_LENGTH);
+		wlan_ralist_add(pmpriv, test_mac);
+		memcpy(pmpriv->adapter,
+		       pmpriv->curr_bss_params.bss_descriptor.mac_address,
+		       test_mac, MLAN_MAC_ADDR_LENGTH);
+		wlan_recv_event(pmpriv, MLAN_EVENT_ID_DRV_CONNECTED, pevent);
+		if (pmpriv->port_ctrl_mode == MTRUE)
+			pmpriv->port_open = MTRUE;
+		pmpriv->media_connected = MTRUE;
+		PRINTM_NETINTF(MEVENT, pmpriv);
+		PRINTM(MEVENT, "nan interface - opened\n");
+		pcb->moal_mfree(pmadapter->pmoal_handle, evt_buf);
+	}
+
+	LEAVE();
+	return;
+}
+
 /********************************************************
 			Global Functions
 ********************************************************/
@@ -363,13 +422,16 @@ wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
 	mlan_adapter *pmadapter = priv->adapter;
 	mlan_status ret = MLAN_STATUS_SUCCESS;
 	state_11d_t enable;
+	t_u8 event_buf[100];
+	mlan_event *pevent = (mlan_event *)event_buf;
 
 	ENTER();
 
 	PRINTM(MINFO, "Handles disconnect event.\n");
 
 	/* If DFS repeater mode is enabled and station interface disconnects
-	   then make sure that all uAPs are stopped. */
+	 * then make sure that all uAPs are stopped.
+	 */
 	if (pmadapter->dfs_repeater)
 		wlan_dfs_rep_disconnect(pmadapter);
 
@@ -384,6 +446,8 @@ wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
 		PRINTM(MINFO, "DISC: port_status = CLOSED\n");
 		priv->port_open = MFALSE;
 	}
+	memset(pmadapter, &priv->gtk_rekey, 0,
+	       sizeof(mlan_ds_misc_gtk_rekey_data));
 	priv->tx_pause = MFALSE;
 	pmadapter->scan_block = MFALSE;
 
@@ -418,12 +482,10 @@ wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
 	priv->wps.session_enable = MFALSE;
 	memset(priv->adapter, (t_u8 *)&priv->wps.wps_ie, 0x00,
 	       sizeof(priv->wps.wps_ie));
-	priv->sec_info.osen_enabled = MFALSE;
-	priv->osen_ie_len = 0;
 
 	priv->sec_info.encryption_mode = MLAN_ENCRYPTION_MODE_NONE;
 
-	/* Enable auto data rate */
+	/*Enable auto data rate */
 	priv->is_data_rate_auto = MTRUE;
 	priv->data_rate = 0;
 
@@ -474,7 +536,13 @@ wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
 		return;
 	}
 
-	wlan_recv_event(priv, MLAN_EVENT_ID_FW_DISCONNECTED, MNULL);
+	pevent->bss_index = priv->bss_index;
+	pevent->event_id = MLAN_EVENT_ID_FW_DISCONNECTED;
+	pevent->event_len = sizeof(priv->disconnect_reason_code);
+	memcpy(priv->adapter, pevent->event_buf, &priv->disconnect_reason_code,
+	       pevent->event_len);
+	wlan_recv_event(priv, MLAN_EVENT_ID_FW_DISCONNECTED, pevent);
+	priv->disconnect_reason_code = 0;
 
 	LEAVE();
 }
@@ -598,6 +666,63 @@ wlan_process_sta_tx_pause_event(pmlan_private priv, pmlan_buffer pevent)
 }
 
 /**
+ *  @brief This function will print diconnect reason code according
+ *  to IEEE 802.11 spec
+ *
+ *  @param reason_code    reason code for the deauth/disaccoc
+ *                        received from firmware
+ *  @return        N/A
+ */
+static void
+wlan_print_disconnect_reason(t_u16 reason_code)
+{
+	ENTER();
+
+	switch (reason_code) {
+	case MLAN_REASON_UNSPECIFIED:
+		PRINTM(MMSG, "wlan: REASON: Unspecified reason\n");
+		break;
+	case MLAN_REASON_PREV_AUTH_NOT_VALID:
+		PRINTM(MMSG,
+		       "wlan: REASON: Previous authentication no longer valid\n");
+		break;
+	case MLAN_REASON_DEAUTH_LEAVING:
+		PRINTM(MMSG,
+		       "wlan: REASON: (Deauth) Sending STA is leaving (or has left) IBSS or ESS\n");
+		break;
+	case MLAN_REASON_DISASSOC_DUE_TO_INACTIVITY:
+		PRINTM(MMSG,
+		       "wlan: REASON: Disassociated due to inactivity \n");
+		break;
+	case MLAN_REASON_DISASSOC_AP_BUSY:
+		PRINTM(MMSG,
+		       "wlan: REASON: (Disassociated) AP unable to handle all connected STAs\n");
+		break;
+	case MLAN_REASON_CLASS2_FRAME_FROM_NOAUTH_STA:
+		PRINTM(MMSG,
+		       "wlan: REASON: Class 2 frame was received from nonauthenticated STA\n");
+		break;
+	case MLAN_REASON_CLASS3_FRAME_FROM_NOASSOC_STA:
+		PRINTM(MMSG,
+		       "wlan: REASON: Class 3 frame was received from nonassociated STA\n");
+		break;
+	case MLAN_REASON_DISASSOC_STA_HAS_LEFT:
+		PRINTM(MMSG,
+		       "wlan: REASON: (Disassocated) Sending STA is leaving (or has left) BSS\n");
+		break;
+	case MLAN_REASON_STA_REQ_ASSOC_WITHOUT_AUTH:
+		PRINTM(MMSG,
+		       "wlan: REASON: STA requesting (re)assoc is not authenticated with responding STA\n");
+		break;
+	default:
+		break;
+	}
+
+	LEAVE();
+	return;
+}
+
+/**
  *  @brief This function handles events generated by firmware
  *
  *  @param priv A pointer to mlan_private structure
@@ -615,11 +740,11 @@ wlan_ops_sta_process_event(IN t_void *priv)
 	t_u8 *evt_buf = MNULL;
 	pmlan_buffer pmbuf = pmadapter->pmlan_buffer_event;
 	t_u16 reason_code;
-	t_u8 sta_addr[MLAN_MAC_ADDR_LENGTH];
-	sta_node *sta_ptr = MNULL;
-	t_u8 i = 0;
+	t_u8 addr[MLAN_MAC_ADDR_LENGTH];
 	pmlan_callbacks pcb = &pmadapter->callbacks;
 	mlan_event *pevent = (mlan_event *)event_buf;
+	chan_band_info *pchan_band_info = MNULL;
+
 	ENTER();
 
 	if (!pmbuf) {
@@ -654,7 +779,7 @@ wlan_ops_sta_process_event(IN t_void *priv)
 	case EVENT_DEAUTHENTICATED:
 		if (pmpriv->wps.session_enable) {
 			PRINTM(MMSG,
-			       "wlan: Recevie deauth event in wps session\n");
+			       "wlan: Receive deauth event in wps session\n");
 			break;
 		}
 		reason_code =
@@ -663,6 +788,8 @@ wlan_ops_sta_process_event(IN t_void *priv)
 					  sizeof(eventcause)));
 		PRINTM(MMSG, "wlan: EVENT: Deauthenticated (reason 0x%x)\n",
 		       reason_code);
+		wlan_print_disconnect_reason(reason_code);
+		pmpriv->disconnect_reason_code = reason_code;
 		pmadapter->dbg.num_event_deauth++;
 		wlan_handle_disconnect_event(pmpriv);
 
@@ -671,7 +798,7 @@ wlan_ops_sta_process_event(IN t_void *priv)
 	case EVENT_DISASSOCIATED:
 		if (pmpriv->wps.session_enable) {
 			PRINTM(MMSG,
-			       "wlan: Recevie disassociate event in wps session\n");
+			       "wlan: Receive disassociate event in wps session\n");
 			break;
 		}
 		reason_code =
@@ -680,6 +807,8 @@ wlan_ops_sta_process_event(IN t_void *priv)
 					  sizeof(eventcause)));
 		PRINTM(MMSG, "wlan: EVENT: Disassociated (reason 0x%x)\n",
 		       reason_code);
+		wlan_print_disconnect_reason(reason_code);
+		pmpriv->disconnect_reason_code = reason_code;
 		pmadapter->dbg.num_event_disassoc++;
 		wlan_handle_disconnect_event(pmpriv);
 		break;
@@ -691,6 +820,7 @@ wlan_ops_sta_process_event(IN t_void *priv)
 					  sizeof(eventcause)));
 		PRINTM(MMSG, "wlan: EVENT: Link lost (reason 0x%x)\n",
 		       reason_code);
+		pmpriv->disconnect_reason_code = reason_code;
 		pmadapter->dbg.num_event_link_lost++;
 		wlan_handle_disconnect_event(pmpriv);
 		break;
@@ -810,16 +940,6 @@ wlan_ops_sta_process_event(IN t_void *priv)
 		wlan_recv_event(pmpriv, MLAN_EVENT_ID_FW_PORT_RELEASE, MNULL);
 		break;
 
-	case EVENT_STOP_TX:
-		PRINTM(MEVENT, "EVENT: Stop Tx (%#x)\n", eventcause);
-		wlan_11h_tx_disable(pmpriv);	/* this fn will send event up
-						   to MOAL */
-		break;
-	case EVENT_START_TX:
-		PRINTM(MEVENT, "EVENT: Start Tx (%#x)\n", eventcause);
-		wlan_11h_tx_enable(pmpriv);	/* this fn will send event up
-						   to MOAL */
-		break;
 	case EVENT_CHANNEL_SWITCH:
 		PRINTM(MEVENT, "EVENT: Channel Switch (%#x)\n", eventcause);
 		if (pmadapter->ecsa_enable) {
@@ -855,19 +975,50 @@ wlan_ops_sta_process_event(IN t_void *priv)
 								 pmpriv);
 			}
 			pmadapter->state_rdh.tx_block = MFALSE;
+			/* Allocate memory for event buffer */
+			ret = pcb->moal_malloc(pmadapter->pmoal_handle,
+					       MAX_EVENT_SIZE,
+					       MLAN_MEM_DEF, &evt_buf);
+			if ((ret == MLAN_STATUS_SUCCESS) && evt_buf) {
+				pevent = (pmlan_event)evt_buf;
+				memset(pmadapter, evt_buf, 0x00,
+				       MAX_EVENT_SIZE);
+				/* Setup event buffer */
+				pevent->bss_index = pmpriv->bss_index;
+				pevent->event_id =
+					MLAN_EVENT_ID_FW_CHAN_SWITCH_COMPLETE;
+				pevent->event_len = sizeof(chan_band_info);
+				pchan_band_info =
+					(chan_band_info *) pevent->event_buf;
+				/* Copy event data */
+				memcpy(pmadapter,
+				       (t_u8 *)&pchan_band_info->bandcfg,
+				       (t_u8 *)&pchan_info->bandcfg,
+				       sizeof(pchan_info->bandcfg));
+				pchan_band_info->channel = pchan_info->channel;
+				wlan_recv_event(pmpriv,
+						MLAN_EVENT_ID_FW_CHAN_SWITCH_COMPLETE,
+						pevent);
+				pcb->moal_mfree(pmadapter->pmoal_handle,
+						evt_buf);
+			}
 		}
+		break;
+
+	case EVENT_STOP_TX:
+		PRINTM(MEVENT, "EVENT: Stop Tx (%#x)\n", eventcause);
+		wlan_11h_tx_disable(pmpriv);	/* this fn will send event up to MOAL */
+		break;
+	case EVENT_START_TX:
+		PRINTM(MEVENT, "EVENT: Start Tx (%#x)\n", eventcause);
+		wlan_11h_tx_enable(pmpriv);	/* this fn will send event up to MOAL */
 		break;
 	case EVENT_CHANNEL_SWITCH_ANN:
 		PRINTM(MEVENT, "EVENT: Channel Switch Announcement\n");
 		/* Here, pass up event first, as handling will send deauth */
 		wlan_recv_event(pmpriv,
 				MLAN_EVENT_ID_FW_CHANNEL_SWITCH_ANN, MNULL);
-		if (pmadapter->ecsa_enable) {
-			t_u8 stop_tx = *(t_u8 *)pmadapter->event_body;
-			if (stop_tx)
-				pmadapter->state_rdh.tx_block = MTRUE;
-		} else
-			wlan_11h_handle_event_chanswann(pmpriv);
+		wlan_11h_handle_event_chanswann(pmpriv);
 		break;
 	case EVENT_RADAR_DETECTED:
 		PRINTM(MEVENT, "EVENT: Radar Detected\n");
@@ -964,7 +1115,22 @@ wlan_ops_sta_process_event(IN t_void *priv)
 
 	case EVENT_RSSI_LOW:
 		PRINTM(MEVENT, "EVENT: Beacon RSSI_LOW\n");
-		wlan_recv_event(pmpriv, MLAN_EVENT_ID_FW_BCN_RSSI_LOW, MNULL);
+		/* Allocate memory for event buffer */
+		ret = pcb->moal_malloc(pmadapter->pmoal_handle, MAX_EVENT_SIZE,
+				       MLAN_MEM_DEF, &evt_buf);
+		if ((ret == MLAN_STATUS_SUCCESS) && evt_buf) {
+			memset(pmadapter, evt_buf, 0x00, MAX_EVENT_SIZE);
+			pevent = (pmlan_event)evt_buf;
+			pevent->bss_index = pmpriv->bss_index;
+			pevent->event_id = MLAN_EVENT_ID_FW_BCN_RSSI_LOW;
+			pevent->event_len = sizeof(t_u16);
+		   /** Fw send bcnRssi low value in event reason field*/
+			memcpy(pmadapter, (t_u8 *)pevent->event_buf,
+			       (t_u8 *)&pmadapter->event_body,
+			       pevent->event_len);
+			wlan_recv_event(pmpriv, pevent->event_id, pevent);
+			pcb->moal_mfree(pmadapter->pmoal_handle, evt_buf);
+		}
 		break;
 	case EVENT_SNR_LOW:
 		PRINTM(MEVENT, "EVENT: Beacon SNR_LOW\n");
@@ -976,7 +1142,22 @@ wlan_ops_sta_process_event(IN t_void *priv)
 		break;
 	case EVENT_RSSI_HIGH:
 		PRINTM(MEVENT, "EVENT: Beacon RSSI_HIGH\n");
-		wlan_recv_event(pmpriv, MLAN_EVENT_ID_FW_BCN_RSSI_HIGH, MNULL);
+		/* Allocate memory for event buffer */
+		ret = pcb->moal_malloc(pmadapter->pmoal_handle, MAX_EVENT_SIZE,
+				       MLAN_MEM_DEF, &evt_buf);
+		if ((ret == MLAN_STATUS_SUCCESS) && evt_buf) {
+			memset(pmadapter, evt_buf, 0x00, MAX_EVENT_SIZE);
+			pevent = (pmlan_event)evt_buf;
+			pevent->bss_index = pmpriv->bss_index;
+			pevent->event_id = MLAN_EVENT_ID_FW_BCN_RSSI_HIGH;
+			pevent->event_len = sizeof(t_u16);
+		   /** Fw send bcnRssi high value in event reason field*/
+			memcpy(pmadapter, (t_u8 *)pevent->event_buf,
+			       (t_u8 *)&pmadapter->event_body,
+			       pevent->event_len);
+			wlan_recv_event(pmpriv, pevent->event_id, pevent);
+			pcb->moal_mfree(pmadapter->pmoal_handle, evt_buf);
+		}
 		break;
 	case EVENT_SNR_HIGH:
 		PRINTM(MEVENT, "EVENT: Beacon SNR_HIGH\n");
@@ -1154,50 +1335,8 @@ wlan_ops_sta_process_event(IN t_void *priv)
 		break;
 
 	case EVENT_IBSS_STATION_CONNECT:
-		memcpy(pmadapter, sta_addr, pmadapter->event_body + 2,
-		       MLAN_MAC_ADDR_LENGTH);
-		sta_ptr = wlan_add_station_entry(pmpriv, sta_addr);
-		if (sta_ptr) {
-			PRINTM(MMSG,
-			       "wlan: EVENT: IBSS_STA_CONNECT " MACSTR "\n",
-			       MAC2STR(sta_addr));
-			if (pmpriv->adapter->adhoc_11n_enabled) {
-				wlan_check_sta_capability(pmpriv, pmbuf,
-							  sta_ptr);
-				for (i = 0; i < MAX_NUM_TID; i++) {
-					if (sta_ptr->is_11n_enabled)
-						sta_ptr->ampdu_sta[i] =
-							pmpriv->ibss_ampdu[i];
-					else
-						sta_ptr->ampdu_sta[i] =
-							BA_STREAM_NOT_ALLOWED;
-				}
-				memset(pmadapter, sta_ptr->rx_seq, 0xff,
-				       sizeof(sta_ptr->rx_seq));
-			}
-		}
 		break;
 	case EVENT_IBSS_STATION_DISCONNECT:
-		memcpy(pmadapter, sta_addr, pmadapter->event_body + 2,
-		       MLAN_MAC_ADDR_LENGTH);
-		PRINTM(MMSG, "wlan: EVENT: IBSS_STA_DISCONNECT " MACSTR "\n",
-		       MAC2STR(sta_addr));
-
-		if (pmpriv->adapter->adhoc_11n_enabled) {
-			wlan_cleanup_reorder_tbl(pmpriv, sta_addr);
-			pmadapter->callbacks.moal_spin_lock(pmadapter->
-							    pmoal_handle,
-							    pmpriv->wmm.
-							    ra_list_spinlock);
-			wlan_11n_cleanup_txbastream_tbl(pmpriv, sta_addr);
-			pmadapter->callbacks.moal_spin_unlock(pmadapter->
-							      pmoal_handle,
-							      pmpriv->wmm.
-							      ra_list_spinlock);
-		}
-
-		wlan_wmm_delete_peer_ralist(pmpriv, sta_addr);
-		wlan_delete_station_entry(pmpriv, sta_addr);
 		break;
 	case EVENT_SAD_REPORT:
 		{
@@ -1268,6 +1407,56 @@ wlan_ops_sta_process_event(IN t_void *priv)
 		break;
 	case EVENT_NAN_GENERIC:
 		PRINTM(MEVENT, "EVENT: NAN_GENERIC_EVENT\n");
+		wlan_process_nan_event(pmpriv, pmbuf);
+		break;
+
+	case EVENT_MANAGEMENT_FRAME_WAKEUP:
+		PRINTM(MEVENT, "EVENT: EVENT_MANAGEMENT_FRAME_WAKEUP HOST\n");
+		break;
+	case EVENT_ROAM_OFFLOAD:
+		memcpy(pmadapter, addr,
+		       pmpriv->curr_bss_params.bss_descriptor.mac_address,
+		       MLAN_MAC_ADDR_LENGTH);
+		memcpy(pmadapter,
+		       pmpriv->curr_bss_params.bss_descriptor.mac_address,
+		       (t_u8 *)(pmadapter->event_body + 2),
+		       MLAN_MAC_ADDR_LENGTH);
+	    /** replace ralist's mac address with new mac address */
+		if (0 ==
+		    wlan_ralist_update(pmpriv, addr,
+				       pmpriv->curr_bss_params.bss_descriptor.
+				       mac_address))
+			wlan_ralist_add(pmpriv,
+					pmpriv->curr_bss_params.bss_descriptor.
+					mac_address);
+		wlan_11n_cleanup_reorder_tbl(pmpriv);
+		wlan_11n_deleteall_txbastream_tbl(pmpriv);
+		/*Update the BSS for inform kernel, otherwise kernel will give warning for not find BSS */
+		memcpy(pmadapter, (t_u8 *)&pmadapter->pscan_table[0],
+		       (t_u8 *)&pmpriv->curr_bss_params.bss_descriptor,
+		       sizeof(BSSDescriptor_t));
+		if (!pmadapter->num_in_scan_table)
+			pmadapter->num_in_scan_table = 1;
+		PRINTM(MEVENT, "EVENT: ROAM OFFLOAD IN FW SUCCESS\n");
+		/* Allocate memory for event buffer */
+		ret = pcb->moal_malloc(pmadapter->pmoal_handle, MAX_EVENT_SIZE,
+				       MLAN_MEM_DEF, &evt_buf);
+		if ((ret == MLAN_STATUS_SUCCESS) && evt_buf) {
+			pevent = (pmlan_event)evt_buf;
+			pevent->bss_index = pmpriv->bss_index;
+			pevent->event_id = MLAN_EVENT_ID_FW_ROAM_OFFLOAD_RESULT;
+		/** Drop event id length and 2 bytes reverved length*/
+			pevent->event_len =
+				pmbuf->data_len - sizeof(eventcause) - 2;
+			memcpy(pmadapter, (t_u8 *)pevent->event_buf,
+			       pmadapter->event_body + 2, MIN(pevent->event_len,
+							      MAX_EVENT_SIZE));
+			wlan_recv_event(pmpriv, pevent->event_id, pevent);
+			pcb->moal_mfree(pmadapter->pmoal_handle, evt_buf);
+		}
+		break;
+	case EVENT_WLS_FTM_COMPLETE:
+		PRINTM(MEVENT, "EVENT: FTM_GENERIC_EVENT\n");
 		/* Allocate memory for event buffer */
 		ret = pcb->moal_malloc(pmadapter->pmoal_handle, MAX_EVENT_SIZE,
 				       MLAN_MEM_DEF, &evt_buf);
@@ -1283,9 +1472,19 @@ wlan_ops_sta_process_event(IN t_void *priv)
 			pcb->moal_mfree(pmadapter->pmoal_handle, evt_buf);
 		}
 		break;
-
-	case EVENT_MANAGEMENT_FRAME_WAKEUP:
-		PRINTM(MEVENT, "EVENT: EVENT_MANAGEMENT_FRAME_WAKEUP HOST\n");
+	case EVENT_FW_HANG_REPORT:
+		if (pmbuf->data_len < (sizeof(eventcause) + sizeof(t_u16))) {
+			PRINTM(MEVENT,
+			       "EVENT: EVENT_FW_HANG_REPORT skip for len too short: %d\n",
+			       pmbuf->data_len);
+			break;
+		}
+		PRINTM(MEVENT, "EVENT: EVENT_FW_HANG_REPORT reasoncode=%d\n",
+		       wlan_le16_to_cpu(*(t_u16 *)
+					(pmbuf->pbuf + pmbuf->data_offset +
+					 sizeof(eventcause))));
+		pmadapter->fw_hang_report = MTRUE;
+		wlan_recv_event(pmpriv, MLAN_EVENT_ID_DRV_DBG_DUMP, MNULL);
 		break;
 	default:
 		PRINTM(MEVENT, "EVENT: unknown event id: %#x\n", eventcause);

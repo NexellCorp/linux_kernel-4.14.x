@@ -2,7 +2,7 @@
   *
   * @brief This file contains standard ioctl functions
   *
-  * Copyright (C) 2010-2016, Marvell International Ltd.
+  * Copyright (C) 2010-2018, Marvell International Ltd.
   *
   * This software file (the "File") is distributed by Marvell International
   * Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -94,6 +94,16 @@ woal_uap_do_priv_ioctl(struct net_device *dev, struct ifreq *req, int cmd)
 			break;
 		default:
 			ret = -EOPNOTSUPP;
+			break;
+		}
+		break;
+	case WOAL_UAP_SET_GET_SIXTEEN_INT:
+		switch (wrq->u.data.flags) {
+		case WOAL_UAP_NET_MONITOR:
+			ret = woal_net_monitor_ioctl(priv, wrq);
+			break;
+		default:
+			ret = -EINVAL;
 			break;
 		}
 		break;

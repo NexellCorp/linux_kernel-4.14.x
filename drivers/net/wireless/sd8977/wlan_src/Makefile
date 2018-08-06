@@ -1,6 +1,6 @@
 # File: Makefile
 #
-# Copyright (C) 2008-2016, Marvell International Ltd.
+# Copyright (C) 2008-2018, Marvell International Ltd.
 #
 # This software file (the "File") is distributed by Marvell International
 # Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -17,8 +17,6 @@
 # IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE
 # ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
 # this warranty disclaimer.
-
-YMD=		`date +%Y%m%d%H%M`
 
 #############################################################################
 # Configuration Options
@@ -53,15 +51,14 @@ CONFIG_REASSOCIATION=y
 # Manufacturing firmware support
 CONFIG_MFG_CMD_SUPPORT=y
 
+# OpenWrt support
+CONFIG_OPENWRT_SUPPORT=n
+
 # Big-endian platform
 CONFIG_BIG_ENDIAN=n
 
-# Enable driver based authenticator
-CONFIG_DRV_EMBEDDED_AUTHENTICATOR=y
 
 
-# Enable driver based supplicant
-CONFIG_DRV_EMBEDDED_SUPPLICANT=y
 
 ifeq ($(CONFIG_DRV_EMBEDDED_SUPPLICANT), y)
 CONFIG_EMBEDDED_SUPP_AUTH=y
@@ -89,8 +86,6 @@ CONFIG_MULTI_CHAN_SUPPORT=y
 
 CONFIG_ANDROID_KERNEL=n
 
-CONFIG_MULTI_INTERFACE=n
-
 
 #32bit app over 64bit kernel support
 CONFIG_USERSPACE_32BIT_OVER_KERNEL_64BIT=n
@@ -101,52 +96,50 @@ CONFIG_USERSPACE_32BIT_OVER_KERNEL_64BIT=n
 #############################################################################
 
 MODEXT = ko
-EXTRA_CFLAGS += -Idrivers/net/wireless/sd8977/wlan_src/mlan
-EXTRA_CFLAGS += -DLINUX
-ifeq ($(CONFIG_EMBEDDED_SUPP_AUTH), y)
-EXTRA_CFLAGS += -Idrivers/net/wireless/sd8977/wlan_src/mlan/esa
-EXTRA_CFLAGS += -Idrivers/net/wireless/sd8977/wlan_src/mlan/esa/common
-endif
+ccflags-y += -Idrivers/net/wireless/sd8977/wlan_src/mlan
+ccflags-y += -DLINUX
+
+
 
 
 KERNELVERSION_X86 := 	$(shell uname -r)
 KERNELDIR ?= /lib/modules/$(KERNELVERSION_X86)/build
 LD += -S
 
-BINDIR = ../bin_sd8xxx
+BINDIR = ../bin_sd8977
 APPDIR= $(shell if test -d "mapp"; then echo mapp; fi)
 
 #############################################################################
 # Compiler Flags
 #############################################################################
 
-	EXTRA_CFLAGS += -I$(KERNELDIR)/include
+	ccflags-y += -I$(KERNELDIR)/include
 
-	EXTRA_CFLAGS += -DFPNUM='"68"'
+	ccflags-y += -DFPNUM='"68"'
 
 ifeq ($(CONFIG_DEBUG),1)
-	EXTRA_CFLAGS += -DDEBUG_LEVEL1
+	ccflags-y += -DDEBUG_LEVEL1
 endif
 
 ifeq ($(CONFIG_DEBUG),2)
-	EXTRA_CFLAGS += -DDEBUG_LEVEL1
-	EXTRA_CFLAGS += -DDEBUG_LEVEL2
+	ccflags-y += -DDEBUG_LEVEL1
+	ccflags-y += -DDEBUG_LEVEL2
 	DBG=	-dbg
 endif
 
 ifeq ($(CONFIG_PROC_DEBUG),y)
-	EXTRA_CFLAGS += -DPROC_DEBUG
+	ccflags-y += -DPROC_DEBUG
 	export CONFIG_PROC_DEBUG
 endif
 
 ifeq ($(CONFIG_64BIT), y)
-	EXTRA_CFLAGS += -DMLAN_64BIT
+	ccflags-y += -DMLAN_64BIT
 endif
 
 ifeq ($(CONFIG_STA_SUPPORT),y)
-	EXTRA_CFLAGS += -DSTA_SUPPORT
+	ccflags-y += -DSTA_SUPPORT
 ifeq ($(CONFIG_REASSOCIATION),y)
-	EXTRA_CFLAGS += -DREASSOCIATION
+	ccflags-y += -DREASSOCIATION
 endif
 else
 CONFIG_WIFI_DIRECT_SUPPORT=n
@@ -156,7 +149,7 @@ CONFIG_STA_CFG80211=n
 endif
 
 ifeq ($(CONFIG_UAP_SUPPORT),y)
-	EXTRA_CFLAGS += -DUAP_SUPPORT
+	ccflags-y += -DUAP_SUPPORT
 else
 CONFIG_WIFI_DIRECT_SUPPORT=n
 CONFIG_WIFI_DISPLAY_SUPPORT=n
@@ -165,67 +158,64 @@ CONFIG_UAP_CFG80211=n
 endif
 
 ifeq ($(CONFIG_WIFI_DIRECT_SUPPORT),y)
-	EXTRA_CFLAGS += -DWIFI_DIRECT_SUPPORT
+	ccflags-y += -DWIFI_DIRECT_SUPPORT
 endif
 ifeq ($(CONFIG_WIFI_DISPLAY_SUPPORT),y)
-	EXTRA_CFLAGS += -DWIFI_DISPLAY_SUPPORT
+	ccflags-y += -DWIFI_DISPLAY_SUPPORT
 endif
 
 ifeq ($(CONFIG_MFG_CMD_SUPPORT),y)
-	EXTRA_CFLAGS += -DMFG_CMD_SUPPORT
+	ccflags-y += -DMFG_CMD_SUPPORT
 endif
 
 ifeq ($(CONFIG_BIG_ENDIAN),y)
-	EXTRA_CFLAGS += -DBIG_ENDIAN_SUPPORT
+	ccflags-y += -DBIG_ENDIAN_SUPPORT
 endif
 
 ifeq ($(CONFIG_USERSPACE_32BIT_OVER_KERNEL_64BIT),y)
-	EXTRA_CFLAGS += -DUSERSPACE_32BIT_OVER_KERNEL_64BIT
+	ccflags-y += -DUSERSPACE_32BIT_OVER_KERNEL_64BIT
 endif
 
 ifeq ($(CONFIG_SDIO_MULTI_PORT_TX_AGGR),y)
-	EXTRA_CFLAGS += -DSDIO_MULTI_PORT_TX_AGGR
+	ccflags-y += -DSDIO_MULTI_PORT_TX_AGGR
 endif
 
 ifeq ($(CONFIG_SDIO_MULTI_PORT_RX_AGGR),y)
-	EXTRA_CFLAGS += -DSDIO_MULTI_PORT_RX_AGGR
+	ccflags-y += -DSDIO_MULTI_PORT_RX_AGGR
 endif
 
 ifeq ($(CONFIG_SDIO_SUSPEND_RESUME),y)
-	EXTRA_CFLAGS += -DSDIO_SUSPEND_RESUME
+	ccflags-y += -DSDIO_SUSPEND_RESUME
 endif
 
 ifeq ($(CONFIG_MULTI_CHAN_SUPPORT),y)
-	EXTRA_CFLAGS += -DMULTI_CHAN_SUPPORT
+	ccflags-y += -DMULTI_CHAN_SUPPORT
 endif
 
 ifeq ($(CONFIG_DFS_TESTING_SUPPORT),y)
-	EXTRA_CFLAGS += -DDFS_TESTING_SUPPORT
+	ccflags-y += -DDFS_TESTING_SUPPORT
 endif
 
 
 ifeq ($(CONFIG_ANDROID_KERNEL), y)
-	EXTRA_CFLAGS += -DANDROID_KERNEL
+	ccflags-y += -DANDROID_KERNEL
 endif
 
-ifeq ($(CONFIG_MULTI_INTERFACE), y)
-	EXTRA_CFLAGS += -DMULTI_INTERFACE
+ifeq ($(CONFIG_OPENWRT_SUPPORT), y)
+	ccflags-y += -DOPENWRT
 endif
+
 
 ifeq ($(CONFIG_T50), y)
-	EXTRA_CFLAGS += -DT50
-	EXTRA_CFLAGS += -DT40
-	EXTRA_CFLAGS += -DT3T
+	ccflags-y += -DT50
+	ccflags-y += -DT40
+	ccflags-y += -DT3T
 endif
 
 # add -Wno-packed-bitfield-compat when GCC version greater than 4.4
 GCC_VERSION := $(shell echo `gcc -dumpversion | cut -f1-2 -d.` \>= 4.4 | sed -e 's/\./*100+/g' | bc )
 ifeq ($(GCC_VERSION),1)
-	EXTRA_CFLAGS += -Wno-packed-bitfield-compat
-endif
-
-ifeq ($(CONFIG_MRVL_SDIO_OOB_IRQ),m)
-	EXTRA_CFLAGS += -DSDIO_OOB_IRQ
+	ccflags-y += -Wno-packed-bitfield-compat
 endif
 
 #############################################################################
@@ -259,6 +249,19 @@ else
 endif
 endif
 
+# OpenWrt
+ifeq ($(CONFIG_OPENWRT_SUPPORT), y)
+ifeq ($(CPTCFG_CFG80211),y)
+	CONFIG_STA_CFG80211=y
+else
+ifeq ($(CPTCFG_CFG80211),m)
+	CONFIG_STA_CFG80211=y
+else
+	CONFIG_STA_CFG80211=n
+endif
+endif
+endif
+
 # Enable CFG80211 for uAP
 ifeq ($(CONFIG_CFG80211),y)
 	CONFIG_UAP_CFG80211=y
@@ -267,6 +270,19 @@ ifeq ($(CONFIG_CFG80211),m)
 	CONFIG_UAP_CFG80211=y
 else
 	CONFIG_UAP_CFG80211=n
+endif
+endif
+
+# OpenWrt
+ifeq ($(CONFIG_OPENWRT_SUPPORT), y)
+ifeq ($(CPTCFG_CFG80211),y)
+	CONFIG_UAP_CFG80211=y
+else
+ifeq ($(CPTCFG_CFG80211),m)
+	CONFIG_UAP_CFG80211=y
+else
+	CONFIG_UAP_CFG80211=n
+endif
 endif
 endif
 
@@ -286,18 +302,18 @@ endif
 
 ifeq ($(CONFIG_STA_SUPPORT),y)
 ifeq ($(CONFIG_STA_WEXT),y)
-	EXTRA_CFLAGS += -DSTA_WEXT
+	ccflags-y += -DSTA_WEXT
 endif
 ifeq ($(CONFIG_STA_CFG80211),y)
-	EXTRA_CFLAGS += -DSTA_CFG80211
+	ccflags-y += -DSTA_CFG80211
 endif
 endif
 ifeq ($(CONFIG_UAP_SUPPORT),y)
 ifeq ($(CONFIG_UAP_WEXT),y)
-	EXTRA_CFLAGS += -DUAP_WEXT
+	ccflags-y += -DUAP_WEXT
 endif
 ifeq ($(CONFIG_UAP_CFG80211),y)
-	EXTRA_CFLAGS += -DUAP_CFG80211
+	ccflags-y += -DUAP_CFG80211
 endif
 endif
 
@@ -320,13 +336,7 @@ endif
 endif
 
 
-ifeq ($(CONFIG_DRV_EMBEDDED_AUTHENTICATOR), y)
-    EXTRA_CFLAGS += -DDRV_EMBEDDED_AUTHENTICATOR
-endif
 
-ifeq ($(CONFIG_DRV_EMBEDDED_SUPPLICANT), y)
-    EXTRA_CFLAGS += -DDRV_EMBEDDED_SUPPLICANT
-endif
 
 
 MOALOBJS =	mlinux/moal_main.o \
@@ -341,11 +351,11 @@ MLANOBJS =	mlan/mlan_shim.o mlan/mlan_init.o \
 		mlan/mlan_module.o
 
 MLANOBJS += mlan/mlan_wmm.o
+MLANOBJS += mlan/mlan_diag.o
 MLANOBJS += mlan/mlan_sdio.o
 MLANOBJS += mlan/mlan_11n_aggr.o
 MLANOBJS += mlan/mlan_11n_rxreorder.o
 MLANOBJS += mlan/mlan_11n.o
-MLANOBJS += mlan/mlan_11ac.o
 MLANOBJS += mlan/mlan_11d.o
 MLANOBJS += mlan/mlan_11h.o
 ifeq ($(CONFIG_STA_SUPPORT),y)
@@ -394,49 +404,19 @@ endif
 
 
 
-ifeq ($(CONFIG_EMBEDDED_SUPP_AUTH), y)
-MLANOBJS += mlan/esa/common/rc4.o \
-			mlan/esa/common/aes_cmac_rom.o \
-			mlan/esa/common/hmac_sha1.o \
-			mlan/esa/common/md5.o \
-			mlan/esa/common/mrvl_sha256_crypto.o \
-			mlan/esa/common/hmac_md5.o \
-			mlan/esa/common/crypt_new_rom.o \
-			mlan/esa/common/rijndael.o \
-			mlan/esa/common/sha1.o \
-			mlan/esa/common/sha256.o \
-			mlan/esa/common/pass_phrase.o \
-			mlan/esa/common/pmkCache.o \
-			mlan/esa/common/pmkCache_rom.o \
-			mlan/esa/common/parser.o \
-			mlan/esa/common/parser_rom.o \
-			mlan/esa/keyMgmtApStaCommon.o \
-			mlan/esa/hostsa_init.o \
-			mlan/esa/authenticator_api.o
-endif
 
 
-ifeq ($(CONFIG_DRV_EMBEDDED_SUPPLICANT),y)
-MLANOBJS += mlan/esa/keyMgmtSta.o \
-			mlan/esa/keyMgmtSta_rom.o \
-			mlan/esa/supplicant.o
-endif
 
-ifeq ($(CONFIG_DRV_EMBEDDED_AUTHENTICATOR),y)
-MLANOBJS += mlan/esa/AssocAp_srv_rom.o \
-			mlan/esa/keyMgmtAp_rom.o \
-			mlan/esa/keyMgmtAp.o
-endif
 
-ifeq ($(CONFIG_MULTI_INTERFACE), n)
-obj-$(CONFIG_MRVL_WLAN_DRIVER) := mlan.o
-mlan-objs := $(MLANOBJS)
-else
-obj-$(CONFIG_MRVL_WLAN_DRIVER) := mlan_sdio.o
+ifeq ($(CONFIG_MULTI_INTERFACE),y)
+obj-m := mlan_sdio.o
 mlan_sdio-objs := $(MLANOBJS)
+else
+obj-m := mlan.o
+mlan-objs := $(MLANOBJS)
 endif
 MOALOBJS += mlinux/moal_sdio_mmc.o
-obj-$(CONFIG_MRVL_WLAN_DRIVER) += sd8xxx.o
+obj-m += sd8xxx.o
 sd8xxx-objs := $(MOALOBJS)
 
 # Otherwise we were called directly from the command line; invoke the kernel build system.
@@ -449,7 +429,7 @@ endif
 
 ###############################################################
 
-export		CC LD EXTRA_CFLAGS KERNELDIR
+export		CC LD ccflags-y KERNELDIR
 
 ifeq ($(CONFIG_STA_SUPPORT),y)
 ifeq ($(CONFIG_UAP_SUPPORT),y)
@@ -491,18 +471,20 @@ build:		echo default
 		mkdir $(BINDIR); \
 	fi
 
-ifeq ($(CONFIG_MULTI_INTERFACE), n)
-	cp -f mlan.$(MODEXT) $(BINDIR)/mlan$(DBG).$(MODEXT)
+ifeq ($(CONFIG_MULTI_INTERFACE),y)
+	cp -f mlan_sdio.$(MODEXT) $(BINDIR)/mlan_sdio$(DBG).$(MODEXT)
 else
-	cp -f mlan_sdio.$(MODEXT) $(BINDIR)/mlan$(DBG).$(MODEXT)
+	cp -f mlan.$(MODEXT) $(BINDIR)/mlan$(DBG).$(MODEXT)
 endif
-	cp -f sd8xxx.$(MODEXT) $(BINDIR)/sd8xxx$(DBG).$(MODEXT)
+	cp -f sd8xxx.$(MODEXT) $(BINDIR)/sd8977$(DBG).$(MODEXT)
 	cp -rpf script/sdio_mmc/* $(BINDIR)/
 
 ifeq ($(CONFIG_STA_SUPPORT),y)
 	cp -f README $(BINDIR)
 	cp -f README_MLAN $(BINDIR)
-	cp -f README_RBC $(BINDIR)
+ifeq ($(CONFIG_OPENWRT_SUPPORT),y)
+	cp -f README_OPENWRT $(BINDIR)
+endif
 ifneq ($(APPDIR),)
 	$(MAKE) -C mapp/mlanconfig $@ INSTALLDIR=$(BINDIR)
 	$(MAKE) -C mapp/mlanutl $@ INSTALLDIR=$(BINDIR)
@@ -537,6 +519,8 @@ clean:
 	-find . -name "Module.symvers" -exec rm {} \;
 	-find . -name "Module.markers" -exec rm {} \;
 	-find . -name "modules.order" -exec rm {} \;
+	-find . -name ".*.dwo" -exec rm {} \;
+	-find . -name "*dwo" -exec rm {} \;
 	-rm -rf .tmp_versions
 ifneq ($(APPDIR),)
 ifeq ($(CONFIG_STA_SUPPORT),y)
@@ -557,6 +541,8 @@ install: default
 
 	cp -f mlan.$(MODEXT) $(INSTALLDIR)/mlan$(DBG).$(MODEXT)
 	cp -f ../io/sdio/$(PLATFORM)/sdio.$(MODEXT) $(INSTALLDIR)
+	cp -f sd8xxx.$(MODEXT) $(INSTALLDIR)/sd8977$(DBG).$(MODEXT)
+	echo "sd8977 Driver Installed"
 
 distclean:
 	-find . -name "*.o" -exec rm {} \;
@@ -571,6 +557,8 @@ distclean:
 	-find . -name "*.ko" -exec rm {} \;
 	-find . -name ".*.cmd" -exec rm {} \;
 	-find . -name "*.mod.c" -exec rm {} \;
+	-find . -name ".*.dwo" -exec rm {} \;
+	-find . -name "*dwo" -exec rm {} \;
 	-rm -rf .tmp_versions
 ifneq ($(APPDIR),)
 ifeq ($(CONFIG_STA_SUPPORT),y)

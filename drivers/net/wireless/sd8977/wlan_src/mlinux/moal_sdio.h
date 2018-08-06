@@ -3,7 +3,7 @@
   * @brief This file contains definitions for SDIO interface.
   * driver.
   *
-  * Copyright (C) 2008-2016, Marvell International Ltd.
+  * Copyright (C) 2008-2018, Marvell International Ltd.
   *
   * This software file (the "File") is distributed by Marvell International
   * Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -49,33 +49,21 @@ Change log:
 #define FIXED_ADDRESS	0
 #endif
 
-#ifdef STA_SUPPORT
-/** Default firmware name */
-
-#define DEFAULT_FW_NAME_8777 "mrvl/sd8777_uapsta.bin"
-#define DEFAULT_FW_NAME_8787 "mrvl/sd8787_uapsta.bin"
-#define DEFAULT_FW_NAME_8887 "mrvl/sd8887_uapsta.bin"
-#define DEFAULT_FW_NAME_8801 "mrvl/sd8801_uapsta.bin"
-#define DEFAULT_FW_NAME_8897 "mrvl/sd8897_uapsta.bin"
-#define DEFAULT_FW_NAME_8977 "mrvl/sdsd8977_combo.bin"
-#define SD8977_V2_FW_NAME "mrvl/sdsd8977_combo_v2.bin"
-#define SD8977_V1_FW_NAME "mrvl/sdsd8977_combo_v1.bin"
+#define SD8977_V0       0x0
+#define SD8977_V1       0x8
+#define SD8977_V2       0x9
 #define SD8977_V0_FW_NAME "mrvl/sdsd8977_combo.bin"
-#define DEFAULT_FW_NAME_8997 "mrvl/sdsd8997_combo.bin"
-#define SD8997_Z_FW_NAME "mrvl/sdsd8997_combo.bin"
-#define SD8997_V2_FW_NAME "mrvl/sdsd8997_combo_v2.bin"
-#define SD8997_V3_FW_NAME "mrvl/sdsd8997_combo_v3.bin"
-#define DEFAULT_FW_NAME_8797 "mrvl/sd8797_uapsta.bin"
-#define SD8887_A0_FW_NAME    "mrvl/sd8887_uapsta.bin"
-#define SD8887_A2_FW_NAME    "mrvl/sd8887_uapsta_a2.bin"
-#define SD8887_WLAN_A2_FW_NAME "mrvl/sd8887_wlan_a2.bin"
-#define SD8887_WLAN_A0_FW_NAME "mrvl/sd8887_wlan.bin"
+#define SD8977_V1_FW_NAME "mrvl/sdsd8977_combo_v1.bin"
+#define SD8977_V2_FW_NAME "mrvl/sdsd8977_combo_v2.bin"
 #define SD8977_WLAN_V2_FW_NAME "mrvl/sd8977_wlan_v2.bin"
 #define SD8977_WLAN_V1_FW_NAME "mrvl/sd8977_wlan_v1.bin"
 #define SD8977_WLAN_V0_FW_NAME "mrvl/sd8977_wlan.bin"
-#define SD8997_WLAN_Z_FW_NAME "mrvl/sd8997_wlan.bin"
-#define SD8997_WLAN_V2_FW_NAME "mrvl/sd8997_wlan_v2.bin"
-#define SD8997_WLAN_V3_FW_NAME "mrvl/sd8997_wlan_v3.bin"
+
+#ifdef STA_SUPPORT
+/** Default firmware name */
+
+#define DEFAULT_FW_NAME	"mrvl/sdsd8977_combo.bin"
+
 #ifndef DEFAULT_FW_NAME
 #define DEFAULT_FW_NAME ""
 #endif
@@ -84,16 +72,9 @@ Change log:
 #ifdef UAP_SUPPORT
 /** Default firmware name */
 
-#define DEFAULT_AP_FW_NAME_8777 "mrvl/sd8777_uapsta.bin"
-#define DEFAULT_AP_FW_NAME_8787 "mrvl/sd8787_uapsta.bin"
-#define DEFAULT_AP_FW_NAME_8887 "mrvl/sd8887_uapsta.bin"
-#define DEFAULT_AP_FW_NAME_8801 "mrvl/sd8801_uapsta.bin"
-#define DEFAULT_AP_FW_NAME_8897 "mrvl/sd8897_uapsta.bin"
-#define DEFAULT_AP_FW_NAME_8977 "mrvl/sdsd8977_combo.bin"
-#define DEFAULT_AP_FW_NAME_8997 "mrvl/sdsd8997_combo.bin"
-#define DEFAULT_AP_FW_NAME_8797 "mrvl/sd8797_uapsta.bin"
-#define DEFAULT_WLAN_FW_NAME_8977 "mrvl/sd8977_wlan.bin"
-#define DEFAULT_WLAN_FW_NAME_8997 "mrvl/sd8997_wlan.bin"
+#define DEFAULT_AP_FW_NAME "mrvl/sdsd8977_combo.bin"
+#define DEFAULT_WLAN_FW_NAME "mrvl/sd8977_wlan.bin"
+
 #ifndef DEFAULT_AP_FW_NAME
 #define DEFAULT_AP_FW_NAME ""
 #endif
@@ -101,16 +82,9 @@ Change log:
 
 /** Default firmaware name */
 
-#define DEFAULT_AP_STA_FW_NAME_8777 "mrvl/sd8777_uapsta.bin"
-#define DEFAULT_AP_STA_FW_NAME_8787 "mrvl/sd8787_uapsta.bin"
-#define DEFAULT_AP_STA_FW_NAME_8887 "mrvl/sd8887_uapsta.bin"
-#define DEFAULT_AP_STA_FW_NAME_8801 "mrvl/sd8801_uapsta.bin"
-#define DEFAULT_AP_STA_FW_NAME_8897 "mrvl/sd8897_uapsta.bin"
-#define DEFAULT_AP_STA_FW_NAME_8797 "mrvl/sd8797_uapsta.bin"
-#define DEFAULT_AP_STA_FW_NAME_8977 "mrvl/sdsd8977_combo.bin"
-#define DEFAULT_AP_STA_FW_NAME_8997 "mrvl/sdsd8997_combo.bin"
-#define DEFAULT_WLAN_FW_NAME_8977 "mrvl/sd8977_wlan.bin"
-#define DEFAULT_WLAN_FW_NAME_8997 "mrvl/sd8997_wlan.bin"
+#define DEFAULT_AP_STA_FW_NAME "mrvl/sdsd8977_combo.bin"
+#define DEFAULT_WLAN_FW_NAME "mrvl/sd8977_wlan.bin"
+
 #ifndef DEFAULT_AP_STA_FW_NAME
 #define DEFAULT_AP_STA_FW_NAME ""
 #endif
@@ -118,8 +92,6 @@ Change log:
 /********************************************************
 		Global Functions
 ********************************************************/
-/** Function to update the SDIO card type */
-t_void woal_sdio_update_card_type(moal_handle *handle, t_void *card);
 
 /** Function to write register */
 mlan_status woal_write_reg(moal_handle *handle, t_u32 reg, t_u32 data);

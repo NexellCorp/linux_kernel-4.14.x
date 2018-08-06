@@ -1,5 +1,5 @@
 # File: Makefile
-# Copyright (C) 2007-2016, Marvell International Ltd.
+# Copyright (C) 2007-2018, Marvell International Ltd.
 #
 
 CC=		$(CROSS_COMPILE)gcc
@@ -18,13 +18,12 @@ YMD=		`date +%Y%m%d%H%M`
 # 1: PRINTM(MSG,...), PRINTM(FATAL,...), PRINTM(WARN,...) and PRINTM(INFO,...)
 # 2: All PRINTM()
 CONFIG_DEBUG=1
-CONFIG_BT_MULTI_INTERFACE=n
+
 
 # SDIO suspend/resume
 CONFIG_SDIO_SUSPEND_RESUME=y
 
-# Update Tx MAX power level
-CONFIG_UPDATE_TX_MAX_PWR_LVL=y
+
 
 #############################################################################
 # Select Platform Tools
@@ -50,9 +49,10 @@ endif
 
 
 
+
+
 KERNELVERSION_X86 := 	$(shell uname -r)
 KERNELDIR?=/lib/modules/$(KERNELVERSION_X86)/build
-
 
 EXTRA_CFLAGS += -I$(KERNELDIR)/include
 
@@ -62,6 +62,8 @@ LD += -S
 #ifdef SD8xxx
 BINDIR = ../bin_sd8xxx_bt
 #endif
+BINDIR = ../bin_sd8977_bt
+
 
 #############################################################################
 # Compiler Flags
@@ -78,20 +80,8 @@ ifeq ($(CONFIG_DEBUG),2)
 	DBG=	-dbg
 endif
 
-ifeq ($(CONFIG_BT_MULTI_INTERFACE),y)
-	EXTRA_CFLAGS += -DBT_MULTI_INTERFACE
-endif
-
 ifeq ($(CONFIG_SDIO_SUSPEND_RESUME),y)
 	EXTRA_CFLAGS += -DSDIO_SUSPEND_RESUME
-endif
-
-ifeq ($(CONFIG_UPDATE_TX_MAX_PWR_LVL),y)
-	EXTRA_CFLAGS += -DUPDATE_TX_MAX_PWR_LVL
-endif
-
-ifeq ($(CONFIG_MRVL_SDIO_OOB_IRQ),m)
-	EXTRA_CFLAGS += -DSDIO_OOB_IRQ
 endif
 
 #############################################################################
@@ -102,16 +92,16 @@ ifneq ($(KERNELRELEASE),)
 
 BTOBJS = bt/bt_main.o bt/bt_sdiommc.o bt/bt_proc.o bt/mbt_char.o
 
+
 BTOBJS += bt/bt_init.o
 
-ifeq ($(CONFIG_BT_MULTI_INTERFACE), y)
-obj-$(CONFIG_MRVL_BT_DRIVER) := bt8xxx_sdio.o
+ifeq ($(CONFIG_MULTI_INTERFACE), y)
+obj-m := bt8xxx_sdio.o
 bt8xxx_sdio-objs := $(BTOBJS)
 else
-obj-$(CONFIG_MRVL_BT_DRIVER) := bt8xxx.o
+obj-m := bt8xxx.o
 bt8xxx-objs := $(BTOBJS)
 endif
-
 
 
 # Otherwise we were called directly from the command line; invoke the kernel build system.
@@ -137,8 +127,15 @@ build:		echo default
 		mkdir $(BINDIR); \
 	fi
 
-	cp -f bt8xxx.$(MODEXT) $(BINDIR)/bt8xxx$(DBG).$(MODEXT)
+ifeq ($(CONFIG_MULTI_INTERFACE), y)
+	cp -f bt8xxx_sdio.$(MODEXT) $(BINDIR)/bt8977_sdio$(DBG).$(MODEXT)
+else
+	cp -f bt8xxx.$(MODEXT) $(BINDIR)/bt8977$(DBG).$(MODEXT)
+endif
 	cp -r config $(BINDIR)
+
+
+
 
 	cp -f script/sdio_mmc/* $(BINDIR)/
 
@@ -154,6 +151,8 @@ clean:
 	-find . -name "*.mod.c" -exec rm {} \;
 	-find . -name "*.symvers" -exec rm {} \;
 	-find . -name "modules.order" -exec rm {} \;
+	-find . -name ".*.dwo" -exec rm {} \;
+	-find . -name "*dwo" -exec rm {} \;
 	-rm -rf .tmp_versions
 	$(MAKE) -C app/fm_app $@
 
@@ -172,6 +171,8 @@ distclean:
 	-find . -name "*.ko" -exec rm {} \;
 	-find . -name ".*.cmd" -exec rm {} \;
 	-find . -name "*.mod.c" -exec rm {} \;
+	-find . -name ".*.dwo" -exec rm {} \;
+	-find . -name "*dwo" -exec rm {} \;
 	-rm -rf .tmp_versions
 	$(MAKE) -C app/fm_app $@
 # End of file;

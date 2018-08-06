@@ -2,7 +2,7 @@
  *
  *  @brief This file declares the exported symbols from MLAN.
  *
- *  Copyright (C) 2008-2016, Marvell International Ltd.
+ *  Copyright (C) 2008-2018, Marvell International Ltd.
  *
  *  This software file (the "File") is distributed by Marvell International
  *  Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -26,6 +26,7 @@ Change log:
 #ifdef LINUX
 #include <linux/module.h>
 #include "mlan_decl.h"
+#include "mlan_diag.h"
 #include "mlan_ioctl.h"
 
 EXPORT_SYMBOL(mlan_register);
@@ -40,6 +41,9 @@ EXPORT_SYMBOL(mlan_main_process);
 EXPORT_SYMBOL(mlan_rx_process);
 EXPORT_SYMBOL(mlan_select_wmm_queue);
 EXPORT_SYMBOL(mlan_interrupt);
+#if defined(SYSKT)
+EXPORT_SYMBOL(mlan_hs_callback);
+#endif /* SYSKT_MULTI || SYSKT */
 
 EXPORT_SYMBOL(mlan_pm_wakeup_card);
 EXPORT_SYMBOL(mlan_is_main_process_running);

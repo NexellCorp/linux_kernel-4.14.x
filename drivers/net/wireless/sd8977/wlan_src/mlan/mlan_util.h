@@ -3,7 +3,7 @@
  *  @brief This file contains wrappers for linked-list,
  *  spinlock and timer defines.
  *
- *  Copyright (C) 2008-2016, Marvell International Ltd.
+ *  Copyright (C) 2008-2018, Marvell International Ltd.
  *
  *  This software file (the "File") is distributed by Marvell International
  *  Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -521,7 +521,7 @@ util_scalar_conditional_write(t_void *pmoal_handle,
  *  @param num  number
  *  @return     number of bits
  */
-static t_u32 INLINE
+static INLINE t_u32
 bitcount(t_u32 num)
 {
 	t_u32 count = 0;

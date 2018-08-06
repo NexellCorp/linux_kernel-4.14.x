@@ -2,7 +2,7 @@
  *
  *  @brief This file contains AP mode transmit and receive functions
  *
- *  Copyright (C) 2009-2016, Marvell International Ltd.
+ *  Copyright (C) 2009-2018, Marvell International Ltd.
  *
  *  This software file (the "File") is distributed by Marvell International
  *  Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -162,6 +162,8 @@ wlan_ops_uap_process_txpd(IN t_void *priv, IN pmlan_buffer pmbuf)
 	t_u8 *head_ptr = MNULL;
 	t_u32 pkt_type;
 	t_u32 tx_control;
+	t_u8 dst_mac[MLAN_MAC_ADDR_LENGTH];
+
 	ENTER();
 
 	if (!pmbuf->data_len) {
@@ -179,12 +181,12 @@ wlan_ops_uap_process_txpd(IN t_void *priv, IN pmlan_buffer pmbuf)
 		pmbuf->data_offset += sizeof(pkt_type) + sizeof(tx_control);
 		pmbuf->data_len -= sizeof(pkt_type) + sizeof(tx_control);
 	}
-	if (pmbuf->data_offset < (sizeof(UapTxPD) + INTF_HEADER_LEN +
+	if (pmbuf->data_offset < (sizeof(UapTxPD) + pmpriv->intf_hr_len +
 				  DMA_ALIGNMENT)) {
 		PRINTM(MERROR,
 		       "not enough space for UapTxPD: headroom=%d pkt_len=%d, required=%d\n",
 		       pmbuf->data_offset, pmbuf->data_len,
-		       sizeof(UapTxPD) + INTF_HEADER_LEN + DMA_ALIGNMENT);
+		       sizeof(UapTxPD) + pmpriv->intf_hr_len + DMA_ALIGNMENT);
 		DBG_HEXDUMP(MDAT_D, "drop pkt",
 			    pmbuf->pbuf + pmbuf->data_offset, pmbuf->data_len);
 		pmbuf->status_code = MLAN_ERROR_PKT_SIZE_INVALID;
@@ -194,10 +196,10 @@ wlan_ops_uap_process_txpd(IN t_void *priv, IN pmlan_buffer pmbuf)
 	/* head_ptr should be aligned */
 	head_ptr =
 		pmbuf->pbuf + pmbuf->data_offset - sizeof(UapTxPD) -
-		INTF_HEADER_LEN;
+		pmpriv->intf_hr_len;
 	head_ptr = (t_u8 *)((t_ptr)head_ptr & ~((t_ptr)(DMA_ALIGNMENT - 1)));
 
-	plocal_tx_pd = (UapTxPD *)(head_ptr + INTF_HEADER_LEN);
+	plocal_tx_pd = (UapTxPD *)(head_ptr + pmpriv->intf_hr_len);
 	memset(pmpriv->adapter, plocal_tx_pd, 0, sizeof(UapTxPD));
 
 	/* Set the BSS number to TxPD */
@@ -222,7 +224,7 @@ wlan_ops_uap_process_txpd(IN t_void *priv, IN pmlan_buffer pmbuf)
 							 priority];
 
 	if (pmbuf->flags & MLAN_BUF_FLAG_TX_STATUS) {
-		plocal_tx_pd->tx_token_id = (t_u8)pmbuf->tx_seq_num;
+		plocal_tx_pd->tx_control_1 |= pmbuf->tx_seq_num << 8;
 		plocal_tx_pd->flags |= MRVDRV_TxPD_FLAGS_TX_PACKET_STATUS;
 	}
 
@@ -240,6 +242,32 @@ wlan_ops_uap_process_txpd(IN t_void *priv, IN pmlan_buffer pmbuf)
 		plocal_tx_pd->tx_pkt_type = (t_u16)pkt_type;
 		plocal_tx_pd->tx_control = tx_control;
 	}
+	if (pmbuf->flags & MLAN_BUF_FLAG_TX_CTRL) {
+		if (pmbuf->u.tx_info.data_rate) {
+			memcpy(pmpriv->adapter, dst_mac,
+			       pmbuf->pbuf + pmbuf->data_offset,
+			       sizeof(dst_mac));
+			plocal_tx_pd->tx_control |=
+				(wlan_ieee_rateid_to_mrvl_rateid
+				 (pmpriv, pmbuf->u.tx_info.data_rate,
+				  dst_mac) << 16);
+			plocal_tx_pd->tx_control |= TXPD_TXRATE_ENABLE;
+		}
+		plocal_tx_pd->tx_control_1 |= pmbuf->u.tx_info.channel << 21;
+		if (pmbuf->u.tx_info.bw) {
+			plocal_tx_pd->tx_control_1 |= pmbuf->u.tx_info.bw << 16;
+			plocal_tx_pd->tx_control_1 |= TXPD_BW_ENABLE;
+		}
+		if (pmbuf->u.tx_info.tx_power.tp.hostctl)
+			plocal_tx_pd->tx_control |=
+				pmbuf->u.tx_info.tx_power.val;
+		if (pmbuf->u.tx_info.retry_limit) {
+			plocal_tx_pd->tx_control |=
+				pmbuf->u.tx_info.retry_limit << 8;
+			plocal_tx_pd->tx_control |= TXPD_RETRY_ENABLE;
+		}
+	}
+
 	uap_endian_convert_TxPD(plocal_tx_pd);
 
 	/* Adjust the data offset and length to include TxPD in pmbuf */
@@ -279,6 +307,8 @@ wlan_ops_uap_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf)
 #endif
 	t_u8 adj_rx_rate = 0;
 	t_u8 antenna = 0;
+	t_u32 last_rx_sec = 0;
+	t_u32 last_rx_usec = 0;
 
 	ENTER();
 
@@ -288,9 +318,6 @@ wlan_ops_uap_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf)
 	priv->rxpd_rate = prx_pd->rx_rate;
 
 	priv->rxpd_rate_info = prx_pd->rate_info;
-	if (!priv->adapter->psdio_device->v15_fw_api)
-		priv->rxpd_rate_info =
-			wlan_convert_v14_rate_ht_info(priv->rxpd_rate_info);
 
 	if (priv->bss_type == MLAN_BSS_TYPE_UAP) {
 		antenna = wlan_adjust_antenna(priv, (RxPD *)prx_pd);
@@ -302,6 +329,16 @@ wlan_ops_uap_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf)
 							adj_rx_rate,
 							prx_pd->snr, prx_pd->nf,
 							antenna);
+	}
+
+	if (priv->rx_pkt_info) {
+		pmbuf->u.rx_info.data_rate =
+			wlan_index_to_data_rate(priv->adapter, prx_pd->rx_rate,
+						prx_pd->rate_info);
+		pmbuf->u.rx_info.channel =
+			(prx_pd->rx_info & RXPD_CHAN_MASK) >> 5;
+		pmbuf->u.rx_info.antenna = prx_pd->antenna;
+		pmbuf->u.rx_info.rssi = prx_pd->snr - prx_pd->nf;
 	}
 
 	rx_pkt_type = prx_pd->rx_pkt_type;
@@ -327,8 +364,9 @@ wlan_ops_uap_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf)
 
 	if (pmadapter->priv[pmbuf->bss_index]->mgmt_frame_passthru_mask &&
 	    prx_pd->rx_pkt_type == PKT_TYPE_MGMT_FRAME) {
-		/* Check if this is mgmt packet and needs to forwarded to app
-		   as an event */
+		/* Check if this is mgmt packet and needs to
+		 * forwarded to app as an event
+		 */
 		puap_pkt_hdr =
 			(wlan_mgmt_pkt *)((t_u8 *)prx_pd +
 					  prx_pd->rx_pkt_offset);
@@ -347,6 +385,16 @@ wlan_ops_uap_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf)
 		wlan_free_mlan_buffer(pmadapter, pmbuf);
 		goto done;
 	}
+
+	sta_ptr = wlan_get_station_entry(priv, prx_pkt->eth803_hdr.src_addr);
+	if (sta_ptr) {
+		pmadapter->callbacks.moal_get_system_time(pmadapter->
+							  pmoal_handle,
+							  &last_rx_sec,
+							  &last_rx_usec);
+		sta_ptr->stats.last_rx_in_msec =
+			(t_u64)last_rx_sec *1000 + (t_u64)last_rx_usec / 1000;
+	}
 #ifdef DRV_EMBEDDED_AUTHENTICATOR
     /**process eapol packet for uap*/
 	if (IsAuthenticatorEnabled(priv->psapriv) &&
@@ -364,6 +412,11 @@ wlan_ops_uap_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf)
 #endif
 
 	pmbuf->priority = prx_pd->priority;
+	if (pmadapter->enable_net_mon &&
+	    (prx_pd->rx_pkt_type == PKT_TYPE_802DOT11)) {
+		wlan_process_uap_rx_packet(priv, pmbuf);
+		goto done;
+	}
 	memcpy(pmadapter, ta, prx_pkt->eth803_hdr.src_addr,
 	       MLAN_MAC_ADDR_LENGTH);
 	if ((rx_pkt_type != PKT_TYPE_BAR) && (prx_pd->priority < MAX_NUM_TID)) {
@@ -440,7 +493,7 @@ wlan_uap_recv_packet(IN mlan_private *priv, IN pmlan_buffer pmbuf)
 				newbuf->in_ts_sec = pmbuf->in_ts_sec;
 				newbuf->in_ts_usec = pmbuf->in_ts_usec;
 				newbuf->data_offset =
-					(sizeof(UapTxPD) + INTF_HEADER_LEN +
+					(sizeof(UapTxPD) + priv->intf_hr_len +
 					 DMA_ALIGNMENT);
 				util_scalar_increment(pmadapter->pmoal_handle,
 						      &pmadapter->
@@ -489,7 +542,7 @@ wlan_uap_recv_packet(IN mlan_private *priv, IN pmlan_buffer pmbuf)
 				newbuf->in_ts_sec = pmbuf->in_ts_sec;
 				newbuf->in_ts_usec = pmbuf->in_ts_usec;
 				newbuf->data_offset =
-					(sizeof(UapTxPD) + INTF_HEADER_LEN +
+					(sizeof(UapTxPD) + priv->intf_hr_len +
 					 DMA_ALIGNMENT);
 				util_scalar_increment(pmadapter->pmoal_handle,
 						      &pmadapter->
@@ -577,6 +630,14 @@ wlan_process_uap_rx_packet(IN mlan_private *priv, IN pmlan_buffer pmbuf)
 	PRINTM(MDATA, "Rx dest " MACSTR "\n",
 	       MAC2STR(prx_pkt->eth803_hdr.dest_addr));
 
+	if (pmadapter->enable_net_mon) {
+		/* set netmon flag only for a sniffed pkt */
+		if (prx_pd->rx_pkt_type == PKT_TYPE_802DOT11) {
+			pmbuf->flags |= MLAN_BUF_FLAG_NET_MONITOR;
+			goto upload;
+		}
+	}
+
 	/* don't do packet forwarding in disconnected state */
 	/* don't do packet forwarding when packet > 1514 */
 	if ((priv->media_connected == MFALSE) ||
@@ -596,7 +657,7 @@ wlan_process_uap_rx_packet(IN mlan_private *priv, IN pmlan_buffer pmbuf)
 				newbuf->in_ts_sec = pmbuf->in_ts_sec;
 				newbuf->in_ts_usec = pmbuf->in_ts_usec;
 				newbuf->data_offset =
-					(sizeof(UapTxPD) + INTF_HEADER_LEN +
+					(sizeof(UapTxPD) + priv->intf_hr_len +
 					 DMA_ALIGNMENT);
 				util_scalar_increment(pmadapter->pmoal_handle,
 						      &pmadapter->
@@ -682,6 +743,17 @@ upload:
 	PRINTM(MDATA, "%lu.%06lu : Data => kernel seq_num=%d tid=%d\n",
 	       pmbuf->out_ts_sec, pmbuf->out_ts_usec, prx_pd->seq_num,
 	       prx_pd->priority);
+	if (pmbuf->flags & MLAN_BUF_FLAG_NET_MONITOR) {
+		//Use some rxpd space to save rxpd info for radiotap header
+		//We should insure radiotap_info is not bigger than RxPD
+		wlan_rxpdinfo_to_radiotapinfo(priv, (RxPD *)prx_pd,
+					      (radiotap_info *) (pmbuf->pbuf +
+								 pmbuf->
+								 data_offset -
+								 sizeof
+								 (radiotap_info)));
+	}
+
 	ret = pmadapter->callbacks.moal_recv_packet(pmadapter->pmoal_handle,
 						    pmbuf);
 	if (ret == MLAN_STATUS_FAILURE) {

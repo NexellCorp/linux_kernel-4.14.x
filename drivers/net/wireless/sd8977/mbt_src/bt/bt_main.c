@@ -4,7 +4,7 @@
   * driver. It includes init, exit, open, close and main
   * thread etc..
   *
-  * Copyright (C) 2007-2016, Marvell International Ltd.
+  * Copyright (C) 2007-2018, Marvell International Ltd.
   *
   * This software file (the "File") is distributed by Marvell International
   * Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -29,10 +29,9 @@
   *
   * @section copyright_sec Copyright
   *
-  * Copyright (C) 2007-2016, Marvell International Ltd.
+  * Copyright (C) 2007-2018, Marvell International Ltd.
   *
   */
-
 #include <linux/module.h>
 
 #ifdef CONFIG_OF
@@ -46,29 +45,14 @@
 #include "bt_sdio.h"
 
 /** Version */
-#define VERSION "C3X14113"
+#define VERSION "C4X14113"
 
 /** Driver version */
-static char mbt_driver_version[] = "SD8XXX-%s-" VERSION "-(" "FP" FPNUM ")"
+static char mbt_driver_version[] = "SD8977-%s-" VERSION "-(" "FP" FPNUM ")"
 #ifdef DEBUG_LEVEL2
 	"-dbg"
 #endif
 	" ";
-
-/** SD8787 Card */
-#define CARD_SD8787     "SD8787"
-/** SD8777 Card */
-#define CARD_SD8777     "SD8777"
-/** SD8887 Card */
-#define CARD_SD8887     "SD8887"
-/** SD8897 Card */
-#define CARD_SD8897     "SD8897"
-/** SD8797 Card */
-#define CARD_SD8797     "SD8797"
-/** SD8977 Card */
-#define CARD_SD8977     "SD8977"
-/** SD8997 Card */
-#define CARD_SD8997     "SD8997"
 
 /** Declare and initialize fw_version */
 static char fw_version[32] = "0.0.0.p0";
@@ -81,26 +65,21 @@ static char fw_version[32] = "0.0.0.p0";
 
 /** Define module name */
 
-#ifdef BT_MULTI_INTERFACE
-#define MODULE_NAME  "bt_fm_nfc_s"
-#else
 #define MODULE_NAME  "bt_fm_nfc"
-#endif
 
 /** Declaration of chardev class */
 static struct class *chardev_class;
 
 /** Interface specific variables */
-static int fmchar_minor;
-static int nfcchar_minor;
+
+/**
+ * The global variable of a pointer to bt_private
+ * structure variable
+ **/
+bt_private *m_priv[MAX_BT_ADAPTER];
 
 /** Default Driver mode */
-static int drv_mode = (DRV_MODE_BT | DRV_MODE_FM | DRV_MODE_NFC);
-
-/** FM interface name */
-static char *fm_name;
-/** NFC interface name */
-static char *nfc_name;
+static int drv_mode = (DRV_MODE_BT);
 
 /** fw reload flag */
 int bt_fw_reload;
@@ -111,8 +90,8 @@ int bt_fw_serial = 1;
 static int fw = 1;
 /** default powermode */
 static int psmode = 1;
-/** Default CRC check control */
-static int fw_crc_check = 1;
+/** default BLE deep sleep */
+static int deep_sleep = 1;
 /** Init config file (MAC address, register etc.) */
 static char *init_cfg;
 /** Calibration config file (MAC address, init powe etc.) */
@@ -144,6 +123,34 @@ int mbt_pm_keep_power = 1;
 
 static int btpmic = 0;
 
+/** Offset of sequence number in event */
+#define OFFSET_SEQNUM 4
+
+/**
+ *  @brief handle received packet
+ *  @param priv    A pointer to bt_private structure
+ *  @param skb     A pointer to rx skb
+ *
+ *  @return        N/A
+ */
+void
+bt_recv_frame(bt_private *priv, struct sk_buff *skb)
+{
+	struct hci_dev *hdev = NULL;
+	if (priv->bt_dev.m_dev[BT_SEQ].spec_type == BLUEZ_SPEC)
+		hdev = (struct hci_dev *)priv->bt_dev.m_dev[BT_SEQ].dev_pointer;
+	if (hdev) {
+		skb->dev = (void *)hdev;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 13, 0)
+		hci_recv_frame(skb);
+#else
+		hci_recv_frame(hdev, skb);
+#endif
+		hdev->stat.byte_rx += skb->len;
+	}
+	return;
+}
+
 /**
  *  @brief Alloc bt device
  *
@@ -163,48 +170,6 @@ alloc_mbt_dev(void)
 
 	LEAVE();
 	return mbt_dev;
-}
-
-/**
- *  @brief Alloc fm device
- *
- *  @return    pointer to structure fm_dev or NULL
- */
-struct fm_dev *
-alloc_fm_dev(void)
-{
-	struct fm_dev *fm_dev;
-	ENTER();
-
-	fm_dev = kzalloc(sizeof(struct fm_dev), GFP_KERNEL);
-	if (!fm_dev) {
-		LEAVE();
-		return NULL;
-	}
-
-	LEAVE();
-	return fm_dev;
-}
-
-/**
- *  @brief Alloc nfc device
- *
- *  @return    pointer to structure nfc_dev or NULL
- */
-struct nfc_dev *
-alloc_nfc_dev(void)
-{
-	struct nfc_dev *nfc_dev;
-	ENTER();
-
-	nfc_dev = kzalloc(sizeof(struct nfc_dev), GFP_KERNEL);
-	if (!nfc_dev) {
-		LEAVE();
-		return NULL;
-	}
-
-	LEAVE();
-	return nfc_dev;
 }
 
 /**
@@ -244,30 +209,6 @@ clean_up_m_devs(bt_private *priv)
 			hci_free_dev(hdev);
 		}
 		priv->bt_dev.m_dev[BT_SEQ].dev_pointer = NULL;
-	}
-	if (priv->bt_dev.m_dev[FM_SEQ].dev_pointer) {
-		m_dev = &(priv->bt_dev.m_dev[FM_SEQ]);
-		PRINTM(MSG, "BT: Delete %s\n", m_dev->name);
-		if ((drv_mode & DRV_MODE_FM) && (fmchar_minor > 0))
-			fmchar_minor--;
-		m_dev->close(m_dev);
-		/** unregister m_dev to char_dev */
-		if (chardev_class)
-			chardev_cleanup_one(m_dev, chardev_class);
-		free_m_dev(m_dev);
-		priv->bt_dev.m_dev[FM_SEQ].dev_pointer = NULL;
-	}
-	if (priv->bt_dev.m_dev[NFC_SEQ].dev_pointer) {
-		m_dev = &(priv->bt_dev.m_dev[NFC_SEQ]);
-		PRINTM(MSG, "BT: Delete %s\n", m_dev->name);
-		if ((drv_mode & DRV_MODE_NFC) && (nfcchar_minor > 0))
-			nfcchar_minor--;
-		m_dev->close(m_dev);
-		/** unregister m_dev to char_dev */
-		if (chardev_class)
-			chardev_cleanup_one(m_dev, chardev_class);
-		free_m_dev(m_dev);
-		priv->bt_dev.m_dev[NFC_SEQ].dev_pointer = NULL;
 	}
 	LEAVE();
 	return;
@@ -345,22 +286,35 @@ check_evtpkt(bt_private *priv, struct sk_buff *skb)
 						      cmd_wait_q);
 				break;
 			}
-#ifdef SDIO_SUSPEND_RESUME
-		case FM_CMD:
+		case BT_CMD_HISTOGRAM:
 			{
+				u8 *status =
+					skb->data + HCI_EVENT_HDR_SIZE +
+					sizeof(struct hci_ev_cmd_complete);
 				u8 *pos =
 					(skb->data + HCI_EVENT_HDR_SIZE +
 					 sizeof(struct hci_ev_cmd_complete) +
 					 1);
-				if (*pos == FM_SET_INTR_MASK) {
-					priv->bt_dev.sendcmdflag = FALSE;
-					priv->adapter->cmd_complete = TRUE;
-					wake_up_interruptible(&priv->adapter->
-							      cmd_wait_q);
+				if (*status == 0) {
+					priv->hist_data_len =
+						hdr->plen -
+						sizeof(struct
+						       hci_ev_cmd_complete) - 1;
+					if (priv->hist_data_len >
+					    sizeof(priv->hist_data))
+						priv->hist_data_len =
+							sizeof(priv->hist_data);
+					memcpy(priv->hist_data, pos,
+					       priv->hist_data_len);
+					PRINTM(CMD, "histogram len=%d\n",
+					       priv->hist_data_len);
 				}
+				priv->bt_dev.sendcmdflag = FALSE;
+				priv->adapter->cmd_complete = TRUE;
+				wake_up_interruptible(&priv->adapter->
+						      cmd_wait_q);
+				break;
 			}
-			break;
-#endif
 		case BT_CMD_HOST_SLEEP_ENABLE:
 			priv->bt_dev.sendcmdflag = FALSE;
 			break;
@@ -382,6 +336,77 @@ exit:
 		kfree_skb(skb);
 	LEAVE();
 	return ret;
+}
+
+/**
+*  @brief This function stores the FW dumps received from events in a file
+*
+*  @param priv    A pointer to bt_private structure
+*  @param skb     A pointer to rx skb
+*
+*  @return        N/A
+*/
+void
+bt_store_firmware_dump(bt_private *priv, u8 *buf, u32 len)
+{
+	struct file *pfile_fwdump = NULL;
+	loff_t pos = 0;
+	u16 seqnum = 0;
+	struct timeval t;
+	u32 sec;
+
+	ENTER();
+
+	seqnum = __le16_to_cpu(*(u16 *) (buf + OFFSET_SEQNUM));
+
+	if (priv->adapter->fwdump_fname && seqnum != 1) {
+		pfile_fwdump =
+			filp_open((const char *)priv->adapter->fwdump_fname,
+				  O_CREAT | O_WRONLY | O_APPEND, 0644);
+		if (IS_ERR(pfile_fwdump)) {
+			PRINTM(MSG, "Cannot create firmware dump file.\n");
+			LEAVE();
+			return;
+		}
+	} else {
+		if (!priv->adapter->fwdump_fname) {
+			gfp_t flag;
+			flag = (in_atomic() ||
+				irqs_disabled())? GFP_ATOMIC : GFP_KERNEL;
+			priv->adapter->fwdump_fname = kzalloc(64, flag);
+		} else
+			memset(priv->adapter->fwdump_fname, 0, 64);
+
+		do_gettimeofday(&t);
+		sec = (u32)t.tv_sec;
+		sprintf(priv->adapter->fwdump_fname, "%s%u",
+			"/var/log/bt_fwdump_", sec);
+		pfile_fwdump =
+			filp_open(priv->adapter->fwdump_fname,
+				  O_CREAT | O_WRONLY | O_APPEND, 0644);
+		if (IS_ERR(pfile_fwdump)) {
+			sprintf(priv->adapter->fwdump_fname, "%s%u",
+				"/data/bt_fwdump_", sec);
+			pfile_fwdump =
+				filp_open((const char *)priv->adapter->
+					  fwdump_fname,
+					  O_CREAT | O_WRONLY | O_APPEND, 0644);
+		}
+	}
+
+	if (IS_ERR(pfile_fwdump)) {
+		PRINTM(MSG, "Cannot create firmware dump file\n");
+		LEAVE();
+		return;
+	}
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
+	vfs_write(pfile_fwdump, buf, len, &pos);
+#else
+	kernel_write(pfile_fwdump, buf, len, &pos);
+#endif
+	filp_close(pfile_fwdump, NULL);
+	LEAVE();
+	return;
 }
 
 /**
@@ -408,6 +433,11 @@ bt_process_event(bt_private *priv, struct sk_buff *skb)
 	BT_EVENT *pevent;
 
 	ENTER();
+	if (!m_dev) {
+		PRINTM(CMD, "BT: bt_process_event without m_dev\n");
+		ret = BT_STATUS_FAILURE;
+		goto exit;
+	}
 	pevent = (BT_EVENT *)skb->data;
 	if (pevent->EC != 0xff) {
 		PRINTM(CMD, "BT: Not Marvell Event=0x%x\n", pevent->EC);
@@ -415,6 +445,8 @@ bt_process_event(bt_private *priv, struct sk_buff *skb)
 		goto exit;
 	}
 	switch (pevent->data[0]) {
+	case BT_CMD_HISTOGRAM:
+		break;
 	case BT_CMD_AUTO_SLEEP_MODE:
 		if (pevent->data[2] == BT_STATUS_SUCCESS) {
 			if (pevent->data[1] == BT_PS_ENABLE)
@@ -476,8 +508,8 @@ bt_process_event(bt_private *priv, struct sk_buff *skb)
 					DEV_TYPE_AMP) ? "AMP controller" :
 				       "BR/EDR controller");
 				priv->bt_dev.devFeature = pevent->data[4];
-				PRINTM(CMD,
-				       "devFeature:  %s,    %s,    %s,    %s,    %s\n",
+				PRINTM(CMD, "devFeature:  %s,    %s,    %s"
+				       "\n",
 				       ((pevent->
 					 data[4] & DEV_FEATURE_BT) ?
 					"BT Feature" : "No BT Feature"),
@@ -486,13 +518,8 @@ bt_process_event(bt_private *priv, struct sk_buff *skb)
 					"BTAMP Feature" : "No BTAMP Feature"),
 				       ((pevent->
 					 data[4] & DEV_FEATURE_BLE) ?
-					"BLE Feature" : "No BLE Feature"),
-				       ((pevent->
-					 data[4] & DEV_FEATURE_FM) ?
-					"FM Feature" : "No FM Feature"),
-				       ((pevent->
-					 data[4] & DEV_FEATURE_NFC) ?
-					"NFC Feature" : "No NFC Feature"));
+					"BLE Feature" : "No BLE Feature")
+					);
 			}
 			if (pevent->data[1] == MODULE_SHUTDOWN_REQ) {
 				PRINTM(CMD, "BT: EVENT %s:%s\n", m_dev->name,
@@ -514,10 +541,6 @@ bt_process_event(bt_private *priv, struct sk_buff *skb)
 	case BT_EVENT_POWER_STATE:
 		if (pevent->data[1] == BT_PS_SLEEP)
 			priv->adapter->ps_state = PS_SLEEP;
-		if (priv->adapter->ps_state == PS_SLEEP
-		    && (priv->card_type == CARD_TYPE_SD8887)
-			)
-			os_sched_timeout(5);
 		PRINTM(CMD, "BT: EVENT %s:%s\n", m_dev->name,
 		       (priv->adapter->ps_state) ? "PS_SLEEP" : "PS_AWAKE");
 
@@ -549,10 +572,12 @@ exit:
 /**
  *  @brief This function save the dump info to file
  *
- *
  *  @param dir_name     directory name
  *  @param file_name    file_name
- *  @return    0 --success otherwise fail
+ *  @param buf			buffer
+ *  @param buf_len		buffer length
+ *
+ *  @return   		    0 --success otherwise fail
  */
 int
 bt_save_dump_info_to_file(char *dir_name, char *file_name, u8 *buf, u32 buf_len)
@@ -560,8 +585,10 @@ bt_save_dump_info_to_file(char *dir_name, char *file_name, u8 *buf, u32 buf_len)
 	int ret = BT_STATUS_SUCCESS;
 	struct file *pfile = NULL;
 	u8 name[64];
-	mm_segment_t fs;
 	loff_t pos;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
+	mm_segment_t fs;
+#endif
 
 	ENTER();
 
@@ -572,14 +599,15 @@ bt_save_dump_info_to_file(char *dir_name, char *file_name, u8 *buf, u32 buf_len)
 	}
 
 	memset(name, 0, sizeof(name));
-	sprintf((char *)name, "%s/%s", dir_name, file_name);
+	snprintf((char *)name, sizeof(name), "%s/%s", dir_name, file_name);
 	pfile = filp_open((const char *)name, O_CREAT | O_RDWR, 0644);
 	if (IS_ERR(pfile)) {
 		PRINTM(MSG,
 		       "Create file %s error, try to save dump file in /var\n",
 		       name);
 		memset(name, 0, sizeof(name));
-		sprintf((char *)name, "%s/%s", "/var", file_name);
+		snprintf((char *)name, sizeof(name), "%s/%s", "/var",
+			 file_name);
 		pfile = filp_open((const char *)name, O_CREAT | O_RDWR, 0644);
 	}
 	if (IS_ERR(pfile)) {
@@ -590,12 +618,16 @@ bt_save_dump_info_to_file(char *dir_name, char *file_name, u8 *buf, u32 buf_len)
 
 	PRINTM(MSG, "Dump data %s saved in %s\n", file_name, name);
 
+	pos = 0;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
 	fs = get_fs();
 	set_fs(KERNEL_DS);
-	pos = 0;
-	kernel_write(pfile, (const char __user *)buf, buf_len, &pos);
-	filp_close(pfile, NULL);
+	vfs_write(pfile, (const char __user *)buf, buf_len, &pos);
 	set_fs(fs);
+#else
+	kernel_write(pfile, (const char __user *)buf, buf_len, &pos);
+#endif
+	filp_close(pfile, NULL);
 
 	PRINTM(MSG, "Dump data %s saved in %s successfully\n", file_name, name);
 
@@ -606,20 +638,11 @@ done:
 
 #define DEBUG_HOST_READY		0xEE
 #define DEBUG_FW_DONE			0xFF
-#define MAX_POLL_TRIES			100
+#define DUMP_MAX_POLL_TRIES			200
 
-#define DEBUG_DUMP_CTRL_REG_8897               0xE2
-#define DEBUG_DUMP_START_REG_8897              0xE3
-#define DEBUG_DUMP_END_REG_8897                0xEA
-#define DEBUG_DUMP_CTRL_REG_8887               0xA2
-#define DEBUG_DUMP_START_REG_8887              0xA3
-#define DEBUG_DUMP_END_REG_8887                0xAA
-#define DEBUG_DUMP_CTRL_REG_8977               0xF0
-#define DEBUG_DUMP_START_REG_8977              0xF1
-#define DEBUG_DUMP_END_REG_8977                0xF8
-#define DEBUG_DUMP_CTRL_REG_8997               0xF0
-#define DEBUG_DUMP_START_REG_8997              0xF1
-#define DEBUG_DUMP_END_REG_8997                0xF8
+#define DEBUG_DUMP_CTRL_REG               0xF0
+#define DEBUG_DUMP_START_REG              0xF1
+#define DEBUG_DUMP_END_REG                0xF8
 
 typedef enum {
 	DUMP_TYPE_ITCM = 0,
@@ -642,10 +665,15 @@ typedef enum {
 #define MAX_NAME_LEN               8
 #define MAX_FULL_NAME_LEN               32
 
+/** Memory type mapping structure */
 typedef struct {
+	/** memory name */
 	u8 mem_name[MAX_NAME_LEN];
+	/** memory pointer */
 	u8 *mem_Ptr;
+	/** file structure */
 	struct file *pfile_mem;
+	/** donbe flag */
 	u8 done_flag;
 } memory_type_mapping;
 
@@ -688,14 +716,7 @@ bt_cmd52_rdwr_firmware(bt_private *priv, u8 doneflag)
 	u8 ctrl_data = 0;
 	u8 dbg_dump_ctrl_reg = 0;
 
-	if (priv->card_type == CARD_TYPE_SD8887)
-		dbg_dump_ctrl_reg = DEBUG_DUMP_CTRL_REG_8887;
-	else if (priv->card_type == CARD_TYPE_SD8897)
-		dbg_dump_ctrl_reg = DEBUG_DUMP_CTRL_REG_8897;
-	else if (priv->card_type == CARD_TYPE_SD8977)
-		dbg_dump_ctrl_reg = DEBUG_DUMP_CTRL_REG_8977;
-	else if (priv->card_type == CARD_TYPE_SD8997)
-		dbg_dump_ctrl_reg = DEBUG_DUMP_CTRL_REG_8997;
+	dbg_dump_ctrl_reg = DEBUG_DUMP_CTRL_REG;
 
 	sdio_writeb(((struct sdio_mmc_card *)priv->bt_dev.card)->func,
 		    DEBUG_HOST_READY, dbg_dump_ctrl_reg, &ret);
@@ -703,7 +724,7 @@ bt_cmd52_rdwr_firmware(bt_private *priv, u8 doneflag)
 		PRINTM(ERROR, "SDIO Write ERR\n");
 		return RDWR_STATUS_FAILURE;
 	}
-	for (tries = 0; tries < MAX_POLL_TRIES; tries++) {
+	for (tries = 0; tries < DUMP_MAX_POLL_TRIES; tries++) {
 		ctrl_data =
 			sdio_readb(((struct sdio_mmc_card *)priv->bt_dev.card)->
 				   func, dbg_dump_ctrl_reg, &ret);
@@ -766,32 +787,12 @@ bt_dump_firmware_info_v2(bt_private *priv)
 		return;
 	}
 
-	if ((priv->card_type != CARD_TYPE_SD8887) &&
-	    (priv->card_type != CARD_TYPE_SD8897)
-	    && (priv->card_type != CARD_TYPE_SD8977) &&
-	    (priv->card_type != CARD_TYPE_SD8997)) {
-		PRINTM(MSG, "card_type %d don't support FW dump\n",
-		       priv->card_type);
-		return;
-	}
-
 	memset(path_name, 0, sizeof(path_name));
 	strcpy((char *)path_name, "/data");
 	PRINTM(MSG, "Create DUMP directory success:dir_name=%s\n", path_name);
 
-	if (priv->card_type == CARD_TYPE_SD8887) {
-		dbg_dump_start_reg = DEBUG_DUMP_START_REG_8887;
-		dbg_dump_end_reg = DEBUG_DUMP_END_REG_8887;
-	} else if (priv->card_type == CARD_TYPE_SD8897) {
-		dbg_dump_start_reg = DEBUG_DUMP_START_REG_8897;
-		dbg_dump_end_reg = DEBUG_DUMP_END_REG_8897;
-	} else if (priv->card_type == CARD_TYPE_SD8977) {
-		dbg_dump_start_reg = DEBUG_DUMP_START_REG_8977;
-		dbg_dump_end_reg = DEBUG_DUMP_END_REG_8977;
-	} else if (priv->card_type == CARD_TYPE_SD8997) {
-		dbg_dump_start_reg = DEBUG_DUMP_START_REG_8997;
-		dbg_dump_end_reg = DEBUG_DUMP_END_REG_8997;
-	}
+	dbg_dump_start_reg = DEBUG_DUMP_START_REG;
+	dbg_dump_end_reg = DEBUG_DUMP_END_REG;
 
 	sbi_wakeup_firmware(priv);
 	sdio_claim_host(((struct sdio_mmc_card *)priv->bt_dev.card)->func);
@@ -879,8 +880,9 @@ bt_dump_firmware_info_v2(bt_private *priv)
 						      bt_mem_type_mapping_tbl
 						      [idx].mem_Ptr));
 				memset(file_name, 0, sizeof(file_name));
-				sprintf((char *)file_name, "%s%s", "file_bt_",
-					bt_mem_type_mapping_tbl[idx].mem_name);
+				snprintf((char *)file_name, sizeof(file_name),
+					 "%s%s", "file_bt_",
+					 bt_mem_type_mapping_tbl[idx].mem_name);
 				if (BT_STATUS_SUCCESS !=
 				    bt_save_dump_info_to_file((char *)path_name,
 							      (char *)file_name,
@@ -945,6 +947,20 @@ bt_cmd_timeout_func(bt_private *priv, u16 cmd)
 	PRINTM(ERROR, "sdio int status = %d\n", adapter->sd_ireg);
 	bt_dump_sdio_regs(priv);
 	LEAVE();
+}
+
+/**
+ *  @brief This function queue frame
+ *
+ *  @param priv    A pointer to bt_private structure
+ *  @param skb     A pointer to sk_buff structure
+ *
+ *  @return    N/A
+ */
+static void
+bt_queue_frame(bt_private *priv, struct sk_buff *skb)
+{
+	skb_queue_tail(&priv->adapter->tx_queue, skb);
 }
 
 /**
@@ -1059,6 +1075,52 @@ exit:
 }
 
 /**
+ *  @brief This function to get histogram
+ *
+ *  @param priv    A pointer to bt_private structure
+ *  @return    BT_STATUS_SUCCESS or BT_STATUS_FAILURE
+ */
+int
+bt_get_histogram(bt_private *priv)
+{
+	struct sk_buff *skb = NULL;
+	int ret = BT_STATUS_SUCCESS;
+	BT_CMD *pcmd;
+	ENTER();
+	skb = bt_skb_alloc(sizeof(BT_CMD), GFP_ATOMIC);
+	if (skb == NULL) {
+		PRINTM(WARN, "No free skb\n");
+		ret = BT_STATUS_FAILURE;
+		goto exit;
+	}
+	pcmd = (BT_CMD *)skb->data;
+	pcmd->ocf_ogf = __cpu_to_le16((VENDOR_OGF << 10) | BT_CMD_HISTOGRAM);
+	pcmd->length = 0;
+	bt_cb(skb)->pkt_type = MRVL_VENDOR_PKT;
+	skb_put(skb, BT_CMD_HEADER_SIZE + pcmd->length);
+	skb->dev = (void *)(&(priv->bt_dev.m_dev[BT_SEQ]));
+	skb_queue_head(&priv->adapter->tx_queue, skb);
+	PRINTM(CMD, "Queue Histogram cmd(0x%x)\n",
+	       __le16_to_cpu(pcmd->ocf_ogf));
+	priv->bt_dev.sendcmdflag = TRUE;
+	priv->bt_dev.send_cmd_opcode = __le16_to_cpu(pcmd->ocf_ogf);
+	priv->adapter->cmd_complete = FALSE;
+	priv->hist_data_len = 0;
+	memset(priv->hist_data, 0, sizeof(priv->hist_data));
+	wake_up_interruptible(&priv->MainThread.waitQ);
+	if (!os_wait_interruptible_timeout
+	    (priv->adapter->cmd_wait_q, priv->adapter->cmd_complete,
+	     WAIT_UNTIL_CMD_RESP)) {
+		ret = BT_STATUS_FAILURE;
+		PRINTM(MSG, "BT: histogram timeout:\n");
+		bt_cmd_timeout_func(priv, BT_CMD_HISTOGRAM);
+	}
+exit:
+	LEAVE();
+	return ret;
+}
+
+/**
  *  @brief This function enables power save mode
  *
  *  @param priv    A pointer to bt_private structure
@@ -1161,53 +1223,6 @@ exit:
 }
 
 /**
- *  @brief This function sends update_max_tx_pwr comm
- *
- *  @param priv    A pointer to bt_privat
- *  @return    BT_STATUS_SUCCESS or BT_ST
- */
-#ifdef UPDATE_TX_MAX_PWR_LVL
-int
-bt_send_update_max_tx_pwr(bt_private *priv)
-{
-	struct sk_buff *skb = NULL;
-    int ret = BT_STATUS_SUCCESS;
-    BT_CMD *pcmd;
-    ENTER();
-	skb = bt_skb_alloc(sizeof(BT_CMD), GFP_ATOMIC);
-    if (skb == NULL) {
-        PRINTM(WARN, "No free skb\n");
-        ret = BT_STATUS_FAILURE;
-        goto exit;
-	}
-    pcmd = (BT_CMD *)skb->data;
-    pcmd->ocf_ogf =
-		__cpu_to_le16((VENDOR_OGF << 10) | HCI_CMD_MARVELL_UPDATE_TX_MAX_PWR_LVL);
-	pcmd->length = 1;
-	pcmd->data[0] = 0x01;
-    bt_cb(skb)->pkt_type = MRVL_VENDOR_PKT;
-    skb_put(skb, BT_CMD_HEADER_SIZE + pcmd->length);
-    skb->dev = (void *)(&(priv->bt_dev.m_dev[BT_SEQ]));
-    skb_queue_head(&priv->adapter->tx_queue, skb);
-    PRINTM(CMD, "Queue UPDATE_TX_MAX_PWR_LVL Command(0x%x),value=0x%x\n",
-			__le16_to_cpu(pcmd->ocf_ogf), pcmd->data[0]);
-    priv->bt_dev.sendcmdflag = TRUE;
-    priv->bt_dev.send_cmd_opcode = __le16_to_cpu(pcmd->ocf_ogf);
-    priv->adapter->cmd_complete = FALSE;
-    wake_up_interruptible(&priv->MainThread.waitQ);
-    if (!os_wait_interruptible_timeout
-	    (priv->adapter->cmd_wait_q, priv->adapter->cmd_complete, WAIT_UNTIL_CMD_RESP)) {
-			ret = BT_STATUS_FAILURE;
-			PRINTM(MSG, "BT: UPDATE_TX_MAX_PWR_LVL timeout:\n");
-			bt_cmd_timeout_func(priv, HCI_CMD_MARVELL_UPDATE_TX_MAX_PWR_LVL);
-    }
-exit:
-    LEAVE();
-    return ret;
-}
-#endif
-
-/**
  *  @brief This function sends sdio pull ctrl command
  *
  *  @param priv    A pointer to bt_private structure
@@ -1257,59 +1272,6 @@ exit:
 	LEAVE();
 	return ret;
 }
-
-#if defined(SDIO_SUSPEND_RESUME)
-/**
- *  @brief This function set FM interrupt mask
- *
- *  @param priv    A pointer to bt_private structure
- *
- *  @param priv    FM interrupt mask value
- *
- *  @return    BT_STATUS_SUCCESS or BT_STATUS_FAILURE
- */
-int
-fm_set_intr_mask(bt_private *priv, u32 mask)
-{
-	struct sk_buff *skb = NULL;
-	int ret = BT_STATUS_SUCCESS;
-	BT_CMD *pcmd;
-
-	ENTER();
-	skb = bt_skb_alloc(sizeof(BT_CMD), GFP_ATOMIC);
-	if (skb == NULL) {
-		PRINTM(WARN, "No free skb\n");
-		ret = BT_STATUS_FAILURE;
-		goto exit;
-	}
-	pcmd = (BT_CMD *)skb->data;
-	pcmd->ocf_ogf = __cpu_to_le16((VENDOR_OGF << 10) | FM_CMD);
-	pcmd->length = 0x05;
-	pcmd->data[0] = FM_SET_INTR_MASK;
-	PRINTM(CMD, "FM set intr mask=0x%x\n", mask);
-	mask = __cpu_to_le32(mask);
-	memcpy(&pcmd->data[1], &mask, sizeof(mask));
-	bt_cb(skb)->pkt_type = HCI_COMMAND_PKT;
-	skb_put(skb, BT_CMD_HEADER_SIZE + pcmd->length);
-	skb->dev = (void *)(&(priv->bt_dev.m_dev[FM_SEQ]));
-	skb_queue_head(&priv->adapter->tx_queue, skb);
-	priv->bt_dev.sendcmdflag = TRUE;
-	priv->bt_dev.send_cmd_opcode = __le16_to_cpu(pcmd->ocf_ogf);
-	priv->adapter->cmd_complete = FALSE;
-	wake_up_interruptible(&priv->MainThread.waitQ);
-	if (!os_wait_interruptible_timeout(priv->adapter->cmd_wait_q,
-					   priv->adapter->cmd_complete,
-					   WAIT_UNTIL_CMD_RESP)) {
-		ret = BT_STATUS_FAILURE;
-		PRINTM(MSG, "FM: set intr mask=%d timeout\n",
-		       (int)__cpu_to_le32(mask));
-		bt_cmd_timeout_func(priv, FM_CMD);
-	}
-exit:
-	LEAVE();
-	return ret;
-}
-#endif
 
 /**
  *  @brief This function sends command to configure PMIC
@@ -1891,6 +1853,14 @@ bt_load_cal_data_ext(bt_private *priv, u8 *config_data, u32 cfg_data_len)
 	BT_CMD *pcmd;
 
 	ENTER();
+
+	if (cfg_data_len > BT_CMD_DATA_LEN) {
+		PRINTM(WARN, "cfg_data_len is too long exceed %d.\n",
+		       BT_CMD_DATA_LEN);
+		ret = BT_STATUS_FAILURE;
+		goto exit;
+	}
+
 	skb = bt_skb_alloc(sizeof(BT_CMD), GFP_ATOMIC);
 	if (skb == NULL) {
 		PRINTM(WARN, "No free skb\n");
@@ -1993,7 +1963,7 @@ bt_restore_tx_queue(bt_private *priv)
 	while (!skb_queue_empty(&priv->adapter->pending_queue)) {
 		skb = skb_dequeue(&priv->adapter->pending_queue);
 		if (skb)
-			skb_queue_tail(&priv->adapter->tx_queue, skb);
+			bt_queue_frame(priv, skb);
 	}
 	wake_up_interruptible(&priv->MainThread.waitQ);
 }
@@ -2045,6 +2015,36 @@ bt_prepare_command(bt_private *priv)
 	return ret;
 }
 
+/**
+ * @brief Update tx state
+ *
+ * @param priv          A pointer to bt_private structure
+ * @param skb			A pointer to sk_buff structure
+ *
+ * @return                N/A
+ */
+static void
+update_stat_byte_tx(bt_private *priv, struct sk_buff *skb)
+{
+	((struct hci_dev *)priv->bt_dev.m_dev[BT_SEQ].dev_pointer)->stat.
+		byte_tx += skb->len;
+}
+
+/**
+ * @brief Update tx error state
+ *
+ * @param priv          A pointer to bt_private structure
+ * @param skb			A pointer to sk_buff structure
+ *
+ * @return                N/A
+ */
+static void
+update_stat_err_tx(bt_private *priv, struct sk_buff *skb)
+{
+	((struct hci_dev *)priv->bt_dev.m_dev[BT_SEQ].dev_pointer)->stat.
+		err_tx++;
+}
+
 /** @brief This function processes a single packet
  *
  *  @param priv    A pointer to bt_private structure
@@ -2055,7 +2055,7 @@ static int
 send_single_packet(bt_private *priv, struct sk_buff *skb)
 {
 	int ret;
-	int has_realloc = 0;
+	struct sk_buff *new_skb = NULL;
 	ENTER();
 	if (!skb || !skb->data) {
 		LEAVE();
@@ -2069,17 +2069,22 @@ send_single_packet(bt_private *priv, struct sk_buff *skb)
 		return BT_STATUS_FAILURE;
 	}
 	if (skb_headroom(skb) < BT_HEADER_LEN) {
-		skb = skb_realloc_headroom(skb, BT_HEADER_LEN);
-		if (!skb) {
+		new_skb = skb_realloc_headroom(skb, BT_HEADER_LEN);
+		if (!new_skb) {
 			PRINTM(ERROR, "TX error: realloc_headroom failed %d\n",
 			       BT_HEADER_LEN);
+			kfree_skb(skb);
 			LEAVE();
 			return BT_STATUS_FAILURE;
+		} else {
+			if (new_skb != skb)
+				dev_kfree_skb_any(skb);
+			skb = new_skb;
 		}
-		has_realloc = 1;
 	}
-	/* This is SDIO specific header length: byte[3][2][1], * type: byte[0]
-	   (HCI_COMMAND = 1, ACL_DATA = 2, SCO_DATA = 3, 0xFE = Vendor) */
+	/* This is SDIO/PCIE specific header length: byte[3][2][1], * type:
+	   byte[0] (HCI_COMMAND = 1, ACL_DATA = 2, SCO_DATA = 3, 0xFE = Vendor)
+	 */
 	skb_push(skb, BT_HEADER_LEN);
 	skb->data[0] = (skb->len & 0x0000ff);
 	skb->data[1] = (skb->len & 0x00ff00) >> 8;
@@ -2089,44 +2094,14 @@ send_single_packet(bt_private *priv, struct sk_buff *skb)
 		PRINTM(CMD, "DNLD_CMD: ocf_ogf=0x%x len=%d\n",
 		       __le16_to_cpu(*((u16 *) & skb->data[4])), skb->len);
 	ret = sbi_host_to_card(priv, skb->data, skb->len);
-	if (has_realloc)
+	if (ret == BT_STATUS_FAILURE)
+		update_stat_err_tx(priv, skb);
+	else
+		update_stat_byte_tx(priv, skb);
+	if (ret != BT_STATUS_PENDING)
 		kfree_skb(skb);
 	LEAVE();
 	return ret;
-}
-
-static void
-update_stat_byte_tx(bt_private *priv, struct sk_buff *skb)
-{
-	if (((priv->bt_dev.m_dev[FM_SEQ].dev_pointer) &&
-	     (!strcmp
-	      (((struct m_dev *)skb->dev)->name,
-	       priv->bt_dev.m_dev[FM_SEQ].name))) ||
-	    ((priv->bt_dev.m_dev[NFC_SEQ].dev_pointer) &&
-	     (!strcmp
-	      (((struct m_dev *)skb->dev)->name,
-	       priv->bt_dev.m_dev[NFC_SEQ].name))))
-		((struct m_dev *)skb->dev)->stat.byte_tx += skb->len;
-	else
-		((struct hci_dev *)priv->bt_dev.m_dev[BT_SEQ].dev_pointer)->
-			stat.byte_tx += skb->len;
-}
-
-static void
-update_stat_err_tx(bt_private *priv, struct sk_buff *skb)
-{
-	if (((priv->bt_dev.m_dev[FM_SEQ].dev_pointer) &&
-	     (!strcmp
-	      (((struct m_dev *)skb->dev)->name,
-	       priv->bt_dev.m_dev[FM_SEQ].name))) ||
-	    ((priv->bt_dev.m_dev[NFC_SEQ].dev_pointer) &&
-	     (!strcmp
-	      (((struct m_dev *)skb->dev)->name,
-	       priv->bt_dev.m_dev[NFC_SEQ].name))))
-		((struct m_dev *)skb->dev)->stat.err_tx++;
-	else
-		((struct hci_dev *)priv->bt_dev.m_dev[BT_SEQ].dev_pointer)->
-			stat.err_tx++;
 }
 
 #ifdef CONFIG_OF
@@ -2229,6 +2204,7 @@ bt_init_adapter(bt_private *priv)
 	priv->adapter->is_suspended = FALSE;
 	priv->adapter->hs_skip = 0;
 	priv->adapter->num_cmd_timeout = 0;
+	priv->adapter->fwdump_fname = NULL;
 	init_waitqueue_head(&priv->adapter->cmd_wait_q);
 	LEAVE();
 }
@@ -2245,13 +2221,10 @@ bt_init_fw(bt_private *priv)
 	int ret = BT_STATUS_SUCCESS;
 	ENTER();
 	if (fw == 0) {
-		sd_enable_host_int(priv);
+		sbi_enable_host_int(priv);
 		goto done;
 	}
-	sd_disable_host_int(priv);
-	if ((priv->card_type == CARD_TYPE_SD8787) ||
-	    (priv->card_type == CARD_TYPE_SD8777))
-		priv->fw_crc_check = fw_crc_check;
+	sbi_disable_host_int(priv);
 	if (sbi_download_fw(priv)) {
 		PRINTM(ERROR, " FW failed to be download!\n");
 		ret = BT_STATUS_FAILURE;
@@ -2263,11 +2236,8 @@ done:
 }
 
 #define FW_POLL_TRIES 100
-#define SD8897_FW_RESET_REG  0x0E8
-#define SD8887_FW_RESET_REG  0x0B6
-#define SD8977_SD8997_FW_RESET_REG  0x0EE
-#define SD8887_SD8897_FW_RESET_VAL  1
-#define SD8977_SD8997_FW_RESET_VAL  0x99
+#define FW_RESET_REG  0x0EE
+#define FW_RESET_VAL  0x99
 
 /**
  *  @brief This function reload firmware
@@ -2282,8 +2252,8 @@ bt_reload_fw(bt_private *priv, int mode)
 {
 	int ret = 0, tries = 0;
 	u8 value = 1;
-	u32 reset_reg = 0;
-	u8 reset_val = 0;
+	u32 reset_reg = FW_RESET_REG;
+	u8 reset_val = FW_RESET_VAL;
 
 	ENTER();
 	if ((mode != FW_RELOAD_SDIO_INBAND_RESET) &&
@@ -2295,17 +2265,7 @@ bt_reload_fw(bt_private *priv, int mode)
     /** flush pending tx_queue */
 	skb_queue_purge(&priv->adapter->tx_queue);
 	if (mode == FW_RELOAD_SDIO_INBAND_RESET) {
-		if (priv->card_type == CARD_TYPE_SD8887) {
-			reset_reg = SD8887_FW_RESET_REG;
-			reset_val = SD8887_SD8897_FW_RESET_VAL;
-		} else if (priv->card_type == CARD_TYPE_SD8897) {
-			reset_reg = SD8897_FW_RESET_REG;
-			reset_val = SD8887_SD8897_FW_RESET_VAL;
-		} else if ((priv->card_type == CARD_TYPE_SD8977) ||
-			   (priv->card_type == CARD_TYPE_SD8997)) {
-			reset_reg = SD8977_SD8997_FW_RESET_REG;
-			reset_val = SD8977_SD8997_FW_RESET_VAL;
-		}
+		sbi_disable_host_int(priv);
 	    /** Wake up firmware firstly */
 		sbi_wakeup_firmware(priv);
 
@@ -2349,14 +2309,17 @@ bt_reload_fw(bt_private *priv, int mode)
 		}
 	}
 
+	sbi_enable_host_int(priv);
 	/** reload FW */
 	ret = bt_init_fw(priv);
 	if (ret) {
 		PRINTM(ERROR, "Re download firmware failed.\n");
 		ret = -EFAULT;
-		goto done;
 	}
+	LEAVE();
+	return ret;
 done:
+	sbi_enable_host_int(priv);
 	LEAVE();
 	return ret;
 }
@@ -2406,6 +2369,11 @@ bt_free_adapter(bt_private *priv)
 	skb_queue_purge(&priv->adapter->tx_queue);
 	kfree(adapter->tx_buffer);
 	kfree(adapter->hw_regs_buf);
+	/* Free allocated memory for fwdump filename */
+	if (adapter->fwdump_fname) {
+		kfree(adapter->fwdump_fname);
+		adapter->fwdump_fname = NULL;
+	}
 	/* Free the adapter object itself */
 	kfree(adapter);
 	priv->adapter = NULL;
@@ -2570,7 +2538,8 @@ bt_send_frame(struct hci_dev *hdev, struct sk_buff *skb)
 	if (priv->adapter->tx_lock == TRUE)
 		skb_queue_tail(&priv->adapter->pending_queue, skb);
 	else
-		skb_queue_tail(&priv->adapter->tx_queue, skb);
+		bt_queue_frame(priv, skb);
+
 	wake_up_interruptible(&priv->MainThread.waitQ);
 	LEAVE();
 	return BT_STATUS_SUCCESS;
@@ -2617,7 +2586,7 @@ mdev_send_frame(struct m_dev *m_dev, struct sk_buff *skb)
 	if (priv->adapter->tx_lock == TRUE)
 		skb_queue_tail(&priv->adapter->pending_queue, skb);
 	else
-		skb_queue_tail(&priv->adapter->tx_queue, skb);
+		bt_queue_frame(priv, skb);
 	wake_up_interruptible(&priv->MainThread.waitQ);
 
 	LEAVE();
@@ -2688,6 +2657,7 @@ bt_close(struct hci_dev *hdev)
 	}
 #endif
 	skb_queue_purge(&priv->adapter->tx_queue);
+
 	module_put(THIS_MODULE);
 	LEAVE();
 	return BT_STATUS_SUCCESS;
@@ -2703,6 +2673,7 @@ bt_close(struct hci_dev *hdev)
 static int
 mdev_close(struct m_dev *m_dev)
 {
+
 	ENTER();
 	mdev_req_lock(m_dev);
 	if (!test_and_clear_bit(HCI_UP, &m_dev->flags)) {
@@ -2717,7 +2688,6 @@ mdev_close(struct m_dev *m_dev)
 	wake_up_interruptible(&m_dev->req_wait_q);
 	/* Drop queues */
 	skb_queue_purge(&m_dev->rx_q);
-
 	if (!test_and_clear_bit(HCI_RUNNING, &m_dev->flags)) {
 		mdev_req_unlock(m_dev);
 		LEAVE();
@@ -2813,6 +2783,7 @@ init_m_dev(struct m_dev *m_dev)
 #else
 	sema_init(&m_dev->req_lock, 1);
 #endif
+	spin_lock_init(&m_dev->rxlock);
 	memset(&m_dev->stat, 0, sizeof(struct hci_dev_stats));
 	m_dev->open = mdev_open;
 	m_dev->close = mdev_close;
@@ -2839,7 +2810,11 @@ bt_service_main_thread(void *data)
 	bt_thread *thread = data;
 	bt_private *priv = thread->priv;
 	bt_adapter *adapter = priv->adapter;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
+	wait_queue_t wait;
+#else
 	wait_queue_entry_t wait;
+#endif
 	struct sk_buff *skb;
 	ENTER();
 	bt_activate_thread(thread);
@@ -2852,7 +2827,8 @@ bt_service_main_thread(void *data)
 		if (priv->adapter->WakeupTries ||
 		    ((!priv->adapter->IntCounter) &&
 		     (!priv->bt_dev.tx_dnld_rdy ||
-		      skb_queue_empty(&priv->adapter->tx_queue)))) {
+		      skb_queue_empty(&priv->adapter->tx_queue))
+		    )) {
 			PRINTM(INFO, "Main: Thread sleeping...\n");
 			schedule();
 		}
@@ -2873,7 +2849,8 @@ bt_service_main_thread(void *data)
 			OS_INT_RESTORE;
 			sbi_get_int_status(priv);
 		} else if ((priv->adapter->ps_state == PS_SLEEP) &&
-			   !skb_queue_empty(&priv->adapter->tx_queue)) {
+			   (!skb_queue_empty(&priv->adapter->tx_queue)
+			   )) {
 			priv->adapter->WakeupTries++;
 			sbi_wakeup_firmware(priv);
 			continue;
@@ -2883,13 +2860,8 @@ bt_service_main_thread(void *data)
 		if (priv->bt_dev.tx_dnld_rdy == TRUE) {
 			if (!skb_queue_empty(&priv->adapter->tx_queue)) {
 				skb = skb_dequeue(&priv->adapter->tx_queue);
-				if (skb) {
-					if (send_single_packet(priv, skb))
-						update_stat_err_tx(priv, skb);
-					else
-						update_stat_byte_tx(priv, skb);
-					kfree_skb(skb);
-				}
+				if (skb)
+					send_single_packet(priv, skb);
 			}
 		}
 	}
@@ -2927,33 +2899,13 @@ bt_interrupt(struct m_dev *m_dev)
 	LEAVE();
 }
 
-static void
-char_dev_release_dynamic(struct kobject *kobj)
-{
-	struct char_dev *cdev = container_of(kobj, struct char_dev, kobj);
-	ENTER();
-	PRINTM(INFO, "free char_dev\n");
-	kfree(cdev);
-	LEAVE();
-}
-
-static struct kobj_type ktype_char_dev_dynamic = {
-	.release = char_dev_release_dynamic,
-};
-
-static struct char_dev *
-alloc_char_dev(void)
-{
-	struct char_dev *cdev;
-	ENTER();
-	cdev = kzalloc(sizeof(struct char_dev), GFP_KERNEL);
-	if (cdev) {
-		kobject_init(&cdev->kobj, &ktype_char_dev_dynamic);
-		PRINTM(INFO, "alloc char_dev\n");
-	}
-	return cdev;
-}
-
+/**
+ * @brief  Dynamic release of bt private
+ *
+ * @param kobj          A pointer to kobject structure
+ *
+ * @return                N/A
+ */
 static void
 bt_private_dynamic_release(struct kobject *kobj)
 {
@@ -2968,6 +2920,13 @@ static struct kobj_type ktype_bt_private_dynamic = {
 	.release = bt_private_dynamic_release,
 };
 
+/**
+ * @brief  Allocation of bt private
+ *
+ * @param           	N/A
+ *
+ * @return              bt_private
+ */
 static bt_private *
 bt_alloc_priv(void)
 {
@@ -2982,6 +2941,13 @@ bt_alloc_priv(void)
 	return priv;
 }
 
+/**
+ * @brief  Get bt private structure
+ *
+ * @param priv          A pointer to bt_private structure
+ *
+ * @return              kobject structure
+ */
 struct kobject *
 bt_priv_get(bt_private *priv)
 {
@@ -2989,6 +2955,13 @@ bt_priv_get(bt_private *priv)
 	return kobject_get(&priv->kobj);
 }
 
+/**
+ * @brief  Get bt private structure
+ *
+ * @param priv          A pointer to bt_private structure
+ *
+ * @return              N/A
+ */
 void
 bt_priv_put(bt_private *priv)
 {
@@ -3021,19 +2994,17 @@ bt_init_cmd(bt_private *priv)
 			goto done;
 		}
 	}
-	if (btpmic
-	    && ((priv->card_type == CARD_TYPE_SD8997) ||
-		(priv->card_type == CARD_TYPE_SD8977))
-		) {
+	if (btpmic) {
 		if (BT_STATUS_SUCCESS != bt_pmic_configure(priv)) {
 			PRINTM(FATAL, "BT: PMIC Configure failed \n");
 			ret = BT_STATUS_FAILURE;
 			goto done;
 		}
 	}
-	ret = bt_set_ble_deepsleep(priv, TRUE);
+	ret = bt_set_ble_deepsleep(priv, deep_sleep ? TRUE : FALSE);
 	if (ret < 0) {
-		PRINTM(FATAL, "Enable BLE deepsleep failed!\n");
+		PRINTM(FATAL, "%s BLE deepsleep failed!\n",
+		       deep_sleep ? "Enable" : "Disable");
 		goto done;
 	}
 	if (psmode) {
@@ -3046,22 +3017,13 @@ bt_init_cmd(bt_private *priv)
 		}
 	}
 #if defined(SDIO_SUSPEND_RESUME)
-	priv->bt_dev.gpio_gap = 0xffff;
+	priv->bt_dev.gpio_gap = DEF_GPIO_GAP;
 	ret = bt_send_hscfg_cmd(priv);
 	if (ret < 0) {
 		PRINTM(FATAL, "Send HSCFG failed!\n");
 		goto done;
 	}
 #endif
-
-#ifdef UPDATE_TX_MAX_PWR_LVL
-	ret = bt_send_update_max_tx_pwr(priv);
-	if (ret < 0) {
-			PRINTM(FATAL, "Send UPDATE_TX_MAX_PWR_LVL failed!\n");
-			goto done;
-	}
-#endif
-
 	priv->bt_dev.sdio_pull_cfg = 0xffffffff;
 	priv->bt_dev.sdio_pull_ctrl = 0;
 	wake_up_interruptible(&priv->MainThread.waitQ);
@@ -3153,17 +3115,12 @@ int
 sbi_register_conf_dpc(bt_private *priv)
 {
 	int ret = BT_STATUS_SUCCESS;
-	struct fm_dev *fm_dev = NULL;
-	struct nfc_dev *nfc_dev = NULL;
 	struct hci_dev *hdev = NULL;
-	struct char_dev *char_dev = NULL;
-	char dev_file[DEV_NAME_LEN + 5];
 	unsigned char dev_type = 0;
 
 	ENTER();
 
 	priv->bt_dev.tx_dnld_rdy = TRUE;
-
 	if (priv->fw_reload) {
 		bt_reinit_fw(priv);
 		LEAVE();
@@ -3246,8 +3203,7 @@ sbi_register_conf_dpc(bt_private *priv)
 			goto done;
 		}
 	}
-	if (cal_cfg_ext && (priv->card_type == CARD_TYPE_SD8787)
-		) {
+	if (cal_cfg_ext) {
 		if (BT_STATUS_SUCCESS != bt_cal_config_ext(priv, cal_cfg_ext)) {
 			PRINTM(FATAL, "BT: Set cal ext data failed\n");
 			ret = BT_STATUS_FAILURE;
@@ -3275,120 +3231,6 @@ sbi_register_conf_dpc(bt_private *priv)
 		bt_proc_init(priv, &(priv->bt_dev.m_dev[BT_SEQ]), BT_SEQ);
 	}
 
-	if ((drv_mode & DRV_MODE_FM) &&
-	    (!(priv->bt_dev.devType == DEV_TYPE_AMP)) &&
-	    (priv->bt_dev.devFeature & DEV_FEATURE_FM)) {
-
-		/** alloc fm_dev */
-		fm_dev = alloc_fm_dev();
-		if (!fm_dev) {
-			PRINTM(FATAL, "Can not allocate fm dev\n");
-			ret = -ENOMEM;
-			goto err_kmalloc;
-		}
-
-		/** init m_dev */
-		init_m_dev(&(priv->bt_dev.m_dev[FM_SEQ]));
-		priv->bt_dev.m_dev[FM_SEQ].dev_type = FM_TYPE;
-		priv->bt_dev.m_dev[FM_SEQ].spec_type = GENERIC_SPEC;
-		priv->bt_dev.m_dev[FM_SEQ].dev_pointer = (void *)fm_dev;
-		priv->bt_dev.m_dev[FM_SEQ].driver_data = priv;
-		priv->bt_dev.m_dev[FM_SEQ].read_continue_flag = 0;
-
-		/** create char device for FM */
-		char_dev = alloc_char_dev();
-		if (!char_dev) {
-			class_destroy(chardev_class);
-			ret = -ENOMEM;
-			goto err_kmalloc;
-		}
-		char_dev->minor = FMCHAR_MINOR_BASE + fmchar_minor;
-		char_dev->dev_type = FM_TYPE;
-
-		if (fm_name)
-			snprintf(fm_dev->name, sizeof(fm_dev->name), "%s%d",
-				 fm_name, fmchar_minor);
-		else
-			snprintf(fm_dev->name, sizeof(fm_dev->name),
-				 "mfmchar%d", fmchar_minor);
-		snprintf(dev_file, sizeof(dev_file), "/dev/%s", fm_dev->name);
-		PRINTM(MSG, "BT: Create %s\n", dev_file);
-		fmchar_minor++;
-
-		/** register m_dev to FM char device */
-		priv->bt_dev.m_dev[FM_SEQ].index = char_dev->minor;
-		char_dev->m_dev = &(priv->bt_dev.m_dev[FM_SEQ]);
-
-		/** register char dev */
-		register_char_dev(char_dev, chardev_class,
-				  MODULE_NAME, fm_dev->name);
-
-		/** chmod for FM char device */
-		mbtchar_chmod(dev_file, 0660);
-
-		/** create proc device */
-		snprintf(priv->bt_dev.m_dev[FM_SEQ].name,
-			 sizeof(priv->bt_dev.m_dev[FM_SEQ].name), fm_dev->name);
-		bt_proc_init(priv, &(priv->bt_dev.m_dev[FM_SEQ]), FM_SEQ);
-	}
-
-	if ((drv_mode & DRV_MODE_NFC) &&
-	    (!(priv->bt_dev.devType == DEV_TYPE_AMP)) &&
-	    (priv->bt_dev.devFeature & DEV_FEATURE_NFC)) {
-
-		/** alloc nfc_dev */
-		nfc_dev = alloc_nfc_dev();
-		if (!nfc_dev) {
-			PRINTM(FATAL, "Can not allocate nfc dev\n");
-			ret = -ENOMEM;
-			goto err_kmalloc;
-		}
-
-		/** init m_dev */
-		init_m_dev(&(priv->bt_dev.m_dev[NFC_SEQ]));
-		priv->bt_dev.m_dev[NFC_SEQ].dev_type = NFC_TYPE;
-		priv->bt_dev.m_dev[NFC_SEQ].spec_type = GENERIC_SPEC;
-		priv->bt_dev.m_dev[NFC_SEQ].dev_pointer = (void *)nfc_dev;
-		priv->bt_dev.m_dev[NFC_SEQ].driver_data = priv;
-		priv->bt_dev.m_dev[NFC_SEQ].read_continue_flag = 0;
-
-		/** create char device for NFC */
-		char_dev = alloc_char_dev();
-		if (!char_dev) {
-			class_destroy(chardev_class);
-			ret = -ENOMEM;
-			goto err_kmalloc;
-		}
-		char_dev->minor = NFCCHAR_MINOR_BASE + nfcchar_minor;
-		char_dev->dev_type = NFC_TYPE;
-		if (nfc_name)
-			snprintf(nfc_dev->name, sizeof(nfc_dev->name), "%s%d",
-				 nfc_name, nfcchar_minor);
-		else
-			snprintf(nfc_dev->name, sizeof(nfc_dev->name),
-				 "mnfcchar%d", nfcchar_minor);
-		snprintf(dev_file, sizeof(dev_file), "/dev/%s", nfc_dev->name);
-		PRINTM(MSG, "BT: Create %s\n", dev_file);
-		nfcchar_minor++;
-
-		/** register m_dev to NFC char device */
-		priv->bt_dev.m_dev[NFC_SEQ].index = char_dev->minor;
-		char_dev->m_dev = &(priv->bt_dev.m_dev[NFC_SEQ]);
-
-		/** register char dev */
-		register_char_dev(char_dev, chardev_class, MODULE_NAME,
-				  nfc_dev->name);
-
-		/** chmod for NFC char device */
-		mbtchar_chmod(dev_file, 0666);
-
-		/** create proc device */
-		snprintf(priv->bt_dev.m_dev[NFC_SEQ].name,
-			 sizeof(priv->bt_dev.m_dev[NFC_SEQ].name),
-			 nfc_dev->name);
-		bt_proc_init(priv, &(priv->bt_dev.m_dev[NFC_SEQ]), NFC_SEQ);
-	}
-
 done:
 	LEAVE();
 	return ret;
@@ -3409,6 +3251,7 @@ bt_private *
 bt_add_card(void *card)
 {
 	bt_private *priv = NULL;
+	int index = 0;
 
 	ENTER();
 
@@ -3418,7 +3261,17 @@ bt_add_card(void *card)
 		LEAVE();
 		return NULL;
 	}
-
+	/* Save the handle */
+	for (index = 0; index < MAX_BT_ADAPTER; index++) {
+		if (m_priv[index] == NULL)
+			break;
+	}
+	if (index < MAX_BT_ADAPTER) {
+		m_priv[index] = priv;
+	} else {
+		PRINTM(ERROR, "Exceeded maximum cards supported!\n");
+		goto err_kmalloc;
+	}
 	/* allocate buffer for bt_adapter */
 	priv->adapter = kzalloc(sizeof(bt_adapter), GFP_KERNEL);
 	if (!priv->adapter) {
@@ -3453,26 +3306,6 @@ bt_add_card(void *card)
 	/* wait for mainthread to up */
 	while (!priv->MainThread.pid)
 		os_sched_timeout(1);
-
-	sdio_update_card_type(priv, card);
-	/* Update driver version */
-	if (priv->card_type == CARD_TYPE_SD8787)
-		memcpy(mbt_driver_version, CARD_SD8787, strlen(CARD_SD8787));
-	else if (priv->card_type == CARD_TYPE_SD8777)
-		memcpy(mbt_driver_version, CARD_SD8777, strlen(CARD_SD8777));
-	else if (priv->card_type == CARD_TYPE_SD8887)
-		memcpy(mbt_driver_version, CARD_SD8887, strlen(CARD_SD8887));
-	else if (priv->card_type == CARD_TYPE_SD8897)
-		memcpy(mbt_driver_version, CARD_SD8897, strlen(CARD_SD8897));
-	else if (priv->card_type == CARD_TYPE_SD8797)
-		memcpy(mbt_driver_version, CARD_SD8797, strlen(CARD_SD8797));
-	else if (priv->card_type == CARD_TYPE_SD8977)
-		memcpy(mbt_driver_version, CARD_SD8977, strlen(CARD_SD8977));
-	else if (priv->card_type == CARD_TYPE_SD8997)
-		memcpy(mbt_driver_version, CARD_SD8997, strlen(CARD_SD8997));
-
-	if (BT_STATUS_SUCCESS != sdio_get_sdio_device(priv))
-		goto err_kmalloc;
 
 	/** user config file */
 	init_waitqueue_head(&priv->init_user_conf_wait_q);
@@ -3512,6 +3345,12 @@ err_registerdev:
 err_kmalloc:
 	if (priv->adapter)
 		bt_free_adapter(priv);
+	for (index = 0; index < MAX_BT_ADAPTER; index++) {
+		if (m_priv[index] == priv) {
+			m_priv[index] = NULL;
+			break;
+		}
+	}
 	bt_priv_put(priv);
 	LEAVE();
 	return NULL;
@@ -3568,18 +3407,15 @@ int
 bt_remove_card(void *card)
 {
 	bt_private *priv = (bt_private *)card;
+	int index;
 	ENTER();
 	if (!priv) {
 		LEAVE();
 		return BT_STATUS_SUCCESS;
 	}
-	if (!priv->adapter->SurpriseRemoved) {
-		if (BT_STATUS_SUCCESS == bt_send_reset_command(priv))
-			bt_send_module_cfg_cmd(priv, MODULE_SHUTDOWN_REQ);
-		/* Disable interrupts on the card */
-		sd_disable_host_int(priv);
-		priv->adapter->SurpriseRemoved = TRUE;
-	}
+
+	priv->adapter->SurpriseRemoved = TRUE;
+
 	bt_send_hw_remove_event(priv);
 	wake_up_interruptible(&priv->adapter->cmd_wait_q);
 	priv->adapter->SurpriseRemoved = TRUE;
@@ -3595,8 +3431,13 @@ bt_remove_card(void *card)
 	clean_up_m_devs(priv);
 	PRINTM(INFO, "Free Adapter\n");
 	bt_free_adapter(priv);
+	for (index = 0; index < MAX_BT_ADAPTER; index++) {
+		if (m_priv[index] == priv) {
+			m_priv[index] = NULL;
+			break;
+		}
+	}
 	bt_priv_put(priv);
-
 	LEAVE();
 	return BT_STATUS_SUCCESS;
 }
@@ -3610,9 +3451,12 @@ static int
 bt_init_module(void)
 {
 	int ret = BT_STATUS_SUCCESS;
+	int index;
 	ENTER();
 	PRINTM(MSG, "BT: Loading driver\n");
-
+	/* Init the bt_private pointer array first */
+	for (index = 0; index < MAX_BT_ADAPTER; index++)
+		m_priv[index] = NULL;
 	bt_root_proc_init();
 
 	/** create char device class */
@@ -3647,8 +3491,23 @@ done:
 static void
 bt_exit_module(void)
 {
+	bt_private *priv;
+	int index;
 	ENTER();
 	PRINTM(MSG, "BT: Unloading driver\n");
+	for (index = 0; index < MAX_BT_ADAPTER; index++) {
+		priv = m_priv[index];
+		if (!priv)
+			continue;
+		if (priv && !priv->adapter->SurpriseRemoved) {
+			if (BT_STATUS_SUCCESS == bt_send_reset_command(priv))
+				bt_send_module_cfg_cmd(priv,
+						       MODULE_SHUTDOWN_REQ);
+		}
+		sbi_disable_host_int(priv);
+
+	}
+
 	sbi_unregister();
 
 	bt_root_proc_remove();
@@ -3666,11 +3525,10 @@ MODULE_VERSION(VERSION);
 MODULE_LICENSE("GPL");
 module_param(fw, int, 0);
 MODULE_PARM_DESC(fw, "0: Skip firmware download; otherwise: Download firmware");
-module_param(fw_crc_check, int, 0);
-MODULE_PARM_DESC(fw_crc_check,
-		 "1: Enable FW download CRC check (default); 0: Disable FW download CRC check");
 module_param(psmode, int, 0);
 MODULE_PARM_DESC(psmode, "1: Enable powermode; 0: Disable powermode");
+module_param(deep_sleep, int, 0);
+MODULE_PARM_DESC(deep_sleep, "1: Enable deep sleep; 0: Disable deep sleep");
 #ifdef CONFIG_OF
 module_param(dts_enable, int, 0);
 MODULE_PARM_DESC(dts_enable, "0: Disable DTS; 1: Enable DTS");
@@ -3692,11 +3550,7 @@ MODULE_PARM_DESC(cal_cfg_ext, "BT calibrate ext file name");
 module_param(bt_mac, charp, 0660);
 MODULE_PARM_DESC(bt_mac, "BT init mac address");
 module_param(drv_mode, int, 0);
-MODULE_PARM_DESC(drv_mode, "Bit 0: BT/AMP/BLE; Bit 1: FM; Bit 2: NFC");
-module_param(fm_name, charp, 0);
-MODULE_PARM_DESC(fm_name, "FM interface name");
-module_param(nfc_name, charp, 0);
-MODULE_PARM_DESC(nfc_name, "NFC interface name");
+MODULE_PARM_DESC(drv_mode, "Bit 0: BT/AMP/BLE;");
 module_param(bt_fw_reload, int, 0);
 MODULE_PARM_DESC(bt_fw_reload,
 		 "0: disable fw_reload; 1: enable fw reload feature");

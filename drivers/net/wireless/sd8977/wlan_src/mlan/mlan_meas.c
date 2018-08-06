@@ -11,7 +11,7 @@
  *  Requires use of the following preprocessor define:
  *    - ENABLE_MEAS
  *
- *  Copyright (C) 2008-2016, Marvell International Ltd.
+ *  Copyright (C) 2008-2018, Marvell International Ltd.
  *
  *  This software file (the "File") is distributed by Marvell International
  *  Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -104,8 +104,7 @@ wlan_meas_dump_meas_req(const HostCmd_DS_MEASUREMENT_REQUEST *pmeas_req)
 
 	switch (pmeas_req->meas_type) {
 	case WLAN_MEAS_BASIC:
-		/* Lazy cheat, fields of bas, cca, rpi union match on the
-		   request */
+		/* Lazy cheat, fields of bas, cca, rpi union match on the request */
 		PRINTM(MINFO, "Meas: Req: chan: %u\n",
 		       pmeas_req->req.basic.channel);
 		PRINTM(MINFO, "Meas: Req: strt: %llu\n",
@@ -224,8 +223,7 @@ wlan_meas_cmdresp_get_report(mlan_private *pmpriv,
 		/* Clear the pending report indicator */
 		pmadapter->state_meas.meas_rpt_pend_on = 0;
 
-		/* Copy the received report into the measurement state for
-		   retrieval */
+		/* Copy the received report into the measurement state for retrieval */
 		memcpy(pmadapter, &pmadapter->state_meas.meas_rpt_returned,
 		       pmeas_rpt,
 		       sizeof(pmadapter->state_meas.meas_rpt_returned));

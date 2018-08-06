@@ -2,7 +2,7 @@
  *
  *  @brief This file contains functions for 11n Aggregation.
  *
- *  Copyright (C) 2008-2016, Marvell International Ltd.
+ *  Copyright (C) 2008-2018, Marvell International Ltd.
  *
  *  This software file (the "File") is distributed by Marvell International
  *  Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -280,13 +280,15 @@ wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf)
 			pkt_len += sizeof(Eth803Hdr_t);
 		}
 		daggr_mbuf =
-			wlan_alloc_mlan_buffer(pmadapter, pkt_len, 0,
+			wlan_alloc_mlan_buffer(pmadapter,
+					       pkt_len + MLAN_NET_IP_ALIGN, 0,
 					       MOAL_ALLOC_MLAN_BUFFER);
 		if (daggr_mbuf == MNULL) {
 			PRINTM(MERROR, "Error allocating daggr mlan_buffer\n");
 			ret = MLAN_STATUS_FAILURE;
 			break;
 		}
+		daggr_mbuf->data_offset += MLAN_NET_IP_ALIGN;
 		daggr_mbuf->bss_index = pmbuf->bss_index;
 		daggr_mbuf->buf_type = pmbuf->buf_type;
 		daggr_mbuf->data_len = pkt_len;
@@ -360,6 +362,8 @@ wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf)
 	}
 
 done:
+	priv->msdu_in_rx_amsdu_cnt += pmbuf->use_count;
+	priv->amsdu_rx_cnt++;
     /** we should free the aggr buffer after deaggr */
 	wlan_free_mlan_buffer(pmadapter, pmbuf);
 	LEAVE();
@@ -427,6 +431,8 @@ wlan_11n_aggregate_pkt(mlan_private *priv, raListTbl *pra_list,
 		pmbuf_aggr->in_ts_usec = pmbuf_src->in_ts_usec;
 		if (pmbuf_src->flags & MLAN_BUF_FLAG_TDLS)
 			pmbuf_aggr->flags |= MLAN_BUF_FLAG_TDLS;
+		if (pmbuf_src->flags & MLAN_BUF_FLAG_TCP_ACK)
+			pmbuf_aggr->flags |= MLAN_BUF_FLAG_TCP_ACK;
 
 		/* Form AMSDU */
 		wlan_11n_form_amsdu_txpd(priv, pmbuf_aggr);
@@ -435,6 +441,7 @@ wlan_11n_aggregate_pkt(mlan_private *priv, raListTbl *pra_list,
 		if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_STA)
 			ptx_pd = (TxPD *)pmbuf_aggr->pbuf;
 #endif
+		priv->msdu_in_tx_amsdu_cnt++;
 	} else {
 		pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle,
 						      priv->wmm.
@@ -460,22 +467,20 @@ wlan_11n_aggregate_pkt(mlan_private *priv, raListTbl *pra_list,
 						      priv->wmm.
 						      ra_list_spinlock);
 
-		if (pmbuf_src->flags & MLAN_BUF_FLAG_TCP_ACK)
-			pmadapter->callbacks.moal_tcp_ack_tx_ind(pmadapter->
-								 pmoal_handle,
-								 pmbuf_src);
+		if (pmbuf_src) {
+			pkt_size += wlan_11n_form_amsdu_pkt(pmadapter,
+							    (data + pkt_size),
+							    pmbuf_src->pbuf +
+							    pmbuf_src->
+							    data_offset,
+							    pmbuf_src->data_len,
+							    &pad);
 
-		pkt_size += wlan_11n_form_amsdu_pkt(pmadapter,
-						    (data + pkt_size),
-						    pmbuf_src->pbuf +
-						    pmbuf_src->data_offset,
-						    pmbuf_src->data_len, &pad);
-
-		DBG_HEXDUMP(MDAT_D, "pmbuf_src", pmbuf_src,
-			    sizeof(mlan_buffer));
-		wlan_write_data_complete(pmadapter, pmbuf_src,
-					 MLAN_STATUS_SUCCESS);
-
+			DBG_HEXDUMP(MDAT_D, "pmbuf_src", pmbuf_src,
+				    sizeof(mlan_buffer));
+			wlan_write_data_complete(pmadapter, pmbuf_src,
+						 MLAN_STATUS_SUCCESS);
+		}
 		pmadapter->callbacks.moal_spin_lock(pmadapter->pmoal_handle,
 						    priv->wmm.ra_list_spinlock);
 
@@ -492,6 +497,7 @@ wlan_11n_aggregate_pkt(mlan_private *priv, raListTbl *pra_list,
 			(pmlan_buffer)util_peek_list(pmadapter->pmoal_handle,
 						     &pra_list->buf_head, MNULL,
 						     MNULL);
+		priv->msdu_in_tx_amsdu_cnt++;
 	}
 
 	pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle,
@@ -582,7 +588,7 @@ wlan_11n_aggregate_pkt(mlan_private *priv, raListTbl *pra_list,
 	PRINTM_GET_SYS_TIME(MDATA, &sec, &usec);
 	PRINTM_NETINTF(MDATA, priv);
 	PRINTM(MDATA, "%lu.%06lu : Data => FW\n", sec, usec);
-
+	priv->amsdu_tx_cnt++;
 exit:
 	LEAVE();
 	return pkt_size + headroom;

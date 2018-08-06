@@ -3,7 +3,7 @@
  *  @brief This file defines the FW initialization data
  *  structures.
  *
- *  Copyright (C) 2008-2016, Marvell International Ltd.
+ *  Copyright (C) 2008-2018, Marvell International Ltd.
  *
  *  This software file (the "File") is distributed by Marvell International
  *  Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -28,7 +28,7 @@ Change log:
 #define _MLAN_INIT_H_
 
 /** Tx buffer size for firmware download*/
-#define FW_DNLD_TX_BUF_SIZE	620
+#define FW_DNLD_TX_BUF_SIZE	2312
 /** Rx buffer size for firmware download*/
 #define FW_DNLD_RX_BUF_SIZE       2048
 /** Max firmware retry */

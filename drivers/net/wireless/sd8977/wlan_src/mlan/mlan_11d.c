@@ -2,7 +2,7 @@
  *
  *  @brief This file contains functions for 802.11D.
  *
- *  Copyright (C) 2008-2016, Marvell International Ltd.
+ *  Copyright (C) 2008-2018, Marvell International Ltd.
  *
  *  This software file (the "File") is distributed by Marvell International
  *  Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -45,25 +45,26 @@ typedef struct _region_code_mapping {
 
 /** Region code mapping table */
 static region_code_mapping_t region_code_mapping[] = {
-	{"US ", 0x10},		/* US FCC */
-	{"CA ", 0x20},		/* IC Canada */
-	{"SG ", 0x10},		/* Singapore */
-	{"EU ", 0x30},		/* ETSI */
-	{"AU ", 0x30},		/* Australia */
+	{"US ", 0x10},		/* US FCC      */
+	{"CA ", 0x20},		/* IC Canada   */
+	{"SG ", 0x10},		/* Singapore   */
+	{"EU ", 0x30},		/* ETSI        */
+	{"AU ", 0x30},		/* Australia   */
 	{"KR ", 0x30},		/* Republic Of Korea */
-	{"FR ", 0x32},		/* France */
-	{"JP ", 0x40},		/* Japan */
-	{"JP ", 0x41},		/* Japan */
-	{"CN ", 0x50},		/* China */
-	{"JP ", 0xFE},		/* Japan */
+	{"FR ", 0x32},		/* France      */
+	{"JP ", 0x40},		/* Japan       */
+	{"JP ", 0x41},		/* Japan       */
+	{"CN ", 0x50},		/* China       */
+	{"JP ", 0xFE},		/* Japan       */
 	{"JP ", 0xFF},		/* Japan special */
 };
 
-/** Default Tx power */
-#define TX_PWR_DEFAULT  10
-
 /** Universal region code */
 #define UNIVERSAL_REGION_CODE   0xff
+#endif
+
+/** Default Tx power */
+#define TX_PWR_DEFAULT  10
 
 /* Following two structures define the supported channels */
 /** Channels for 802.11b/g */
@@ -123,7 +124,6 @@ static chan_freq_power_t channel_freq_power_UN_AJ[] = {
     {252, 4980, TX_PWR_DEFAULT},
 channels for 11J JP 10M channel gap */
 };
-#endif /* STA_SUPPORT */
 
 /********************************************************
 			Global Variables
@@ -195,8 +195,7 @@ wlan_11d_channel_known(pmlan_adapter pmadapter,
 			ret = MTRUE;
 
 			if (band & BAND_A) {
-				/* If chan is a DFS channel, we need to see an
-				   AP on it */
+				/* If chan is a DFS channel, we need to see an AP on it */
 				pmpriv = wlan_get_priv(pmadapter,
 						       MLAN_BSS_ROLE_STA);
 				if (pmpriv &&
@@ -437,10 +436,10 @@ wlan_11d_get_chan(pmlan_adapter pmadapter, t_u8 band, t_u8 first_chan,
 	t_u8 cfp_no = 0;
 
 	ENTER();
-	if (band & (BAND_B | BAND_G | BAND_GN | BAND_GAC)) {
+	if (band & (BAND_B | BAND_G | BAND_GN)) {
 		cfp = channel_freq_power_UN_BG;
 		cfp_no = NELEMENTS(channel_freq_power_UN_BG);
-	} else if (band & (BAND_A | BAND_AN | BAND_AAC)) {
+	} else if (band & (BAND_A | BAND_AN)) {
 		cfp = channel_freq_power_UN_AJ;
 		cfp_no = NELEMENTS(channel_freq_power_UN_AJ);
 	} else {
@@ -525,7 +524,7 @@ wlan_11d_process_country_info(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc)
 			}
 
 			if (j == parsed_region_chan->no_of_chan &&
-			    j < MAX_NO_OF_CHAN) {
+			    (j + num_chan_added) < MAX_NO_OF_CHAN) {
 				/*
 				 * Channel does not exist in the channel power
 				 * table, update this new chan and tx_power
@@ -940,6 +939,44 @@ wlan_ret_802_11d_domain_info(mlan_private *pmpriv, HostCmd_DS_COMMAND *resp)
 	return ret;
 }
 
+/**
+ *  @brief This function converts channel to frequency
+ *
+ *  @param pmadapter    A pointer to mlan_adapter structure
+ *  @param chan         Channel number
+ *  @param band         Band
+ *
+ *  @return             Channel frequency
+ */
+t_u32
+wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, t_u8 band)
+{
+	chan_freq_power_t *cf;
+	t_u16 cnt;
+	t_u16 i;
+	t_u32 freq = 0;
+
+	ENTER();
+
+	/* Get channel-frequency-power trios */
+	if (band & (BAND_A | BAND_AN)) {
+		cf = channel_freq_power_UN_AJ;
+		cnt = NELEMENTS(channel_freq_power_UN_AJ);
+	} else {
+		cf = channel_freq_power_UN_BG;
+		cnt = NELEMENTS(channel_freq_power_UN_BG);
+	}
+
+	/* Locate channel and return corresponding frequency */
+	for (i = 0; i < cnt; i++) {
+		if (chan == cf[i].channel)
+			freq = cf[i].freq;
+	}
+
+	LEAVE();
+	return freq;
+}
+
 #ifdef STA_SUPPORT
 /**
  *  @brief This function parses country information for region channel
@@ -990,8 +1027,7 @@ wlan_11d_parse_domain_info(pmlan_adapter pmadapter,
 	for (j = 0, last_chan = 0; j < no_of_sub_band; j++) {
 
 		if (country_info->sub_band[j].first_chan <= last_chan) {
-			/* Step2&3: Check First Chan Num increment and no
-			   overlap */
+			/* Step2&3: Check First Chan Num increment and no overlap */
 			PRINTM(MINFO, "11D: Chan[%d>%d] Overlap\n",
 			       country_info->sub_band[j].first_chan, last_chan);
 			continue;
@@ -1038,44 +1074,6 @@ wlan_11d_parse_domain_info(pmlan_adapter pmadapter,
 }
 
 /**
- *  @brief This function converts channel to frequency
- *
- *  @param pmadapter    A pointer to mlan_adapter structure
- *  @param chan         Channel number
- *  @param band         Band
- *
- *  @return             Channel frequency
- */
-t_u32
-wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, t_u8 band)
-{
-	chan_freq_power_t *cf;
-	t_u16 cnt;
-	t_u16 i;
-	t_u32 freq = 0;
-
-	ENTER();
-
-	/* Get channel-frequency-power trios */
-	if (band & (BAND_A | BAND_AN | BAND_AAC)) {
-		cf = channel_freq_power_UN_AJ;
-		cnt = NELEMENTS(channel_freq_power_UN_AJ);
-	} else {
-		cf = channel_freq_power_UN_BG;
-		cnt = NELEMENTS(channel_freq_power_UN_BG);
-	}
-
-	/* Locate channel and return corresponding frequency */
-	for (i = 0; i < cnt; i++) {
-		if (chan == cf[i].channel)
-			freq = cf[i].freq;
-	}
-
-	LEAVE();
-	return freq;
-}
-
-/**
  *  @brief This function setups scan channels
  *
  *  @param pmpriv       Pointer to mlan_private structure
@@ -1118,7 +1116,7 @@ wlan_11d_set_universaltable(mlan_private *pmpriv, t_u8 band)
 		i++;
 	}
 
-	if (band & (BAND_A | BAND_AN | BAND_AAC)) {
+	if (band & (BAND_A | BAND_AN)) {
 		/* If band A */
 
 		/* Set channel-frequency-power */
@@ -1243,7 +1241,6 @@ wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u8 band)
 				case BAND_A:
 				case BAND_AN:
 				case BAND_A | BAND_AN:
-				case BAND_A | BAND_AN | BAND_AAC:
 					break;
 				default:
 					continue;
@@ -1258,7 +1255,6 @@ wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u8 band)
 				case BAND_GN:
 				case BAND_G | BAND_GN:
 				case BAND_B | BAND_G | BAND_GN:
-				case BAND_B | BAND_G | BAND_GN | BAND_GAC:
 					break;
 				default:
 					continue;
@@ -1450,6 +1446,29 @@ wlan_11d_prepare_dnld_domain_info_cmd(mlan_private *pmpriv)
 	LEAVE();
 	return ret;
 }
+#endif /* STA_SUPPORT */
+
+/**
+ *  @brief This function checks country code and maps it when needed
+ *
+ *  @param pmadapter    A pointer to mlan_adapter structure
+ *  @param pcountry_code Pointer to the country code string
+ *
+ *  @return             Pointer to the mapped country code string
+ */
+static t_u8 *
+wlan_11d_map_country_code(IN pmlan_adapter pmadapter, IN t_u8 *pcountry_code)
+{
+	/* Since firmware can only recognize EU as ETSI domain and there is no memory left
+	 * for some devices to convert it in firmware, driver need to convert it before
+	 * passing country code to firmware through tlv
+	 */
+
+	if (wlan_is_etsi_country(pmadapter, pcountry_code))
+		return ("EU ");
+	else
+		return pcountry_code;
+}
 
 /**
  *  @brief This function sets up domain_reg and downloads CMD to FW
@@ -1471,12 +1490,20 @@ wlan_11d_cfg_domain_info(IN pmlan_adapter pmadapter,
 
 	ENTER();
 
+	if (pmadapter->otp_region && pmadapter->otp_region->force_reg) {
+		PRINTM(MERROR,
+		       "ForceRegionRule is set in the on-chip OTP memory\n");
+		ret = MLAN_STATUS_FAILURE;
+		goto done;
+	}
 	cfg_11d = (mlan_ds_11d_cfg *)pioctl_req->pbuf;
 	domain_info = &cfg_11d->param.domain_info;
 	memcpy(pmadapter, pmadapter->country_code, domain_info->country_code,
 	       COUNTRY_CODE_LEN);
 	wlan_11d_set_domain_info(pmpriv, domain_info->band,
-				 domain_info->country_code,
+				 wlan_11d_map_country_code(pmadapter,
+							   domain_info->
+							   country_code),
 				 domain_info->no_of_sub_band,
 				 (IEEEtypes_SubbandSet_t *)domain_info->
 				 sub_band);
@@ -1510,7 +1537,6 @@ done:
 	LEAVE();
 	return ret;
 }
-#endif /* STA_SUPPORT */
 
 #if defined(UAP_SUPPORT)
 /**
@@ -1563,8 +1589,9 @@ wlan_11d_handle_uap_domain_info(mlan_private *pmpriv,
 		((pdomain_tlv->header.len -
 		  COUNTRY_CODE_LEN) / sizeof(IEEEtypes_SubbandSet_t));
 
-	/* TODO: don't just clobber pmadapter->domain_reg.  Add some checking
-	   or merging between STA & UAP domain_info */
+	/* TODO: don't just clobber pmadapter->domain_reg.
+	 *       Add some checking or merging between STA & UAP domain_info
+	 */
 	wlan_11d_set_domain_info(pmpriv, band, pdomain_tlv->country_code,
 				 num_sub_band, pdomain_tlv->sub_band);
 	ret = wlan_11d_send_domain_info(pmpriv, pioctl_buf);

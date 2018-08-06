@@ -2,7 +2,7 @@
  *
  *  @brief This file contains functions for 802.11H.
  *
- *  Copyright (C) 2008-2016, Marvell International Ltd.
+ *  Copyright (C) 2008-2018, Marvell International Ltd.
  *
  *  This software file (the "File") is distributed by Marvell International
  *  Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -68,7 +68,7 @@ Change Log:
 #define MAX_DFS_REPORT_USABLE_AGE_SEC  (120)	/* 2 minutes */
 
 /** Minimum delay for CHAN_SW IE to broadcast by FW */
-#define MIN_RDH_CHAN_SW_IE_PERIOD_MSEC  (500)	/* 5 beacons @ 100ms */
+#define MIN_RDH_CHAN_SW_IE_PERIOD_MSEC  (400)	/* 4 beacons @ 100ms */
 
 /** Maximum delay for CHAN_SW IE to broadcast by FW */
 #define MAX_RDH_CHAN_SW_IE_PERIOD_MSEC  (3000)	/* 5 beacons @ 600ms */
@@ -185,8 +185,7 @@ wlan_11h_convert_ieee_to_mrvl_ie(mlan_adapter *pmadapter,
 	/* Increment the temp buffer pointer by the size appended */
 	ptmp_buf += sizeof(mrvl_ie_hdr);
 
-	/* Append the data section of the IE; length given by the IEEE IE
-	   length */
+	/* Append the data section of the IE; length given by the IEEE IE length */
 	memcpy(pmadapter, ptmp_buf, pin_ie + 2, pin_ie[1]);
 
 	LEAVE();
@@ -319,19 +318,19 @@ wlan_11h_set_supp_channels_ie(mlan_private *priv,
 		 * Channels are contiguous in 2.4GHz, usually only one subband.
 		 */
 		switch (cfp_bg) {
-		case 0x10:	/* USA FCC */
+		case 0x10:	/* USA FCC   */
 		case 0x20:	/* Canada IC */
 		default:
 			psup_chan->subband[num_subbands++] =
 				wlan_11h_2_4G_region_FCC;
 			break;
 		case 0x30:	/* Europe ETSI */
-		case 0x41:	/* Japan */
-		case 0x50:	/* China */
+		case 0x41:	/* Japan  */
+		case 0x50:	/* China  */
 			psup_chan->subband[num_subbands++] =
 				wlan_11h_2_4G_region_EU;
 			break;
-		case 0x40:	/* Japan */
+		case 0x40:	/* Japan  */
 			psup_chan->subband[num_subbands++] =
 				wlan_11h_2_4G_region_JPN40;
 			break;
@@ -349,7 +348,7 @@ wlan_11h_set_supp_channels_ie(mlan_private *priv,
 		 * element.
 		 */
 		switch (cfp_a) {
-		case 0x10:	/* USA FCC */
+		case 0x10:	/* USA FCC   */
 		case 0x20:	/* Canada IC */
 		case 0x30:	/* Europe ETSI */
 		default:
@@ -363,6 +362,10 @@ wlan_11h_set_supp_channels_ie(mlan_private *priv,
 				wlan_11h_unii_upper_band;
 			break;
 		case 0x50:	/* China */
+			psup_chan->subband[num_subbands++] =
+				wlan_11h_unii_lower_band;
+			psup_chan->subband[num_subbands++] =
+				wlan_11h_unii_middle_band;
 			psup_chan->subband[num_subbands++] =
 				wlan_11h_unii_upper_band;
 			break;
@@ -394,16 +397,13 @@ wlan_11h_set_supp_channels_ie(mlan_private *priv,
 			psup_chan->subband[num_subbands++] =
 				wlan_11h_unii_upper_band;
 			break;
-		case 0x5:	/* Low band (5150-5250 MHz) and High band
-				   (5725-5850 MHz) channels */
+		case 0x5:	/* Low band (5150-5250 MHz) and High band (5725-5850 MHz) channels */
 			psup_chan->subband[num_subbands++] =
 				wlan_11h_unii_lower_band;
 			psup_chan->subband[num_subbands++] =
 				wlan_11h_unii_upper_band;
 			break;
-		case 0x6:	/* Low band (5150-5250 MHz) and Lower middle
-				   band (5250-5350 MHz) and High band
-				   (5725-5850 MHz) channels */
+		case 0x6:	/* Low band (5150-5250 MHz) and Lower middle band (5250-5350 MHz) and High band (5725-5850 MHz) channels */
 			psup_chan->subband[num_subbands++] =
 				wlan_11h_unii_lower_band;
 			psup_chan->subband[num_subbands++] =
@@ -610,8 +610,8 @@ wlan_11h_cmd_chan_rpt_req(mlan_private *priv,
 		pcmd_ptr->size += sizeof(MrvlIEtypes_ChanRpt11hBasic_t);
 	}
 
-	/* update dfs sturcture. dfs_check_pending is set when we receive
-	   CMD_RESP == SUCCESS */
+	/* update dfs sturcture.
+	 * dfs_check_pending is set when we receive CMD_RESP == SUCCESS */
 	pstate_dfs->dfs_check_pending = MFALSE;
 	pstate_dfs->dfs_radar_found = MFALSE;
 	pstate_dfs->dfs_check_priv = MNULL;
@@ -970,7 +970,7 @@ wlan_11h_is_master_active_on_dfs_chan(mlan_private *priv)
 		/* UAP */
 #ifdef UAP_SUPPORT
 		if ((priv->uap_bss_started == MTRUE) &&
-		    (priv->uap_state_chan_cb.band_config & BAND_CONFIG_5GHZ) &&
+		    (priv->uap_state_chan_cb.bandcfg.chanBand == BAND_5GHZ) &&
 		    wlan_11h_radar_detect_required(priv,
 						   priv->uap_state_chan_cb.
 						   channel))
@@ -1130,37 +1130,11 @@ wlan_11h_check_radar_det_state(mlan_adapter *pmadapter, OUT t_u32 *pnew_state)
 }
 
 /**
- *  @brief generate the channel center frequency index
- *
- *  @param channel_num       channel number
- *
- *  @return                 frenquency index
- */
-static t_u8
-wlan_11h_get_channel_freq_idx(IN t_u8 channel_num)
-{
-	t_u8 index;
-	t_u8 center_freq[] = { 42, 58, 106, 122, 138, 155 };
-	t_u8 chan_idx, ret = 0;
-
-	chan_idx = channel_num - 100;
-
-	for (index = 0; index < sizeof(center_freq); index++) {
-		if ((chan_idx >= (center_freq[index] - 6)) &&
-		    (chan_idx <= (center_freq[index] + 6))) {
-			ret = center_freq[index];
-			break;
-		}
-	}
-
-	return ret;
-}
-
-/**
  *  @brief Prepare ioctl for add/remove CHAN_SW IE - RADAR_DETECTED event handling
  *
  *  @param pmadapter        Pointer to mlan_adapter
  *  @param pioctl_req       Pointer to completed mlan_ioctl_req (allocated inside)
+ *  @param ppcust_chansw_ie Poniter to customer ie
  *  @param is_adding_ie     CHAN_SW IE is to be added (MTRUE), or removed (MFALSE)
  *
  *  @return                 MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
@@ -1175,11 +1149,6 @@ wlan_11h_prepare_custom_ie_chansw(IN mlan_adapter *pmadapter,
 	custom_ie *pcust_chansw_ie = MNULL;
 	IEEEtypes_ChanSwitchAnn_t *pchansw_ie = MNULL;
 	mlan_status ret;
-	IEEEtypes_Header_t *pChanSwWrap_ie = MNULL;
-	IEEEtypes_WideBWChanSwitch_t *pbwchansw_ie = MNULL;
-	IEEEtypes_VhtTpcEnvelope_t *pvhttpcEnv_ie = MNULL;
-	t_u8 index;
-	mlan_private *pmpriv = MNULL;
 
 	ENTER();
 
@@ -1235,82 +1204,8 @@ wlan_11h_prepare_custom_ie_chansw(IN mlan_adapter *pmadapter,
 	pchansw_ie->new_channel_num = pmadapter->state_rdh.new_channel;
 
 	pchansw_ie->chan_switch_count = pmadapter->dfs_cs_count;
-	PRINTM(MCMD_D, "Channel switch count = %d\n",
-	       pchansw_ie->chan_switch_count);
-
-	for (index = 0; index < pmadapter->state_rdh.priv_list_count; index++) {
-		pmpriv = pmadapter->state_rdh.priv_list[index];
-		/* find the first AP interface */
-		if (GET_BSS_ROLE(pmpriv) == MLAN_BSS_ROLE_UAP) {
-			if (pmpriv->is_11ac_enabled) {
-
-				pChanSwWrap_ie =
-					(IEEEtypes_Header_t *)((t_u8 *)
-							       pchansw_ie +
-							       sizeof
-							       (IEEEtypes_ChanSwitchAnn_t));
-				pChanSwWrap_ie->element_id = EXT_POWER_CONSTR;
-				/* will have multiple sub IEs */
-				pChanSwWrap_ie->len = 0;
-
-				/* prepare the Wide Bandwidth Channel Switch IE
-				   * Channel Switch IE */
-				pbwchansw_ie =
-					(IEEEtypes_WideBWChanSwitch_t
-					 *)((t_u8 *)pChanSwWrap_ie +
-					    sizeof(IEEEtypes_Header_t));
-				pbwchansw_ie->ieee_hdr.element_id =
-					BW_CHANNEL_SWITCH;
-				pbwchansw_ie->ieee_hdr.len =
-					sizeof(IEEEtypes_WideBWChanSwitch_t) -
-					sizeof(IEEEtypes_Header_t);
-				/* fix 80MHZ now */
-				pbwchansw_ie->new_channel_width =
-					VHT_OPER_CHWD_80MHZ;
-				pbwchansw_ie->new_channel_center_freq0 =
-					wlan_11h_get_channel_freq_idx
-					(pmadapter->state_rdh.new_channel);
-				pbwchansw_ie->new_channel_center_freq1 =
-					wlan_11h_get_channel_freq_idx
-					(pmadapter->state_rdh.new_channel);
-				pChanSwWrap_ie->len +=
-					sizeof(IEEEtypes_WideBWChanSwitch_t);
-
-				/* prepare the VHT Transmit Power Envelope IE */
-				pvhttpcEnv_ie =
-					(IEEEtypes_VhtTpcEnvelope_t *)((t_u8 *)
-								       pChanSwWrap_ie
-								       +
-								       sizeof
-								       (IEEEtypes_Header_t)
-								       +
-								       sizeof
-								       (IEEEtypes_WideBWChanSwitch_t));
-				pvhttpcEnv_ie->ieee_hdr.element_id =
-					VHT_TX_POWER_ENV;
-				pvhttpcEnv_ie->ieee_hdr.len =
-					sizeof(IEEEtypes_VhtTpcEnvelope_t) -
-					sizeof(IEEEtypes_Header_t);
-				/* Local Max TX Power Count= 3, * Local TX
-				   Power Unit Inter=EIP(0) */
-				pvhttpcEnv_ie->tpc_info = 3;
-				pvhttpcEnv_ie->local_max_tp_20mhz = 0xff;
-				pvhttpcEnv_ie->local_max_tp_40mhz = 0xff;
-				pvhttpcEnv_ie->local_max_tp_80mhz = 0xff;
-				pChanSwWrap_ie->len +=
-					sizeof(IEEEtypes_VhtTpcEnvelope_t);
-
-				pcust_chansw_ie->ie_length +=
-					sizeof(IEEEtypes_WideBWChanSwitch_t)
-					+ sizeof(IEEEtypes_VhtTpcEnvelope_t)
-					+ sizeof(IEEEtypes_Header_t);
-
-				PRINTM(MINFO,
-				       "Append Wide Bandwidth Channel Switch IE\n");
-				break;
-			}
-		}
-	}
+	PRINTM(MCMD_D, "New Channel = %d Channel switch count = %d\n",
+	       pmadapter->state_rdh.new_channel, pchansw_ie->chan_switch_count);
 
 	pds_misc_cfg->param.cust_ie.len += pcust_chansw_ie->ie_length;
 	DBG_HEXDUMP(MCMD_D, "11h: custom_ie containing CHAN_SW IE",
@@ -1336,12 +1231,13 @@ wlan_11h_prepare_custom_ie_chansw(IN mlan_adapter *pmadapter,
  *  @return MFALSE if the channel is not allowed in given band
  */
 static t_bool
-wlan_11h_is_band_valid(t_u8 start_chn, t_u8 uap_band_cfg)
+wlan_11h_is_band_valid(t_u8 start_chn, Band_Config_t uap_band_cfg)
 {
 
-	/* if band width is not 20MHZ (either 40 or 80MHz) return MFALSE, 165
-	   is not allowed in bands other than 20MHZ */
-	if (start_chn == 165 && (uap_band_cfg & UAP_BAND_WIDTH_MASK)) {
+	/* if band width is not 20MHZ (either 40 or 80MHz)
+	 * return MFALSE, 165 is not allowed in bands other than 20MHZ
+	 */
+	if (start_chn == 165 && (uap_band_cfg.chanWidth != CHAN_BW_20MHZ)) {
 		return MFALSE;
 	}
 	return MTRUE;
@@ -1359,7 +1255,7 @@ wlan_11h_is_band_valid(t_u8 start_chn, t_u8 uap_band_cfg)
  *  @return      Starting channel
  */
 static t_u8
-wlan_11h_get_uap_start_channel(mlan_private *priv, t_u8 uap_band_cfg)
+wlan_11h_get_uap_start_channel(mlan_private *priv, Band_Config_t uap_band_cfg)
 {
 	t_u8 start_chn;
 	mlan_adapter *adapter = priv->adapter;
@@ -1368,9 +1264,11 @@ wlan_11h_get_uap_start_channel(mlan_private *priv, t_u8 uap_band_cfg)
 	region_chan_t *chn_tbl;
 	t_u8 rand_tries = 0;
 
-	/* TODO: right now mostly a copy of wlan_11h_get_adhoc_start_channel.
-	   Improve to be more specfic to UAP, e.g.  1. take into account
-	   COUNTRY_CODE -> region_code 2. check domain_info for value channels */
+	/*TODO:  right now mostly a copy of wlan_11h_get_adhoc_start_channel.
+	 *       Improve to be more specfic to UAP, e.g.
+	 *       1. take into account COUNTRY_CODE -> region_code
+	 *       2. check domain_info for value channels
+	 */
 	ENTER();
 
 	/*
@@ -1383,7 +1281,7 @@ wlan_11h_get_uap_start_channel(mlan_private *priv, t_u8 uap_band_cfg)
 	/*
 	 * Check that we are looking for a channel in the A Band
 	 */
-	if (uap_band_cfg & BAND_CONFIG_5GHZ) {
+	if (uap_band_cfg.chanBand == BAND_5GHZ) {
 		/*
 		 * Set default to the A Band default.
 		 * Used if random selection fails
@@ -1403,8 +1301,7 @@ wlan_11h_get_uap_start_channel(mlan_private *priv, t_u8 uap_band_cfg)
 			     region++) {
 				chn_tbl = &adapter->region_channel[region];
 
-				/* Check if table is valid and marked for A
-				   Band */
+				/* Check if table is valid and marked for A Band */
 				if (chn_tbl->valid
 				    && chn_tbl->region == adapter->region_code
 				    && chn_tbl->band & BAND_A) {
@@ -1420,10 +1317,9 @@ wlan_11h_get_uap_start_channel(mlan_private *priv, t_u8 uap_band_cfg)
 					start_chn =
 						(t_u8)chn_tbl->pcfp[rand_entry].
 						channel;
-					/* Loop until a non-dfs channel is
-					   found with compatible band bounded
-					   by chn_tbl->num_cfp entries in the
-					   channel table */
+					/* Loop until a non-dfs channel is found with compatible band
+					 * bounded by chn_tbl->num_cfp entries in the channel table
+					 */
 					while ((wlan_11h_is_channel_under_nop
 						(adapter, start_chn) ||
 						((adapter->state_rdh.stage ==
@@ -1805,8 +1701,10 @@ wlan_11h_activate(mlan_private *priv, t_void *pioctl_buf, t_bool flag)
 	/* add bits for master/slave radar detect into enable. */
 	enable |= wlan_11h_get_current_radar_detect_flags(priv->adapter);
 
-	/* Whenever repeater mode is on make sure we do not enable master or
-	   slave radar det mode. HW will not detect radar in dfs_repeater mode. */
+	/* Whenever repeater mode is on make sure
+	 * we do not enable master or slave radar det mode.
+	 * HW will not detect radar in dfs_repeater mode.
+	 */
 	if (priv->adapter->dfs_repeater) {
 		enable &= ~(MASTER_RADAR_DET_MASK | SLAVE_RADAR_DET_MASK);
 	}
@@ -1861,7 +1759,7 @@ wlan_11h_init(mlan_adapter *adapter)
 	pstate_11h->is_master_radar_det_active = MFALSE;
 	pstate_11h->is_slave_radar_det_active = MFALSE;
 
-	/* Initialize quiet_ie */
+	/*Initialize quiet_ie */
 	memset(adapter, pquiet, 0, sizeof(IEEEtypes_Quiet_t));
 	pquiet->element_id = QUIET;
 	pquiet->len =
@@ -1882,7 +1780,8 @@ wlan_11h_init(mlan_adapter *adapter)
 	pstate_rdh->priv_curr_idx = 0;
 	pstate_rdh->curr_channel = 0;
 	pstate_rdh->new_channel = 0;
-	pstate_rdh->uap_band_cfg = 0;
+	memset(adapter, &(pstate_rdh->uap_band_cfg), 0,
+	       sizeof(pstate_rdh->uap_band_cfg));
 	pstate_rdh->max_bcn_dtim_ms = 0;
 	memset(adapter, pstate_rdh->priv_list, 0,
 	       sizeof(pstate_rdh->priv_list));
@@ -1997,7 +1896,6 @@ wlan_11h_get_adhoc_start_channel(mlan_private *priv)
 	 * Check that we are looking for a channel in the A Band
 	 */
 	if ((adapter->adhoc_start_band & BAND_A)
-	    || (adapter->adhoc_start_band & BAND_AN)
 		) {
 		/*
 		 * Set default to the A Band default.
@@ -2018,8 +1916,7 @@ wlan_11h_get_adhoc_start_channel(mlan_private *priv)
 			     region++) {
 				chn_tbl = &adapter->region_channel[region];
 
-				/* Check if table is valid and marked for A
-				   Band */
+				/* Check if table is valid and marked for A Band */
 				if (chn_tbl->valid
 				    && chn_tbl->region == adapter->region_code
 				    && chn_tbl->band & BAND_A) {
@@ -2086,8 +1983,7 @@ wlan_11h_get_csa_closed_channel(mlan_private *priv)
 						      pmoal_handle, &sec,
 						      &usec);
 	if (sec > priv->intf_state_11h.dfs_slave_csa_expire_at_sec) {
-		/* expired: remove channel from blacklist table, and clear vars
-		 */
+		/* expired:  remove channel from blacklist table, and clear vars */
 		wlan_set_chan_blacklist(priv, BAND_A,
 					priv->intf_state_11h.dfs_slave_csa_chan,
 					MFALSE);
@@ -2216,7 +2112,6 @@ wlan_11h_issue_radar_detect(mlan_private *priv,
 			}
 			if (channel == 116 &&
 			    ((bandcfg.chanWidth == CHAN_BW_40MHZ)
-			     || (bandcfg.chanWidth == CHAN_BW_80MHZ)
 			    )) {
 				chan_rpt_req.millisec_dwell_time =
 					WLAN_11H_CHANNEL_AVAIL_CHECK_DURATION *
@@ -2306,13 +2201,14 @@ wlan_11h_check_chan_report(mlan_private *priv, t_u8 chan)
 			ret = MLAN_STATUS_FAILURE;
 		}
 	} else {
-		/* When Cache is not valid. This is required during extending
-		   cache validity during bss_stop */
+		/* When Cache is not valid. This is required during extending cache
+		 * validity during bss_stop
+		 */
 		pstate_dfs->dfs_check_channel = 0;
 
-		/* TODO: reissue report request if not pending.  BUT HOW to
-		   make the code wait for it??? For now, just fail since we
-		   don't have the info. */
+		/*TODO:  reissue report request if not pending.
+		 *       BUT HOW to make the code wait for it???
+		 * For now, just fail since we don't have the info. */
 
 		ret = MLAN_STATUS_PENDING;
 	}
@@ -2354,7 +2250,6 @@ wlan_11h_process_start(mlan_private *priv,
 	ENTER();
 	if (wlan_11h_is_enabled(priv)
 	    && ((adapter->adhoc_start_band & BAND_A)
-		|| (adapter->adhoc_start_band & BAND_AN)
 	    )
 		) {
 		if (!wlan_11d_is_enabled(priv)) {
@@ -2389,8 +2284,7 @@ wlan_11h_process_start(mlan_private *priv,
 			/* check if this channel is under NOP */
 			if (wlan_11h_is_channel_under_nop(adapter, channel))
 				ret = MLAN_STATUS_FAILURE;
-			/* check last channel report, if this channel is free
-			   of radar */
+			/* check last channel report, if this channel is free of radar */
 			if (ret == MLAN_STATUS_SUCCESS)
 				ret = wlan_11h_check_chan_report(priv, channel);
 		}
@@ -2754,12 +2648,95 @@ mlan_status
 wlan_11h_handle_event_chanswann(mlan_private *priv)
 {
 	mlan_status ret = MLAN_STATUS_SUCCESS;
+#ifdef STA_SUPPORT
+	mlan_deauth_param deauth_param;
+#endif
 	t_u32 sec, usec;
+#if defined(UAP_SUPPORT)
+	mlan_adapter *pmadapter = priv->adapter;
+	int i;
+	t_u8 radar_detected = MFALSE;
+	mlan_private *pmpriv = MNULL;
+#endif
 
 	ENTER();
+
+#if defined(UAP_SUPPORT)
+    /** No need handle AP if mc_policy is disabled, FW will move the AP to client's new channel */
+	if (pmadapter->mc_policy &&
+	    priv->adapter->state_11h.is_master_radar_det_active) {
+		for (i = 0; i < MIN(pmadapter->priv_num, MLAN_MAX_BSS_NUM); i++) {
+			if (pmadapter->priv[i] &&
+			    (pmadapter->priv[i]->bss_role == MLAN_BSS_ROLE_UAP)
+			    && pmadapter->priv[i]->uap_bss_started &&
+			    (priv->curr_bss_params.bss_descriptor.channel ==
+			     pmadapter->priv[i]->uap_channel)) {
+				PRINTM(MCMND,
+				       "Receive channel switch Ann event on uap_channel=%d\n",
+				       pmadapter->priv[i]->uap_channel);
+				radar_detected = MTRUE;
+				pmpriv = pmadapter->priv[i];
+				break;
+			}
+		}
+		if (radar_detected) {
+			if (!pmpriv->intf_state_11h.is_11h_host) {
+				if (pmadapter->state_rdh.stage == RDH_OFF) {
+					pmadapter->state_rdh.stage =
+						RDH_CHK_INTFS;
+					wlan_11h_radar_detected_handling
+						(pmadapter, pmpriv);
+					if (pmpriv->uap_host_based)
+						wlan_recv_event(pmpriv,
+								MLAN_EVENT_ID_FW_RADAR_DETECTED,
+								MNULL);
+				} else {
+					PRINTM(MEVENT,
+					       "Ignore Event Radar Detected - handling already in progress.\n");
+				}
+			} else {
+#ifdef DFS_TESTING_SUPPORT
+				if (pmpriv->adapter->dfs_test_params.
+				    no_channel_change_on_radar ||
+				    pmpriv->adapter->dfs_test_params.
+				    fixed_new_channel_on_radar) {
+					if (pmadapter->state_rdh.stage ==
+					    RDH_OFF ||
+					    pmadapter->state_rdh.stage ==
+					    RDH_SET_CUSTOM_IE) {
+						pmadapter->state_rdh.stage =
+							RDH_CHK_INTFS;
+						wlan_11h_radar_detected_handling
+							(pmadapter, pmpriv);
+					} else
+						PRINTM(MEVENT,
+						       "Ignore Event Radar Detected - handling already in progress.\n");
+				} else {
+#endif
+					pmpriv->intf_state_11h.tx_disabled =
+						MTRUE;
+					wlan_recv_event(pmpriv,
+							MLAN_EVENT_ID_FW_RADAR_DETECTED,
+							MNULL);
+
+#ifdef DFS_TESTING_SUPPORT
+				}
+#endif
+			}
+		}
+	}
+	if (pmadapter->ecsa_enable) {
+		t_u8 stop_tx = *(t_u8 *)pmadapter->event_body;
+		if (stop_tx)
+			pmadapter->state_rdh.tx_block = MTRUE;
+		LEAVE();
+		return ret;
+	}
+#endif
+
 	priv->adapter->state_11h.recvd_chanswann_event = MTRUE;
 
-	/* unlikely: clean up previous csa if still on-going */
+	/* unlikely:  clean up previous csa if still on-going */
 	if (priv->intf_state_11h.dfs_slave_csa_chan) {
 		wlan_set_chan_blacklist(priv, BAND_A,
 					priv->intf_state_11h.dfs_slave_csa_chan,
@@ -2776,12 +2753,13 @@ wlan_11h_handle_event_chanswann(mlan_private *priv)
 		sec + DFS_CHAN_MOVE_TIME;
 
 #ifdef STA_SUPPORT
-	/* do directed deauth.  recvd_chanswann_event flag will cause different
-	   reason code */
+	/* do directed deauth.  recvd_chanswann_event flag will cause different reason code */
 	PRINTM(MINFO, "11h: handle_event_chanswann() - sending deauth\n");
-	ret = wlan_disconnect(priv, MNULL,
-			      &priv->curr_bss_params.bss_descriptor.
-			      mac_address);
+	memcpy(priv->adapter, deauth_param.mac_addr,
+	       &priv->curr_bss_params.bss_descriptor.mac_address,
+	       MLAN_MAC_ADDR_LENGTH);
+	deauth_param.reason_code = DEF_DEAUTH_REASON_CODE;
+	ret = wlan_disconnect(priv, MNULL, &deauth_param);
 
 	/* clear region table so next scan will be all passive */
 	PRINTM(MINFO, "11h: handle_event_chanswann() - clear region table\n");
@@ -2843,6 +2821,57 @@ wlan_11h_ioctl_dfs_testing(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req)
 
 	LEAVE();
 	return MLAN_STATUS_SUCCESS;
+}
+
+/**
+ *  @brief 802.11h IOCTL to handle channel NOP status check
+ *  @brief If given channel is under NOP, return a new non-dfs
+ *  @brief channel
+ *
+ *  @param pmadapter    Pointer to mlan_adapter
+ *  @param pioctl_req   Pointer to mlan_ioctl_req
+ *
+ *  @return MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+mlan_status
+wlan_11h_ioctl_get_channel_nop_info(pmlan_adapter pmadapter,
+				    pmlan_ioctl_req pioctl_req)
+{
+	pmlan_private pmpriv = MNULL;
+	mlan_ds_11h_cfg *ds_11hcfg = MNULL;
+	t_s32 ret = MLAN_STATUS_FAILURE;
+	mlan_ds_11h_chan_nop_info *ch_nop_info = MNULL;
+
+	ENTER();
+
+	if (pioctl_req) {
+		ds_11hcfg = (mlan_ds_11h_cfg *)pioctl_req->pbuf;
+		ch_nop_info = &ds_11hcfg->param.ch_nop_info;
+		pmpriv = pmadapter->priv[pioctl_req->bss_index];
+
+		if (pioctl_req->action == MLAN_ACT_GET) {
+			ch_nop_info->chan_under_nop =
+				wlan_11h_is_channel_under_nop(pmadapter,
+							      ch_nop_info->
+							      curr_chan);
+			if (ch_nop_info->chan_under_nop) {
+				wlan_11h_switch_non_dfs_chan(pmpriv,
+							     &ch_nop_info->
+							     new_chan.channel);
+				if (ch_nop_info->chan_width == CHAN_BW_40MHZ)
+					wlan_11h_update_bandcfg(&ch_nop_info->
+								new_chan.
+								bandcfg,
+								ch_nop_info->
+								new_chan.
+								channel);
+			}
+		}
+		ret = MLAN_STATUS_SUCCESS;
+	}
+
+	LEAVE();
+	return ret;
 }
 #endif /* DFS_TESTING_SUPPORT */
 
@@ -3153,7 +3182,8 @@ wlan_dfs_rep_bw_change(mlan_adapter *pmadapter)
 		if (GET_BSS_ROLE(pmpriv) == MLAN_BSS_ROLE_UAP) {
 
 			/* Check if uAPs running on non-dfs channel. If they do
-			   then there is no need to restart the uAPs */
+			 * then there is no need to restart the uAPs
+			 */
 			if (!wlan_11h_radar_detect_required(pmpriv,
 							    pmadapter->
 							    dfsr_channel))
@@ -3184,21 +3214,21 @@ wlan_dfs_rep_bw_change(mlan_adapter *pmadapter)
  *  @return MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE or MLAN_STATUS_PENDING
  */
 void
-wlan_11h_update_bandcfg(IN t_u8 *uap_band_cfg, IN t_u8 new_channel)
+wlan_11h_update_bandcfg(IN Band_Config_t *uap_band_cfg, IN t_u8 new_channel)
 {
 	t_u8 chan_offset;
 	ENTER();
 
-	/* Update the channel offset for 20MHz, 40MHz and 80MHz Clear the
-	   channel bandwidth for 20MHz since channel switch could be happening
-	   from 40/80MHz to 20MHz */
+	/* Update the channel offset for 20MHz, 40MHz and 80MHz
+	 * Clear the channel bandwidth for 20MHz
+	 * since channel switch could be happening from 40/80MHz to 20MHz
+	 */
 	chan_offset = wlan_get_second_channel_offset(new_channel);
-	(*uap_band_cfg) &= ~CHANNEL_OFFSET_MASK;
-	(*uap_band_cfg) |= chan_offset << 4;
+	uap_band_cfg->chan2Offset = chan_offset;
 
 	if (!chan_offset) {	/* 40MHz/80MHz */
 		PRINTM(MCMD_D, "20MHz channel, clear channel bandwidth\n");
-		(*uap_band_cfg) &= ~CHANNEL_BANDWIDTH_MASK;
+		uap_band_cfg->chanWidth = CHAN_BW_20MHZ;
 	}
 	LEAVE();
 }
@@ -3228,6 +3258,62 @@ wlan_11h_get_priv_curr_idx(mlan_private *pmpriv,
 		}
 	}
 	return (found == MTRUE) ? MLAN_STATUS_SUCCESS : MLAN_STATUS_FAILURE;
+}
+
+/**
+ *  @brief Driver handling for remove customeie
+ *
+ *  @param pmadapter    Pointer to mlan_adapter
+ *  @param pmpriv       Pointer to mlan_private
+ *
+ *  @return MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE or MLAN_STATUS_PENDING
+ */
+mlan_status
+wlan_11h_remove_custom_ie(mlan_adapter *pmadapter, mlan_private *pmpriv)
+{
+	mlan_status ret = MLAN_STATUS_SUCCESS;
+	wlan_radar_det_hndlg_state_t *pstate_rdh = &pmadapter->state_rdh;
+	mlan_ioctl_req *pioctl_req = MNULL;
+
+	ENTER();
+	if (pstate_rdh->stage == RDH_SET_CUSTOM_IE) {
+		pstate_rdh->priv_curr_idx = RDH_STAGE_FIRST_ENTRY_PRIV_IDX;
+		PRINTM(MMSG, "Removing CHAN_SW IE from interfaces.\n");
+		while ((++pstate_rdh->priv_curr_idx) <
+		       pstate_rdh->priv_list_count) {
+			pmpriv = pstate_rdh->priv_list[pstate_rdh->
+						       priv_curr_idx];
+			if (!wlan_11h_is_dfs_master(pmpriv))
+				continue;
+			ret = wlan_11h_prepare_custom_ie_chansw(pmadapter,
+								&pioctl_req,
+								MFALSE);
+			if ((ret != MLAN_STATUS_SUCCESS) || !pioctl_req) {
+				PRINTM(MERROR,
+				       "%s(): Error in preparing CHAN_SW IE.\n",
+				       __func__);
+				goto done;
+			}
+
+			pioctl_req->bss_index = pmpriv->bss_index;
+			ret = wlan_misc_ioctl_custom_ie_list(pmadapter,
+							     pioctl_req,
+							     MFALSE);
+			if (ret != MLAN_STATUS_SUCCESS &&
+			    ret != MLAN_STATUS_PENDING) {
+				PRINTM(MERROR,
+				       "%s(): Could not remove IE for priv=%p [priv_bss_idx=%d]!\n",
+				       __func__, pmpriv, pmpriv->bss_index);
+				/* TODO: hiow to handle this error case??  ignore & continue? */
+			}
+			/* free ioctl buffer memory before we leave */
+			pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle,
+							(t_u8 *)pioctl_req);
+		}
+	}
+done:
+	LEAVE();
+	return ret;
 }
 
 /**
@@ -3298,28 +3384,12 @@ wlan_11h_radar_detected_handling(mlan_adapter *pmadapter, mlan_private *pmpriv)
 			       rdh_stage_str[pstate_rdh->stage]);
 			break;	/* EXIT CASE */
 		}
-#ifdef DFS_TESTING_SUPPORT
-		if (pmadapter->ecsa_enable) {
-			if (pmadapter->dfs_test_params.
-			    no_channel_change_on_radar) {
-				/* nothing to do... no channel change on radar */
-				PRINTM(MMSG,
-				       "11h: dfstesting -- no channel change on radar,"
-				       " skip event handling.\n");
-				pstate_rdh->stage = RDH_OFF;
-				PRINTM(MCMD_D,
-				       "%s(): finished - stage(%d)=%s\n",
-				       __func__, pstate_rdh->stage,
-				       rdh_stage_str[pstate_rdh->stage]);
-				break;	/* EXIT CASE */
-			}
-		}
-#endif
 
 		/* else: start handling */
 		pstate_rdh->curr_channel = 0;
 		pstate_rdh->new_channel = 0;
-		pstate_rdh->uap_band_cfg = 0;
+		memset(pmadapter, &(pstate_rdh->uap_band_cfg), 0,
+		       sizeof(pstate_rdh->uap_band_cfg));
 		pstate_rdh->max_bcn_dtim_ms = 0;
 		pstate_rdh->priv_curr_idx = RDH_STAGE_FIRST_ENTRY_PRIV_IDX;
 		pstate_rdh->stage = RDH_STOP_TRAFFIC;
@@ -3367,8 +3437,7 @@ wlan_11h_radar_detected_handling(mlan_adapter *pmadapter, mlan_private *pmpriv)
 			} else
 #endif
 			{
-				/* Assume all STAs on same channel, find first
-				   STA */
+				/* Assume all STAs on same channel, find first STA */
 				MASSERT(pstate_rdh->priv_list_count > 0);
 				for (i = 0; i < pstate_rdh->priv_list_count;
 				     i++) {
@@ -3390,7 +3459,7 @@ wlan_11h_radar_detected_handling(mlan_adapter *pmadapter, mlan_private *pmpriv)
 			pstate_rdh->curr_channel =
 				pmpriv->uap_state_chan_cb.channel;
 			pstate_rdh->uap_band_cfg =
-				pmpriv->uap_state_chan_cb.band_config;
+				pmpriv->uap_state_chan_cb.bandcfg;
 			PRINTM(MCMD_D,
 			       "%s(): uap_band_cfg=0x%02x curr_chan=%d, curr_idx=%d bss_role=%d\n",
 			       __func__, pstate_rdh->uap_band_cfg,
@@ -3410,15 +3479,13 @@ wlan_11h_radar_detected_handling(mlan_adapter *pmadapter, mlan_private *pmpriv)
 				wlan_11h_get_uap_start_channel(pmpriv,
 							       pmpriv->
 							       uap_state_chan_cb.
-							       band_config);
+							       bandcfg);
 		else
 #endif
 			pstate_rdh->new_channel =
 				wlan_11h_get_adhoc_start_channel(pmpriv);
 
-		if (!pstate_rdh->new_channel || (pstate_rdh->new_channel == pstate_rdh->curr_channel)) {	/* report
-														   error
-														 */
+		if (!pstate_rdh->new_channel || (pstate_rdh->new_channel == pstate_rdh->curr_channel)) {	/* report error */
 			PRINTM(MERROR,
 			       "%s():  ERROR - Failed to choose new_chan"
 			       " (!= curr_chan) !!\n", __func__);
@@ -3444,6 +3511,10 @@ wlan_11h_radar_detected_handling(mlan_adapter *pmadapter, mlan_private *pmpriv)
 			pstate_rdh->new_channel =
 				pmadapter->dfs_test_params.
 				fixed_new_channel_on_radar;
+		}
+		/* applies to DFS with ECSA support */
+		if (pmadapter->dfs_test_params.no_channel_change_on_radar) {
+			pstate_rdh->new_channel = pstate_rdh->curr_channel;
 		}
 #endif
 		PRINTM(MCMD_D, "%s():  curr_chan=%d, new_chan=%d\n",
@@ -3507,10 +3578,8 @@ wlan_11h_radar_detected_handling(mlan_adapter *pmadapter, mlan_private *pmpriv)
 					bcn_pd_msec =
 						pmpriv->curr_bss_params.
 						bss_descriptor.beacon_period;
-					/* if (priv->bss_mode !=
-					   MLAN_BSS_MODE_IBSS) */
-					/* TODO: mlan_scan.c needs to parse TLV
-					   0x05 (TIM) for dtim_period */
+					/* if (priv->bss_mode != MLAN_BSS_MODE_IBSS) */
+					/* TODO: mlan_scan.c needs to parse TLV 0x05 (TIM) for dtim_period */
 				}
 				PRINTM(MCMD_D,
 				       "%s():  sta.bcn_pd=%d, sta.dtim_pd=%d\n",
@@ -3535,45 +3604,43 @@ wlan_11h_radar_detected_handling(mlan_adapter *pmadapter, mlan_private *pmpriv)
 		       rdh_stage_str[pstate_rdh->stage],
 		       pstate_rdh->priv_curr_idx);
 
-		/* add CHAN_SW IE - firmware will accept on any interface, and
-		   apply to all */
+		/* add CHAN_SW IE - Need apply on each interface */
 		if (pstate_rdh->priv_curr_idx == RDH_STAGE_FIRST_ENTRY_PRIV_IDX) {
 			mlan_ioctl_req *pioctl_req = MNULL;
-
-			ret = wlan_11h_prepare_custom_ie_chansw(pmadapter,
-								&pioctl_req,
-								MTRUE);
-			if ((ret != MLAN_STATUS_SUCCESS) || !pioctl_req) {
-				PRINTM(MERROR,
-				       "%s(): Error in preparing CHAN_SW IE.\n",
-				       __func__);
-				break;	/* EXIT CASE */
-			}
-
 			PRINTM(MMSG,
 			       "11h: Radar Detected - adding CHAN_SW IE to interfaces.\n");
-			ret = wlan_11h_get_priv_curr_idx(pmpriv, pstate_rdh);
-			if (ret != MLAN_STATUS_SUCCESS) {
-				PRINTM(MERROR,
-				       "Unable to locate pmpriv in current active priv_list\n");
-				break;	/* EXIT CASE */
+			while ((++pstate_rdh->priv_curr_idx) <
+			       pstate_rdh->priv_list_count) {
+				pmpriv = pstate_rdh->priv_list[pstate_rdh->
+							       priv_curr_idx];
+				if (!wlan_11h_is_dfs_master(pmpriv))
+					continue;
+				ret = wlan_11h_prepare_custom_ie_chansw
+					(pmadapter, &pioctl_req, MTRUE);
+				if ((ret != MLAN_STATUS_SUCCESS) || !pioctl_req) {
+					PRINTM(MERROR,
+					       "%s(): Error in preparing CHAN_SW IE.\n",
+					       __func__);
+					break;	/* EXIT CASE */
+				}
+				pioctl_req->bss_index = pmpriv->bss_index;
+				ret = wlan_misc_ioctl_custom_ie_list(pmadapter,
+								     pioctl_req,
+								     MFALSE);
+				if (ret != MLAN_STATUS_SUCCESS &&
+				    ret != MLAN_STATUS_PENDING) {
+					PRINTM(MERROR,
+					       "%s(): Could not set IE for priv=%p [priv_bss_idx=%d]!\n",
+					       __func__, pmpriv,
+					       pmpriv->bss_index);
+					/* TODO: how to handle this error case??  ignore & continue? */
+				}
+				/* free ioctl buffer memory before we leave */
+				pmadapter->callbacks.moal_mfree(pmadapter->
+								pmoal_handle,
+								(t_u8 *)
+								pioctl_req);
 			}
-
-			pioctl_req->bss_index = pmpriv->bss_index;
-			ret = wlan_misc_ioctl_custom_ie_list(pmadapter,
-							     pioctl_req,
-							     MFALSE);
-			if (ret != MLAN_STATUS_SUCCESS &&
-			    ret != MLAN_STATUS_PENDING) {
-				PRINTM(MERROR,
-				       "%s(): Could not set IE for priv=%p [priv_bss_idx=%d]!\n",
-				       __func__, pmpriv, pmpriv->bss_index);
-				/* TODO: how to handle this error case?? ignore
-				   & continue? */
-			}
-			/* free ioctl buffer memory before we leave */
-			pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle,
-							(t_u8 *)pioctl_req);
 			break;	/* EXIT CASE */
 		}
 		/* else */
@@ -3587,18 +3654,16 @@ wlan_11h_radar_detected_handling(mlan_adapter *pmadapter, mlan_private *pmpriv)
 		       rdh_stage_str[pstate_rdh->stage],
 		       pstate_rdh->priv_curr_idx);
 
-		/* remove CHAN_SW IE - firmware will accept on any interface,
-		   and apply to all */
+		/* remove CHAN_SW IE - Need apply on each interface */
 		if (pstate_rdh->priv_curr_idx == RDH_STAGE_FIRST_ENTRY_PRIV_IDX) {
 			mlan_ioctl_req *pioctl_req = MNULL;
-
 			/*
 			 * first entry to this stage, do delay
 			 * DFS requires a minimum of 5 chances for clients to hear this IE.
 			 * Use delay:  5 beacons <= (BCN_DTIM_MSEC*5) <= 3 seconds).
 			 */
 			t_u16 delay_ms = MAX(MIN_RDH_CHAN_SW_IE_PERIOD_MSEC,
-					     MIN((5 *
+					     MIN((4 *
 						  pstate_rdh->max_bcn_dtim_ms),
 						 MAX_RDH_CHAN_SW_IE_PERIOD_MSEC));
 			PRINTM(MMSG,
@@ -3609,38 +3674,38 @@ wlan_11h_radar_detected_handling(mlan_adapter *pmadapter, mlan_private *pmpriv)
 			       "11h: Radar Detected - delay over, removing"
 			       " CHAN_SW IE from interfaces.\n");
 
-			ret = wlan_11h_prepare_custom_ie_chansw(pmadapter,
-								&pioctl_req,
-								MFALSE);
-			if ((ret != MLAN_STATUS_SUCCESS) || !pioctl_req) {
-				PRINTM(MERROR,
-				       "%s(): Error in preparing CHAN_SW IE.\n",
-				       __func__);
-				break;	/* EXIT CASE */
+			while ((++pstate_rdh->priv_curr_idx) <
+			       pstate_rdh->priv_list_count) {
+				pmpriv = pstate_rdh->priv_list[pstate_rdh->
+							       priv_curr_idx];
+				if (!wlan_11h_is_dfs_master(pmpriv))
+					continue;
+				ret = wlan_11h_prepare_custom_ie_chansw
+					(pmadapter, &pioctl_req, MFALSE);
+				if ((ret != MLAN_STATUS_SUCCESS) || !pioctl_req) {
+					PRINTM(MERROR,
+					       "%s(): Error in preparing CHAN_SW IE.\n",
+					       __func__);
+					break;	/* EXIT CASE */
+				}
+				pioctl_req->bss_index = pmpriv->bss_index;
+				ret = wlan_misc_ioctl_custom_ie_list(pmadapter,
+								     pioctl_req,
+								     MFALSE);
+				if (ret != MLAN_STATUS_SUCCESS &&
+				    ret != MLAN_STATUS_PENDING) {
+					PRINTM(MERROR,
+					       "%s(): Could not remove IE for priv=%p [priv_bss_idx=%d]!\n",
+					       __func__, pmpriv,
+					       pmpriv->bss_index);
+					/* TODO: hiow to handle this error case??  ignore & continue? */
+				}
+				/* free ioctl buffer memory before we leave */
+				pmadapter->callbacks.moal_mfree(pmadapter->
+								pmoal_handle,
+								(t_u8 *)
+								pioctl_req);
 			}
-
-			ret = wlan_11h_get_priv_curr_idx(pmpriv, pstate_rdh);
-			if (ret != MLAN_STATUS_SUCCESS) {
-				PRINTM(MERROR,
-				       "Unable to locate pmpriv in current active priv_list\n");
-				break;	/* EXIT CASE */
-			}
-
-			pioctl_req->bss_index = pmpriv->bss_index;
-			ret = wlan_misc_ioctl_custom_ie_list(pmadapter,
-							     pioctl_req,
-							     MFALSE);
-			if (ret != MLAN_STATUS_SUCCESS &&
-			    ret != MLAN_STATUS_PENDING) {
-				PRINTM(MERROR,
-				       "%s(): Could not remove IE for priv=%p [priv_bss_idx=%d]!\n",
-				       __func__, pmpriv, pmpriv->bss_index);
-				/* TODO: hiow to handle this error case??
-				   ignore & continue? */
-			}
-			/* free ioctl buffer memory before we leave */
-			pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle,
-							(t_u8 *)pioctl_req);
 			break;	/* EXIT CASE */
 		}
 		/* else */
@@ -3671,8 +3736,7 @@ wlan_11h_radar_detected_handling(mlan_adapter *pmadapter, mlan_private *pmpriv)
 #ifdef STA_SUPPORT
 			if (GET_BSS_ROLE(pmpriv) == MLAN_BSS_ROLE_STA) {
 				if (wlan_11h_is_dfs_master(pmpriv)) {
-					/* Save ad-hoc creator state before
-					   stop clears it */
+					/* Save ad-hoc creator state before stop clears it */
 					pmpriv->adhoc_state_prev =
 						pmpriv->adhoc_state;
 				}
@@ -3772,9 +3836,8 @@ rdh_restart_intfs:
 								   pstate_rdh->
 								   new_channel))
 				{
-					/* Radar detection is required for this
-					   channel, make sure 11h is activated
-					   in the firmware */
+					/* Radar detection is required for this channel,
+					   make sure 11h is activated in the firmware */
 					ret = wlan_11h_activate(pmpriv, MNULL,
 								MTRUE);
 					ret = wlan_11h_config_master_radar_det
@@ -3790,9 +3853,10 @@ rdh_restart_intfs:
 #endif
 #ifdef STA_SUPPORT
 			if (GET_BSS_ROLE(pmpriv) == MLAN_BSS_ROLE_STA) {
-				/* Check previous state to find former Ad-hoc
-				   creator interface. Set new state to
-				   Starting, so it'll be seen as a DFS master. */
+				/* Check previous state to find former
+				 * Ad-hoc creator interface. Set new
+				 * state to Starting, so it'll be seen
+				 * as a DFS master. */
 				if (pmpriv->adhoc_state_prev == ADHOC_STARTED) {
 					pmpriv->adhoc_state = ADHOC_STARTING;
 					pmpriv->adhoc_state_prev = ADHOC_IDLE;
@@ -3803,10 +3867,8 @@ rdh_restart_intfs:
 						pstate_rdh->new_channel;
 					if (wlan_11h_radar_detect_required
 					    (pmpriv, pstate_rdh->new_channel)) {
-						/* Radar detection is required
-						   for this channel, make sure
-						   11h is activated in the
-						   firmware */
+						/* Radar detection is required for this channel,
+						   make sure 11h is activated in the firmware */
 						ret = wlan_11h_activate(pmpriv,
 									MNULL,
 									MTRUE);
@@ -3828,12 +3890,12 @@ rdh_restart_intfs:
 					break;	/* leads to exit case */
 				}
 
-				/* NOTE: DON'T reconnect slave STA intfs -
-				   infra/adhoc_joiner Do we want to return to
-				   same AP/network (on radar channel)? If want
-				   to connect back, depend on either: 1.
-				   driver's reassoc thread 2. wpa_supplicant,
-				   or other user-space app */
+				/* NOTE:  DON'T reconnect slave STA intfs - infra/adhoc_joiner
+				 *   Do we want to return to same AP/network (on radar channel)?
+				 *   If want to connect back, depend on either:
+				 *     1. driver's reassoc thread
+				 *     2. wpa_supplicant, or other user-space app
+				 */
 			}
 #endif
 		}
@@ -3853,33 +3915,45 @@ rdh_restart_intfs:
 		/* remove custome ie */
 		if (pmadapter->ecsa_enable) {
 			mlan_ioctl_req *pioctl_req = MNULL;
-			ret = wlan_11h_prepare_custom_ie_chansw(pmadapter,
-								&pioctl_req,
-								MFALSE);
-			if ((ret != MLAN_STATUS_SUCCESS) || !pioctl_req) {
-				PRINTM(MERROR,
-				       "%s(): Error in preparing CHAN_SW IE.\n",
-				       __func__);
-				break;	/* EXIT CASE */
-			}
 
-			pmpriv = pstate_rdh->priv_list[0];
-			pstate_rdh->priv_curr_idx = 0;
-			pioctl_req->bss_index = pmpriv->bss_index;
-			ret = wlan_misc_ioctl_custom_ie_list(pmadapter,
-							     pioctl_req,
-							     MFALSE);
-			if (ret != MLAN_STATUS_SUCCESS &&
-			    ret != MLAN_STATUS_PENDING) {
-				PRINTM(MERROR,
-				       "%s(): Could not set IE for priv=%p [priv_bss_idx=%d]!\n",
-				       __func__, pmpriv, pmpriv->bss_index);
-				/* TODO: hiow to handle this error case??
-				   ignore & continue? */
+			/* After RDH_SET_CUSTOM_IE, priv_curr_idx value wasn't reset. Reset priv_curr_idx
+			 * and remove custome ie. The remove needs to be done after every set custom ie
+			 * to avoid the case of adding of duplicate ie */
+			pstate_rdh->priv_curr_idx =
+				RDH_STAGE_FIRST_ENTRY_PRIV_IDX;
+			while ((++pstate_rdh->priv_curr_idx) <
+			       pstate_rdh->priv_list_count) {
+				pmpriv = pstate_rdh->priv_list[pstate_rdh->
+							       priv_curr_idx];
+				if (!wlan_11h_is_dfs_master(pmpriv))
+					continue;
+				ret = wlan_11h_prepare_custom_ie_chansw
+					(pmadapter, &pioctl_req, MFALSE);
+				if ((ret != MLAN_STATUS_SUCCESS) || !pioctl_req) {
+					PRINTM(MERROR,
+					       "%s(): Error in preparing CHAN_SW IE.\n",
+					       __func__);
+					break;	/* EXIT CASE */
+				}
+				pioctl_req->bss_index = pmpriv->bss_index;
+
+				ret = wlan_misc_ioctl_custom_ie_list(pmadapter,
+								     pioctl_req,
+								     MFALSE);
+				if (ret != MLAN_STATUS_SUCCESS &&
+				    ret != MLAN_STATUS_PENDING) {
+					PRINTM(MERROR,
+					       "%s(): Could not remove IE for priv=%p [priv_bss_idx=%d]!\n",
+					       __func__, pmpriv,
+					       pmpriv->bss_index);
+					/* TODO: hiow to handle this error case??  ignore & continue? */
+				}
+				/* free ioctl buffer memory before we leave */
+				pmadapter->callbacks.moal_mfree(pmadapter->
+								pmoal_handle,
+								(t_u8 *)
+								pioctl_req);
 			}
-			/* free ioctl buffer memory before we leave */
-			pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle,
-							(t_u8 *)pioctl_req);
 		}
 		/* continue traffic for reactivated interfaces */
 		PRINTM(MMSG,
@@ -3895,8 +3969,7 @@ rdh_restart_intfs:
 		break;
 
 	default:
-		pstate_rdh->stage = RDH_OFF;	/* cancel RDH to unblock Tx
-						   packets */
+		pstate_rdh->stage = RDH_OFF;	/* cancel RDH to unblock Tx packets */
 		break;
 	}
 
@@ -3927,7 +4000,7 @@ wlan_11h_dfs_event_preprocessing(mlan_adapter *pmadapter)
 	ENTER();
 	switch (pmadapter->event_cause & EVENT_ID_MASK) {
 	case EVENT_RADAR_DETECTED:
-		/* find active intf: prefer dfs_master over dfs_slave */
+		/* find active intf:  prefer dfs_master over dfs_slave */
 		if (wlan_get_privs_by_two_cond(pmadapter,
 					       wlan_11h_is_master_active_on_dfs_chan,
 					       wlan_11h_is_dfs_master,
@@ -4008,7 +4081,7 @@ wlan_11h_switch_non_dfs_chan(mlan_private *priv, t_u8 *chan)
 	}
 #endif
 
-	/* get the channel table first */
+	/*get the channel table first */
 	for (i = 0; i < MAX_REGION_CHANNEL_NUM; i++) {
 		if (pmadapter->region_channel[i].band == BAND_A
 		    && pmadapter->region_channel[i].valid) {

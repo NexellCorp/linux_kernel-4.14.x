@@ -2,7 +2,7 @@
   *
   * @brief This file contains wireless extension standard ioctl functions
   *
-  * Copyright (C) 2010-2016, Marvell International Ltd.
+  * Copyright (C) 2010-2018, Marvell International Ltd.
   *
   * This software file (the "File") is distributed by Marvell International
   * Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -324,8 +324,8 @@ woal_set_freq(struct net_device *dev, struct iw_request_info *info,
 	}
 	i = ap_cfg->num_of_chan;
 
-	/* Initialize the invalid values so that the correct values below are
-	   downloaded to firmware */
+	/* Initialize the invalid values so that the correct values
+	 * below are downloaded to firmware */
 	woal_set_sys_config_invalid_data(sys_cfg);
 
 	/* If setting by frequency, convert to a channel */
@@ -379,26 +379,34 @@ woal_get_freq(struct net_device *dev, struct iw_request_info *info,
 	      struct iw_freq *fwrq, char *extra)
 {
 	moal_private *priv = (moal_private *)netdev_priv(dev);
-	mlan_uap_bss_param ap_cfg;
+	mlan_uap_bss_param *ap_cfg = NULL;
 	t_u8 band = 0;
 	int ret = 0;
 
 	ENTER();
 
+	ap_cfg = kzalloc(sizeof(mlan_uap_bss_param), GFP_ATOMIC);
+	if (!ap_cfg) {
+		PRINTM(MERROR, "Fail to alloc memory for mlan_uap_bss_param\n");
+		return -EFAULT;
+	}
+
 	if (MLAN_STATUS_SUCCESS != woal_set_get_sys_config(priv,
 							   MLAN_ACT_GET,
 							   MOAL_IOCTL_WAIT,
-							   &ap_cfg)) {
+							   ap_cfg)) {
 		PRINTM(MERROR, "Error getting AP confiruration\n");
+		kfree(ap_cfg);
 		LEAVE();
 		return -EFAULT;
 	}
 
-	band = ap_cfg.band_cfg & BAND_CONFIG_5GHZ;
-	fwrq->m = (long)channel_to_frequency(ap_cfg.channel, band);
-	fwrq->i = (long)ap_cfg.channel;
+	band = (ap_cfg->bandcfg.chanBand == BAND_5GHZ);
+	fwrq->m = (long)channel_to_frequency(ap_cfg->channel, band);
+	fwrq->i = (long)ap_cfg->channel;
 	fwrq->e = 6;
 
+	kfree(ap_cfg);
 	LEAVE();
 	return ret;
 }
@@ -507,8 +515,8 @@ woal_set_encode(struct net_device *dev, struct iw_request_info *info,
 		goto done;
 	}
 
-	/* Initialize the invalid values so that the correct values below are
-	   downloaded to firmware */
+	/* Initialize the invalid values so that the correct values
+	 * below are downloaded to firmware */
 	woal_set_sys_config_invalid_data(sys_cfg);
 	sys_cfg->wep_cfg.key0.key_index = 0;
 	sys_cfg->wep_cfg.key1.key_index = 1;
@@ -543,8 +551,7 @@ woal_set_encode(struct net_device *dev, struct iw_request_info *info,
 				pkey = &sys_cfg->wep_cfg.key2;
 			if (ap_cfg->wep_cfg.key3.is_default)
 				pkey = &sys_cfg->wep_cfg.key3;
-			else {	/* Something wrong, select first key as default
-				 */
+			else {	/* Something wrong, select first key as default */
 				PRINTM(MERROR,
 				       "No default key set! Selecting first key.\n");
 				pkey = &sys_cfg->wep_cfg.key0;
@@ -650,7 +657,7 @@ woal_get_encode(struct net_device *dev, struct iw_request_info *info,
 	moal_private *priv = (moal_private *)netdev_priv(dev);
 	int index = (dwrq->flags & IW_ENCODE_INDEX);
 	wep_key *pkey = NULL;
-	mlan_uap_bss_param ap_cfg;
+	mlan_uap_bss_param *ap_cfg = NULL;
 	int ret = 0;
 
 	ENTER();
@@ -659,10 +666,17 @@ woal_get_encode(struct net_device *dev, struct iw_request_info *info,
 		ret = -EINVAL;
 		goto done;
 	}
+	ap_cfg = kzalloc(sizeof(mlan_uap_bss_param), GFP_ATOMIC);
+	if (!ap_cfg) {
+		PRINTM(MERROR, "Fail to alloc memory for mlan_uap_bss_param\n");
+		ret = -EFAULT;
+		goto done;
+	}
+
 	if (MLAN_STATUS_SUCCESS != woal_set_get_sys_config(priv,
 							   MLAN_ACT_GET,
 							   MOAL_IOCTL_WAIT,
-							   &ap_cfg)) {
+							   ap_cfg)) {
 		PRINTM(MERROR, "Error getting AP confiruration\n");
 		ret = -EFAULT;
 		goto done;
@@ -672,7 +686,7 @@ woal_get_encode(struct net_device *dev, struct iw_request_info *info,
 	/*
 	 * Check encryption mode
 	 */
-	switch (ap_cfg.auth_mode) {
+	switch (ap_cfg->auth_mode) {
 	case MLAN_AUTH_MODE_OPEN:
 		dwrq->flags = IW_ENCODE_OPEN;
 		break;
@@ -685,19 +699,19 @@ woal_get_encode(struct net_device *dev, struct iw_request_info *info,
 		break;
 	}
 
-	switch (ap_cfg.protocol) {
+	switch (ap_cfg->protocol) {
 	case PROTOCOL_NO_SECURITY:
 		dwrq->flags |= IW_ENCODE_DISABLED;
 		break;
 	case PROTOCOL_STATIC_WEP:
-		if (ap_cfg.wep_cfg.key0.is_default)
-			pkey = &ap_cfg.wep_cfg.key0;
-		else if (ap_cfg.wep_cfg.key1.is_default)
-			pkey = &ap_cfg.wep_cfg.key1;
-		else if (ap_cfg.wep_cfg.key2.is_default)
-			pkey = &ap_cfg.wep_cfg.key2;
-		else if (ap_cfg.wep_cfg.key3.is_default)
-			pkey = &ap_cfg.wep_cfg.key3;
+		if (ap_cfg->wep_cfg.key0.is_default)
+			pkey = &ap_cfg->wep_cfg.key0;
+		else if (ap_cfg->wep_cfg.key1.is_default)
+			pkey = &ap_cfg->wep_cfg.key1;
+		else if (ap_cfg->wep_cfg.key2.is_default)
+			pkey = &ap_cfg->wep_cfg.key2;
+		else if (ap_cfg->wep_cfg.key3.is_default)
+			pkey = &ap_cfg->wep_cfg.key3;
 		if (pkey) {
 			dwrq->flags |= (pkey->key_index + 1);
 			dwrq->length = pkey->length;
@@ -710,8 +724,9 @@ woal_get_encode(struct net_device *dev, struct iw_request_info *info,
 	case PROTOCOL_WPA:
 	case PROTOCOL_WPA2:
 	case PROTOCOL_WPA2_MIXED:
-		memcpy(extra, ap_cfg.wpa_cfg.passphrase, ap_cfg.wpa_cfg.length);
-		dwrq->length = ap_cfg.wpa_cfg.length;
+		memcpy(extra, ap_cfg->wpa_cfg.passphrase,
+		       ap_cfg->wpa_cfg.length);
+		dwrq->length = ap_cfg->wpa_cfg.length;
 		dwrq->flags |= 1;
 		dwrq->flags &= ~IW_ENCODE_DISABLED;
 		break;
@@ -722,6 +737,7 @@ woal_get_encode(struct net_device *dev, struct iw_request_info *info,
 	dwrq->flags |= IW_ENCODE_NOKEY;
 
 done:
+	kfree(ap_cfg);
 	LEAVE();
 	return ret;
 }
@@ -765,35 +781,41 @@ woal_set_gen_ie(struct net_device *dev, struct iw_request_info *info,
 		struct iw_point *dwrq, char *extra)
 {
 	moal_private *priv = (moal_private *)netdev_priv(dev);
-	mlan_uap_bss_param sys_cfg;
+	mlan_uap_bss_param *sys_cfg = NULL;
 	IEEEtypes_Header_t *tlv = NULL;
 	int tlv_hdr_len = sizeof(IEEEtypes_Header_t), tlv_buf_left = 0;
 	int ret = 0;
 
 	ENTER();
 
-	/* Initialize the invalid values so that the correct values below are
-	   downloaded to firmware */
-	woal_set_sys_config_invalid_data(&sys_cfg);
+	sys_cfg = kzalloc(sizeof(mlan_uap_bss_param), GFP_ATOMIC);
+	if (!sys_cfg) {
+		PRINTM(MERROR, "Fail to alloc memory for mlan_uap_bss_param\n");
+		LEAVE();
+		return -EFAULT;
+	}
+	/* Initialize the invalid values so that the correct values
+	 * below are downloaded to firmware */
+	woal_set_sys_config_invalid_data(sys_cfg);
 
 	tlv_buf_left = dwrq->length;
 	tlv = (IEEEtypes_Header_t *)extra;
 	while (tlv_buf_left >= tlv_hdr_len) {
 		if (tlv->element_id == WPA_IE) {
-			sys_cfg.protocol |= PROTOCOL_WPA;
+			sys_cfg->protocol |= PROTOCOL_WPA;
 			if (priv->pairwise_cipher == CIPHER_TKIP) {
-				sys_cfg.wpa_cfg.pairwise_cipher_wpa =
+				sys_cfg->wpa_cfg.pairwise_cipher_wpa =
 					CIPHER_TKIP;
 				PRINTM(MINFO, "Set IE Cipher TKIP\n");
 			}
 			if (priv->pairwise_cipher == CIPHER_AES_CCMP) {
-				sys_cfg.wpa_cfg.pairwise_cipher_wpa =
+				sys_cfg->wpa_cfg.pairwise_cipher_wpa =
 					CIPHER_AES_CCMP;
 				PRINTM(MINFO, "Set IE Cipher CCMP\n");
 			}
 			if (priv->pairwise_cipher ==
 			    (CIPHER_TKIP | CIPHER_AES_CCMP)) {
-				sys_cfg.wpa_cfg.pairwise_cipher_wpa =
+				sys_cfg->wpa_cfg.pairwise_cipher_wpa =
 					CIPHER_TKIP | CIPHER_AES_CCMP;
 				PRINTM(MINFO, "Set IE Cipher TKIP + CCMP\n");
 			}
@@ -804,18 +826,18 @@ woal_set_gen_ie(struct net_device *dev, struct iw_request_info *info,
 				sizeof(IEEEtypes_Header_t) + tlv->len;
 		}
 		if (tlv->element_id == RSN_IE) {
-			sys_cfg.protocol |= PROTOCOL_WPA2;
+			sys_cfg->protocol |= PROTOCOL_WPA2;
 			if (priv->pairwise_cipher == CIPHER_TKIP) {
-				sys_cfg.wpa_cfg.pairwise_cipher_wpa2 =
+				sys_cfg->wpa_cfg.pairwise_cipher_wpa2 =
 					CIPHER_TKIP;
 			}
 			if (priv->pairwise_cipher == CIPHER_AES_CCMP) {
-				sys_cfg.wpa_cfg.pairwise_cipher_wpa2 =
+				sys_cfg->wpa_cfg.pairwise_cipher_wpa2 =
 					CIPHER_AES_CCMP;
 			}
 			if (priv->pairwise_cipher ==
 			    (CIPHER_TKIP | CIPHER_AES_CCMP)) {
-				sys_cfg.wpa_cfg.pairwise_cipher_wpa2 =
+				sys_cfg->wpa_cfg.pairwise_cipher_wpa2 =
 					(CIPHER_TKIP | CIPHER_AES_CCMP);
 			}
 			memcpy(priv->bcn_ie_buf + priv->bcn_ie_len,
@@ -825,24 +847,24 @@ woal_set_gen_ie(struct net_device *dev, struct iw_request_info *info,
 				sizeof(IEEEtypes_Header_t) + tlv->len;
 		}
 		if (priv->group_cipher == CIPHER_TKIP)
-			sys_cfg.wpa_cfg.group_cipher = CIPHER_TKIP;
+			sys_cfg->wpa_cfg.group_cipher = CIPHER_TKIP;
 		if (priv->group_cipher == CIPHER_AES_CCMP)
-			sys_cfg.wpa_cfg.group_cipher = CIPHER_AES_CCMP;
+			sys_cfg->wpa_cfg.group_cipher = CIPHER_AES_CCMP;
 		tlv_buf_left -= (tlv_hdr_len + tlv->len);
 		tlv = (IEEEtypes_Header_t *)((t_u8 *)tlv + tlv_hdr_len +
 					     tlv->len);
 	}
-	sys_cfg.key_mgmt = priv->uap_key_mgmt;
-	if (sys_cfg.key_mgmt & KEY_MGMT_PSK)
-		sys_cfg.key_mgmt_operation |= 0x01;
-	if (sys_cfg.key_mgmt & KEY_MGMT_EAP)
-		sys_cfg.key_mgmt_operation |= 0x03;
+	sys_cfg->key_mgmt = priv->uap_key_mgmt;
+	if (sys_cfg->key_mgmt & KEY_MGMT_PSK)
+		sys_cfg->key_mgmt_operation |= 0x01;
+	if (sys_cfg->key_mgmt & KEY_MGMT_EAP)
+		sys_cfg->key_mgmt_operation |= 0x03;
 
-	if (sys_cfg.protocol) {
+	if (sys_cfg->protocol) {
 		if (MLAN_STATUS_SUCCESS != woal_set_get_sys_config(priv,
 								   MLAN_ACT_SET,
 								   MOAL_IOCTL_WAIT,
-								   &sys_cfg)) {
+								   sys_cfg)) {
 			PRINTM(MERROR, "Error setting AP configuration\n");
 			ret = -EFAULT;
 			goto done;
@@ -870,6 +892,7 @@ woal_set_gen_ie(struct net_device *dev, struct iw_request_info *info,
 	}
 
 done:
+	kfree(sys_cfg);
 	LEAVE();
 	return ret;
 }
@@ -895,7 +918,7 @@ woal_set_encode_ext(struct net_device *dev,
 	t_u8 *pkey_material = NULL;
 	mlan_ioctl_req *req = NULL;
 	mlan_ds_sec_cfg *sec = NULL;
-	mlan_uap_bss_param sys_cfg;
+	mlan_uap_bss_param *sys_cfg = NULL;
 	wep_key *pwep_key = NULL;
 	int ret = 0;
 	mlan_status status = MLAN_STATUS_SUCCESS;
@@ -911,30 +934,36 @@ woal_set_encode_ext(struct net_device *dev,
 		ret = -EINVAL;
 		goto done;
 	}
+	sys_cfg = kzalloc(sizeof(mlan_uap_bss_param), GFP_ATOMIC);
+	if (!sys_cfg) {
+		PRINTM(MERROR, "Fail to alloc memory for mlan_uap_bss_param\n");
+		ret = -EFAULT;
+		goto done;
+	}
 
-	/* Initialize the invalid values so that the correct values below are
-	   downloaded to firmware */
-	woal_set_sys_config_invalid_data(&sys_cfg);
+	/* Initialize the invalid values so that the correct values
+	 * below are downloaded to firmware */
+	woal_set_sys_config_invalid_data(sys_cfg);
 
 	pkey_material = (t_u8 *)(ext + 1);
 	/* Disable Key */
 	if ((dwrq->flags & IW_ENCODE_DISABLED) && !ext->key_len) {
-		sys_cfg.protocol = PROTOCOL_NO_SECURITY;
+		sys_cfg->protocol = PROTOCOL_NO_SECURITY;
 	} else if (ext->alg == IW_ENCODE_ALG_WEP) {
-		sys_cfg.protocol = PROTOCOL_STATIC_WEP;
+		sys_cfg->protocol = PROTOCOL_STATIC_WEP;
 		/* Set WEP key */
 		switch (key_index) {
 		case 0:
-			pwep_key = &sys_cfg.wep_cfg.key0;
+			pwep_key = &sys_cfg->wep_cfg.key0;
 			break;
 		case 1:
-			pwep_key = &sys_cfg.wep_cfg.key1;
+			pwep_key = &sys_cfg->wep_cfg.key1;
 			break;
 		case 2:
-			pwep_key = &sys_cfg.wep_cfg.key2;
+			pwep_key = &sys_cfg->wep_cfg.key2;
 			break;
 		case 3:
-			pwep_key = &sys_cfg.wep_cfg.key3;
+			pwep_key = &sys_cfg->wep_cfg.key3;
 			break;
 		}
 		if (pwep_key) {
@@ -995,13 +1024,14 @@ woal_set_encode_ext(struct net_device *dev,
 	if (MLAN_STATUS_SUCCESS != woal_set_get_sys_config(priv,
 							   MLAN_ACT_SET,
 							   MOAL_IOCTL_WAIT,
-							   &sys_cfg)) {
+							   sys_cfg)) {
 		PRINTM(MERROR, "Error setting AP confiruration\n");
 		ret = -EFAULT;
 		goto done;
 	}
 
 done:
+	kfree(sys_cfg);
 	if (status != MLAN_STATUS_PENDING)
 		kfree(req);
 	LEAVE();
@@ -1063,8 +1093,9 @@ woal_set_mlme(struct net_device *dev,
 		       MAC2STR(sta_addr), mlme->reason_code);
 
 		/* FIXME: For flushing all stations we need to use zero MAC,
-		   but right now the FW does not support this. So, manually
-		   delete each one individually. */
+		 * but right now the FW does not support this. So, manually
+		 * delete each one individually.
+		 */
 		/* If deauth all station, get the connected STA list first */
 		if (!memcmp(bc_addr, sta_addr, ETH_ALEN)) {
 			PRINTM(MIOCTL, "Deauth all stations\n");
@@ -1105,7 +1136,7 @@ woal_set_mlme(struct net_device *dev,
 		req->req_id = MLAN_IOCTL_BSS;
 		req->action = MLAN_ACT_SET;
 
-		if (!memcmp(bc_addr, sta_addr, ETH_ALEN)) {
+		if (sta_list && !memcmp(bc_addr, sta_addr, ETH_ALEN)) {
 			for (i = 0; i < sta_list->sta_count; i++) {
 				memcpy(bss->param.deauth_param.mac_addr,
 				       sta_list->info[i].mac_address, ETH_ALEN);
@@ -1155,13 +1186,19 @@ woal_set_auth(struct net_device *dev, struct iw_request_info *info,
 {
 	int ret = 0;
 	moal_private *priv = (moal_private *)netdev_priv(dev);
-	mlan_uap_bss_param sys_cfg;
+	mlan_uap_bss_param *sys_cfg = NULL;
 
 	ENTER();
 
-	/* Initialize the invalid values so that the correct values below are
-	   downloaded to firmware */
-	woal_set_sys_config_invalid_data(&sys_cfg);
+	sys_cfg = kzalloc(sizeof(mlan_uap_bss_param), GFP_ATOMIC);
+	if (!sys_cfg) {
+		PRINTM(MERROR, "Fail to alloc memory for mlan_uap_bss_param\n");
+		LEAVE();
+		return -EFAULT;
+	}
+	/* Initialize the invalid values so that the correct values
+	 * below are downloaded to firmware */
+	woal_set_sys_config_invalid_data(sys_cfg);
 
 	switch (vwrq->flags & IW_AUTH_INDEX) {
 	case IW_AUTH_CIPHER_PAIRWISE:
@@ -1176,24 +1213,24 @@ woal_set_auth(struct net_device *dev, struct iw_request_info *info,
 			/* XXX Do not delete no-operation line */
 			;
 		else if (vwrq->value == IW_AUTH_CIPHER_TKIP) {
-			sys_cfg.wpa_cfg.pairwise_cipher_wpa = CIPHER_TKIP;
-			sys_cfg.wpa_cfg.pairwise_cipher_wpa2 = CIPHER_TKIP;
+			sys_cfg->wpa_cfg.pairwise_cipher_wpa = CIPHER_TKIP;
+			sys_cfg->wpa_cfg.pairwise_cipher_wpa2 = CIPHER_TKIP;
 			priv->pairwise_cipher = CIPHER_TKIP;
 			if (!priv->uap_key_mgmt)
 				priv->uap_key_mgmt = KEY_MGMT_PSK;
 			PRINTM(MINFO, "Set Auth Cipher TKIP\n");
 		} else if (vwrq->value == IW_AUTH_CIPHER_CCMP) {
-			sys_cfg.wpa_cfg.pairwise_cipher_wpa = CIPHER_AES_CCMP;
-			sys_cfg.wpa_cfg.pairwise_cipher_wpa2 = CIPHER_AES_CCMP;
+			sys_cfg->wpa_cfg.pairwise_cipher_wpa = CIPHER_AES_CCMP;
+			sys_cfg->wpa_cfg.pairwise_cipher_wpa2 = CIPHER_AES_CCMP;
 			priv->pairwise_cipher = CIPHER_AES_CCMP;
 			if (!priv->uap_key_mgmt)
 				priv->uap_key_mgmt = KEY_MGMT_PSK;
 			PRINTM(MINFO, "Set Auth Cipher CCMP\n");
 		} else if (vwrq->value ==
 			   (IW_AUTH_CIPHER_TKIP | IW_AUTH_CIPHER_CCMP)) {
-			sys_cfg.wpa_cfg.pairwise_cipher_wpa =
+			sys_cfg->wpa_cfg.pairwise_cipher_wpa =
 				(CIPHER_TKIP | CIPHER_AES_CCMP);
-			sys_cfg.wpa_cfg.pairwise_cipher_wpa2 =
+			sys_cfg->wpa_cfg.pairwise_cipher_wpa2 =
 				(CIPHER_TKIP | CIPHER_AES_CCMP);
 			priv->pairwise_cipher = (CIPHER_TKIP | CIPHER_AES_CCMP);
 			if (!priv->uap_key_mgmt)
@@ -1213,13 +1250,13 @@ woal_set_auth(struct net_device *dev, struct iw_request_info *info,
 			/* XXX Do not delete no-operation line */
 			;
 		else if (vwrq->value & IW_AUTH_CIPHER_TKIP) {
-			sys_cfg.wpa_cfg.group_cipher = CIPHER_TKIP;
+			sys_cfg->wpa_cfg.group_cipher = CIPHER_TKIP;
 			priv->group_cipher = CIPHER_TKIP;
 			if (!priv->uap_key_mgmt)
 				priv->uap_key_mgmt = KEY_MGMT_PSK;
 			PRINTM(MINFO, "Set Auth Cipher TKIP\n");
 		} else if (vwrq->value & IW_AUTH_CIPHER_CCMP) {
-			sys_cfg.wpa_cfg.group_cipher = CIPHER_AES_CCMP;
+			sys_cfg->wpa_cfg.group_cipher = CIPHER_AES_CCMP;
 			priv->group_cipher = CIPHER_AES_CCMP;
 			if (!priv->uap_key_mgmt)
 				priv->uap_key_mgmt = KEY_MGMT_PSK;
@@ -1230,13 +1267,13 @@ woal_set_auth(struct net_device *dev, struct iw_request_info *info,
 		switch (vwrq->value) {
 		case IW_AUTH_ALG_SHARED_KEY:
 			PRINTM(MINFO, "Auth mode shared key!\n");
-			sys_cfg.auth_mode = MLAN_AUTH_MODE_SHARED;
+			sys_cfg->auth_mode = MLAN_AUTH_MODE_SHARED;
 			break;
 		case IW_AUTH_ALG_LEAP:
 			break;
 		case IW_AUTH_ALG_OPEN_SYSTEM:
 			PRINTM(MINFO, "Auth mode open!\n");
-			sys_cfg.auth_mode = MLAN_AUTH_MODE_OPEN;
+			sys_cfg->auth_mode = MLAN_AUTH_MODE_OPEN;
 			break;
 		default:
 			PRINTM(MINFO, "Auth mode auto!\n");
@@ -1246,30 +1283,30 @@ woal_set_auth(struct net_device *dev, struct iw_request_info *info,
 	case IW_AUTH_WPA_VERSION:
 		switch (vwrq->value) {
 		case IW_AUTH_WPA_VERSION_DISABLED:
-			sys_cfg.protocol = PROTOCOL_NO_SECURITY;
+			sys_cfg->protocol = PROTOCOL_NO_SECURITY;
 			break;
 		case IW_AUTH_WPA_VERSION_WPA:
-			sys_cfg.protocol = PROTOCOL_WPA;
+			sys_cfg->protocol = PROTOCOL_WPA;
 			break;
 		case IW_AUTH_WPA_VERSION_WPA2:
-			sys_cfg.protocol = PROTOCOL_WPA2;
+			sys_cfg->protocol = PROTOCOL_WPA2;
 			break;
 		case IW_AUTH_WPA_VERSION_WPA | IW_AUTH_WPA_VERSION_WPA2:
-			sys_cfg.protocol = PROTOCOL_WPA2_MIXED;
+			sys_cfg->protocol = PROTOCOL_WPA2_MIXED;
 			break;
 		default:
 			break;
 		}
-		priv->uap_protocol = sys_cfg.protocol;
+		priv->uap_protocol = sys_cfg->protocol;
 		break;
 	case IW_AUTH_KEY_MGMT:
 		switch (vwrq->value) {
 		case IW_AUTH_KEY_MGMT_802_1X:
-			sys_cfg.key_mgmt |= KEY_MGMT_EAP;
+			sys_cfg->key_mgmt |= KEY_MGMT_EAP;
 			priv->uap_key_mgmt |= KEY_MGMT_EAP;
 			break;
 		case IW_AUTH_KEY_MGMT_PSK:
-			sys_cfg.key_mgmt |= KEY_MGMT_PSK;
+			sys_cfg->key_mgmt |= KEY_MGMT_PSK;
 			priv->uap_key_mgmt |= KEY_MGMT_PSK;
 			break;
 		default:
@@ -1283,29 +1320,31 @@ woal_set_auth(struct net_device *dev, struct iw_request_info *info,
 	case IW_AUTH_ROAMING_CONTROL:
 	case IW_AUTH_PRIVACY_INVOKED:
 	default:
+		kfree(sys_cfg);
 		LEAVE();
 		return -EOPNOTSUPP;	/* No AP configuration */
 	}
-	if (!sys_cfg.key_mgmt)
-		sys_cfg.key_mgmt = priv->uap_key_mgmt;
-	if (sys_cfg.key_mgmt & KEY_MGMT_PSK)
-		sys_cfg.key_mgmt_operation |= 0x01;
-	if (sys_cfg.key_mgmt & KEY_MGMT_EAP)
-		sys_cfg.key_mgmt_operation |= 0x03;
-	if (!sys_cfg.protocol)
-		sys_cfg.protocol = priv->uap_protocol;
+	if (!sys_cfg->key_mgmt)
+		sys_cfg->key_mgmt = priv->uap_key_mgmt;
+	if (sys_cfg->key_mgmt & KEY_MGMT_PSK)
+		sys_cfg->key_mgmt_operation |= 0x01;
+	if (sys_cfg->key_mgmt & KEY_MGMT_EAP)
+		sys_cfg->key_mgmt_operation |= 0x03;
+	if (!sys_cfg->protocol)
+		sys_cfg->protocol = priv->uap_protocol;
 
 	/* Set AP configuration */
 	if (MLAN_STATUS_SUCCESS != woal_set_get_sys_config(priv,
 							   MLAN_ACT_SET,
 							   MOAL_IOCTL_WAIT,
-							   &sys_cfg)) {
+							   sys_cfg)) {
 		PRINTM(MERROR, "Error setting AP confiruration\n");
 		ret = -EFAULT;
 		goto done;
 	}
 
 done:
+	kfree(sys_cfg);
 	LEAVE();
 	return 0;
 }
@@ -1325,58 +1364,66 @@ woal_get_auth(struct net_device *dev, struct iw_request_info *info,
 	      struct iw_param *vwrq, char *extra)
 {
 	moal_private *priv = (moal_private *)netdev_priv(dev);
-	mlan_uap_bss_param ap_cfg;
+	mlan_uap_bss_param *ap_cfg = NULL;
 
 	ENTER();
+
+	ap_cfg = kzalloc(sizeof(mlan_uap_bss_param), GFP_ATOMIC);
+	if (!ap_cfg) {
+		PRINTM(MERROR, "Fail to alloc memory for mlan_uap_bss_param\n");
+		LEAVE();
+		return -EFAULT;
+	}
 
 	if (MLAN_STATUS_SUCCESS != woal_set_get_sys_config(priv,
 							   MLAN_ACT_GET,
 							   MOAL_IOCTL_WAIT,
-							   &ap_cfg)) {
+							   ap_cfg)) {
 		PRINTM(MERROR, "Error getting AP confiruration\n");
+		kfree(ap_cfg);
 		LEAVE();
 		return -EFAULT;
 	}
 	switch (vwrq->flags & IW_AUTH_INDEX) {
 	case IW_AUTH_CIPHER_PAIRWISE:
-		if (ap_cfg.wpa_cfg.pairwise_cipher_wpa == CIPHER_TKIP ||
-		    ap_cfg.wpa_cfg.pairwise_cipher_wpa2 == CIPHER_TKIP)
+		if (ap_cfg->wpa_cfg.pairwise_cipher_wpa == CIPHER_TKIP ||
+		    ap_cfg->wpa_cfg.pairwise_cipher_wpa2 == CIPHER_TKIP)
 			vwrq->value = IW_AUTH_CIPHER_TKIP;
-		else if (ap_cfg.wpa_cfg.pairwise_cipher_wpa == CIPHER_AES_CCMP
-			 || ap_cfg.wpa_cfg.pairwise_cipher_wpa2 ==
+		else if (ap_cfg->wpa_cfg.pairwise_cipher_wpa == CIPHER_AES_CCMP
+			 || ap_cfg->wpa_cfg.pairwise_cipher_wpa2 ==
 			 CIPHER_AES_CCMP)
 			vwrq->value = IW_AUTH_CIPHER_CCMP;
 		else
 			vwrq->value = IW_AUTH_CIPHER_NONE;
 		break;
 	case IW_AUTH_CIPHER_GROUP:
-		if (ap_cfg.wpa_cfg.group_cipher == CIPHER_TKIP)
+		if (ap_cfg->wpa_cfg.group_cipher == CIPHER_TKIP)
 			vwrq->value = IW_AUTH_CIPHER_TKIP;
-		else if (ap_cfg.wpa_cfg.group_cipher == CIPHER_AES_CCMP)
+		else if (ap_cfg->wpa_cfg.group_cipher == CIPHER_AES_CCMP)
 			vwrq->value = IW_AUTH_CIPHER_CCMP;
 		else
 			vwrq->value = IW_AUTH_CIPHER_NONE;
 		break;
 	case IW_AUTH_80211_AUTH_ALG:
-		if (ap_cfg.auth_mode == MLAN_AUTH_MODE_SHARED)
+		if (ap_cfg->auth_mode == MLAN_AUTH_MODE_SHARED)
 			vwrq->value = IW_AUTH_ALG_SHARED_KEY;
-		else if (ap_cfg.auth_mode == MLAN_AUTH_MODE_NETWORKEAP)
+		else if (ap_cfg->auth_mode == MLAN_AUTH_MODE_NETWORKEAP)
 			vwrq->value = IW_AUTH_ALG_LEAP;
 		else
 			vwrq->value = IW_AUTH_ALG_OPEN_SYSTEM;
 		break;
 	case IW_AUTH_WPA_ENABLED:
-		if (ap_cfg.protocol == PROTOCOL_WPA ||
-		    ap_cfg.protocol == PROTOCOL_WPA2 ||
-		    ap_cfg.protocol == PROTOCOL_WPA2_MIXED)
+		if (ap_cfg->protocol == PROTOCOL_WPA ||
+		    ap_cfg->protocol == PROTOCOL_WPA2 ||
+		    ap_cfg->protocol == PROTOCOL_WPA2_MIXED)
 			vwrq->value = 1;
 		else
 			vwrq->value = 0;
 		break;
 	case IW_AUTH_KEY_MGMT:
-		if (ap_cfg.key_mgmt & KEY_MGMT_EAP)
+		if (ap_cfg->key_mgmt & KEY_MGMT_EAP)
 			vwrq->value |= IW_AUTH_KEY_MGMT_802_1X;
-		if (ap_cfg.key_mgmt & KEY_MGMT_PSK)
+		if (ap_cfg->key_mgmt & KEY_MGMT_PSK)
 			vwrq->value |= IW_AUTH_KEY_MGMT_PSK;
 		break;
 	case IW_AUTH_WPA_VERSION:
@@ -1386,10 +1433,11 @@ woal_get_auth(struct net_device *dev, struct iw_request_info *info,
 	case IW_AUTH_ROAMING_CONTROL:
 	case IW_AUTH_PRIVACY_INVOKED:
 	default:
+		kfree(ap_cfg);
 		LEAVE();
 		return -EOPNOTSUPP;
 	}
-
+	kfree(ap_cfg);
 	LEAVE();
 	return 0;
 }
@@ -1420,18 +1468,25 @@ woal_get_range(struct net_device *dev, struct iw_request_info *info,
 	       struct iw_point *dwrq, char *extra)
 {
 	moal_private *priv = (moal_private *)netdev_priv(dev);
-	mlan_uap_bss_param ap_cfg;
+	mlan_uap_bss_param *ap_cfg = NULL;
 	struct iw_range *range = (struct iw_range *)extra;
 	t_u8 band = 0;
 	int i;
 
 	ENTER();
 
+	ap_cfg = kzalloc(sizeof(mlan_uap_bss_param), GFP_ATOMIC);
+	if (!ap_cfg) {
+		PRINTM(MERROR, "Fail to alloc memory for mlan_uap_bss_param\n");
+		LEAVE();
+		return -EFAULT;
+	}
 	if (MLAN_STATUS_SUCCESS != woal_set_get_sys_config(priv,
 							   MLAN_ACT_GET,
 							   MOAL_IOCTL_WAIT,
-							   &ap_cfg)) {
+							   ap_cfg)) {
 		PRINTM(MERROR, "Error getting AP confiruration\n");
+		kfree(ap_cfg);
 		LEAVE();
 		return -EFAULT;
 	}
@@ -1443,20 +1498,20 @@ woal_get_range(struct net_device *dev, struct iw_request_info *info,
 
 	range->num_bitrates = MAX_DATA_RATES;
 	for (i = 0; i < MIN(MAX_DATA_RATES, IW_MAX_BITRATES) &&
-	     ap_cfg.rates[i]; i++) {
-		range->bitrate[i] = (ap_cfg.rates[i] & 0x7f) * 500000;
+	     ap_cfg->rates[i]; i++) {
+		range->bitrate[i] = (ap_cfg->rates[i] & 0x7f) * 500000;
 	}
 	range->num_bitrates = i;
 	PRINTM(MINFO, "IW_MAX_BITRATES=%d num_bitrates=%d\n",
 	       IW_MAX_BITRATES, range->num_bitrates);
 
-	range->num_frequency = MIN(ap_cfg.num_of_chan, IW_MAX_FREQUENCIES);
+	range->num_frequency = MIN(ap_cfg->num_of_chan, IW_MAX_FREQUENCIES);
 
 	for (i = 0; i < range->num_frequency; i++) {
-		range->freq[i].i = (long)ap_cfg.chan_list[i].chan_number;
-		band = ap_cfg.chan_list[i].band_config_type & BAND_CONFIG_5GHZ;
+		range->freq[i].i = (long)ap_cfg->chan_list[i].chan_number;
+		band = (ap_cfg->chan_list[i].bandcfg.chanBand == BAND_5GHZ);
 		range->freq[i].m =
-			(long)channel_to_frequency(ap_cfg.chan_list[i].
+			(long)channel_to_frequency(ap_cfg->chan_list[i].
 						   chan_number, band) * 100000;
 		range->freq[i].e = 1;
 	}
@@ -1492,7 +1547,7 @@ woal_get_range(struct net_device *dev, struct iw_request_info *info,
 /** Maximum power period */
 #define IW_POWER_PERIOD_MAX 120000000	/* 2 min */
 /** Minimum power timeout value */
-#define IW_POWER_TIMEOUT_MIN 1000	/* 1 ms */
+#define IW_POWER_TIMEOUT_MIN 1000	/* 1 ms  */
 /** Maximim power timeout value */
 #define IW_POWER_TIMEOUT_MAX 1000000	/* 1 sec */
 
@@ -1522,20 +1577,20 @@ woal_get_range(struct net_device *dev, struct iw_request_info *info,
 	range->max_retry = MLAN_TX_RETRY_MAX;
 
 #if (WIRELESS_EXT >= 18)
-	if (ap_cfg.protocol & PROTOCOL_WPA)
+	if (ap_cfg->protocol & PROTOCOL_WPA)
 		range->enc_capa |= IW_ENC_CAPA_WPA;
-	if (ap_cfg.protocol & PROTOCOL_WPA2)
+	if (ap_cfg->protocol & PROTOCOL_WPA2)
 		range->enc_capa |= IW_ENC_CAPA_WPA2;
-	if (ap_cfg.wpa_cfg.pairwise_cipher_wpa == CIPHER_TKIP ||
-	    ap_cfg.wpa_cfg.pairwise_cipher_wpa2 == CIPHER_TKIP ||
-	    ap_cfg.wpa_cfg.group_cipher == CIPHER_TKIP)
+	if (ap_cfg->wpa_cfg.pairwise_cipher_wpa == CIPHER_TKIP ||
+	    ap_cfg->wpa_cfg.pairwise_cipher_wpa2 == CIPHER_TKIP ||
+	    ap_cfg->wpa_cfg.group_cipher == CIPHER_TKIP)
 		range->enc_capa |= IW_ENC_CAPA_CIPHER_TKIP;
-	if (ap_cfg.wpa_cfg.pairwise_cipher_wpa == CIPHER_AES_CCMP ||
-	    ap_cfg.wpa_cfg.pairwise_cipher_wpa2 == CIPHER_AES_CCMP ||
-	    ap_cfg.wpa_cfg.group_cipher == CIPHER_AES_CCMP)
+	if (ap_cfg->wpa_cfg.pairwise_cipher_wpa == CIPHER_AES_CCMP ||
+	    ap_cfg->wpa_cfg.pairwise_cipher_wpa2 == CIPHER_AES_CCMP ||
+	    ap_cfg->wpa_cfg.group_cipher == CIPHER_AES_CCMP)
 		range->enc_capa |= IW_ENC_CAPA_CIPHER_CCMP;
 #endif
-
+	kfree(ap_cfg);
 	LEAVE();
 	return 0;
 }
@@ -1574,7 +1629,7 @@ woal_set_essid(struct net_device *dev, struct iw_request_info *info,
 	       struct iw_point *dwrq, char *extra)
 {
 	moal_private *priv = (moal_private *)netdev_priv(dev);
-	mlan_uap_bss_param sys_cfg;
+	mlan_uap_bss_param *sys_cfg = NULL;
 	int ret = 0;
 
 	ENTER();
@@ -1584,40 +1639,47 @@ woal_set_essid(struct net_device *dev, struct iw_request_info *info,
 		ret = -E2BIG;
 		goto done;
 	}
+	sys_cfg = kzalloc(sizeof(mlan_uap_bss_param), GFP_ATOMIC);
+	if (!sys_cfg) {
+		PRINTM(MERROR, "Fail to alloc memory for mlan_uap_bss_param\n");
+		ret = -EFAULT;
+		goto done;
+	}
 
-	/* Initialize the invalid values so that the correct values below are
-	   downloaded to firmware */
-	woal_set_sys_config_invalid_data(&sys_cfg);
+	/* Initialize the invalid values so that the correct values
+	 * below are downloaded to firmware */
+	woal_set_sys_config_invalid_data(sys_cfg);
 
 	/* Set the SSID */
 #if WIRELESS_EXT > 20
-	sys_cfg.ssid.ssid_len = dwrq->length;
+	sys_cfg->ssid.ssid_len = dwrq->length;
 #else
-	sys_cfg.ssid.ssid_len = dwrq->length - 1;
+	sys_cfg->ssid.ssid_len = dwrq->length - 1;
 #endif
 
-	memcpy(sys_cfg.ssid.ssid, extra,
-	       MIN(sys_cfg.ssid.ssid_len, MLAN_MAX_SSID_LENGTH));
-	if (!sys_cfg.ssid.ssid_len || sys_cfg.ssid.ssid[0] < 0x20) {
+	memcpy(sys_cfg->ssid.ssid, extra,
+	       MIN(sys_cfg->ssid.ssid_len, MLAN_MAX_SSID_LENGTH));
+	if (!sys_cfg->ssid.ssid_len || sys_cfg->ssid.ssid[0] < 0x20) {
 		PRINTM(MERROR, "Invalid SSID - aborting set_essid\n");
 		ret = -EINVAL;
 		goto done;
 	}
 	PRINTM(MINFO, "Requested new SSID = %s\n",
-	       (sys_cfg.ssid.ssid_len > 0) ?
-	       (char *)sys_cfg.ssid.ssid : "NULL");
+	       (sys_cfg->ssid.ssid_len > 0) ?
+	       (char *)sys_cfg->ssid.ssid : "NULL");
 
 	/* Set AP configuration */
 	if (MLAN_STATUS_SUCCESS != woal_set_get_sys_config(priv,
 							   MLAN_ACT_SET,
 							   MOAL_IOCTL_WAIT,
-							   &sys_cfg)) {
+							   sys_cfg)) {
 		PRINTM(MERROR, "Error setting AP confiruration\n");
 		ret = -EFAULT;
 		goto done;
 	}
 
 done:
+	kfree(sys_cfg);
 	LEAVE();
 	return ret;
 }
@@ -1637,27 +1699,34 @@ woal_get_essid(struct net_device *dev, struct iw_request_info *info,
 	       struct iw_point *dwrq, char *extra)
 {
 	moal_private *priv = (moal_private *)netdev_priv(dev);
-	mlan_uap_bss_param ap_cfg;
+	mlan_uap_bss_param *ap_cfg = NULL;
 
 	ENTER();
+
+	ap_cfg = kzalloc(sizeof(mlan_uap_bss_param), GFP_ATOMIC);
+	if (!ap_cfg) {
+		PRINTM(MERROR, "Fail to alloc memory for mlan_uap_bss_param\n");
+		return -EFAULT;
+	}
 
 	if (MLAN_STATUS_SUCCESS != woal_set_get_sys_config(priv,
 							   MLAN_ACT_GET,
 							   MOAL_IOCTL_WAIT,
-							   &ap_cfg)) {
+							   ap_cfg)) {
 		PRINTM(MERROR, "Error getting AP confiruration\n");
+		kfree(ap_cfg);
 		LEAVE();
 		return -EFAULT;
 	}
 
 	if (priv->bss_started) {
-		dwrq->length = MIN(dwrq->length, ap_cfg.ssid.ssid_len);
-		memcpy(extra, ap_cfg.ssid.ssid, dwrq->length);
+		dwrq->length = MIN(dwrq->length, ap_cfg->ssid.ssid_len);
+		memcpy(extra, ap_cfg->ssid.ssid, dwrq->length);
 	} else
 		dwrq->length = 0;
 
 	dwrq->flags = 1;
-
+	kfree(ap_cfg);
 	LEAVE();
 	return 0;
 }
@@ -1703,7 +1772,7 @@ static const iw_handler woal_handler[] = {
 	(iw_handler) woal_set_wap,	/* SIOCSIWAP */
 	(iw_handler) woal_get_wap,	/* SIOCGIWAP */
 #if WIRELESS_EXT >= 18
-	(iw_handler) woal_set_mlme,	/* SIOCSIWMLME */
+	(iw_handler) woal_set_mlme,	/* SIOCSIWMLME  */
 #else
 	(iw_handler) NULL,	/* -- hole -- */
 #endif
@@ -1741,8 +1810,8 @@ static const iw_handler woal_handler[] = {
 	(iw_handler) NULL,	/* -- hole -- */
 	(iw_handler) woal_set_gen_ie,	/* SIOCSIWGENIE */
 	(iw_handler) woal_get_gen_ie,	/* SIOCGIWGENIE */
-	(iw_handler) woal_set_auth,	/* SIOCSIWAUTH */
-	(iw_handler) woal_get_auth,	/* SIOCGIWAUTH */
+	(iw_handler) woal_set_auth,	/* SIOCSIWAUTH  */
+	(iw_handler) woal_get_auth,	/* SIOCGIWAUTH  */
 	(iw_handler) woal_set_encode_ext,	/* SIOCSIWENCODEEXT */
 	(iw_handler) woal_get_encode_ext,	/* SIOCGIWENCODEEXT */
 #endif /* WIRELESSS_EXT >= 18 */
@@ -1783,10 +1852,11 @@ struct iw_statistics *
 woal_get_uap_wireless_stats(struct net_device *dev)
 {
 	moal_private *priv = (moal_private *)netdev_priv(dev);
-	t_u16 wait_option = MOAL_NO_WAIT;
+	t_u16 wait_option = MOAL_IOCTL_WAIT;
 
 	ENTER();
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 31)
 	/*
 	 * Since schedule() is not allowed from an atomic context
 	 * such as when dev_base_lock for netdevices is acquired
@@ -1794,9 +1864,9 @@ woal_get_uap_wireless_stats(struct net_device *dev)
 	 * is issued in non-blocking way in such contexts and
 	 * blocking in other cases.
 	 */
-	if (write_can_lock(&dev_base_lock)
-	    && (!in_atomic() || current->exit_state))
-		wait_option = MOAL_WSTATS_WAIT;
+	if (in_atomic() || !write_can_lock(&dev_base_lock))
+		wait_option = MOAL_NO_WAIT;
+#endif
 
 	priv->w_stats.qual.qual = 0;
 	priv->w_stats.qual.level = 0;
