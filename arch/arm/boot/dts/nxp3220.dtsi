@@ -466,6 +466,11 @@
 			status = "disabled";
 		};
 
+		ecid: ecid@20060000 {
+			compatible = "nexell,nxp3220-ecid";
+			reg = <0x20060000 0x1000>;
+		};
+
 		ehci: ehci@24080000 {
 			compatible = "generic-ehci";
 			reg = <0x24080000 0x100>;
