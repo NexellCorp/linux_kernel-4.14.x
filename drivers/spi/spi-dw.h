@@ -104,6 +104,7 @@ struct dw_spi_dma_ops {
 
 struct dw_spi {
 	struct spi_master	*master;
+	struct spi_device	*spi;
 	enum dw_ssi_type	type;
 
 	void __iomem		*regs;
@@ -139,6 +140,7 @@ struct dw_spi {
 	void			*dma_rx;
 	u32			spi_mode;
 
+	struct dw_spi_chip	*chip_info;
 	/* Bus interface info */
 	void			*priv;
 #ifdef CONFIG_DEBUG_FS

@@ -408,6 +408,7 @@ static void dw_spi_handle_err(struct spi_master *master,
 /* This may be called twice for each spi dev */
 static int dw_spi_setup(struct spi_device *spi)
 {
+	struct dw_spi *dws = spi_master_get_devdata(spi->master);
 	struct dw_spi_chip *chip_info = NULL;
 	struct chip_data *chip;
 	int ret;
@@ -421,11 +422,16 @@ static int dw_spi_setup(struct spi_device *spi)
 		spi_set_ctldata(spi, chip);
 	}
 
+	dws->spi = spi;
+
 	/*
 	 * Protocol drivers may change the chip settings, so...
 	 * if chip_info exists, use it
 	 */
 	chip_info = spi->controller_data;
+
+	if (!chip_info && dws->chip_info)
+		chip_info = dws->chip_info;
 
 	/* chip_info doesn't always exist */
 	if (chip_info) {
