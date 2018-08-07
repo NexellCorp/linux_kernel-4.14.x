@@ -356,27 +356,6 @@ static int nx_dw_spi_probe(struct platform_device *pdev)
 				&dws->reg_io_width))
 		dws->reg_io_width = 4;
 
-	if (pdev->dev.of_node) {
-		int i;
-
-		for (i = 0; i < dws->num_cs; i++) {
-			int cs_gpio = of_get_named_gpio(pdev->dev.of_node,
-					"cs-gpios", i);
-
-			if (cs_gpio == -EPROBE_DEFER) {
-				ret = cs_gpio;
-				goto err_pclk;
-			}
-
-			if (gpio_is_valid(cs_gpio)) {
-				ret = devm_gpio_request(&pdev->dev, cs_gpio,
-						dev_name(&pdev->dev));
-				if (ret)
-					goto err_pclk;
-			}
-		}
-	}
-
 	if (of_find_property(pdev->dev.of_node, "support-dma", NULL)) {
 		dws->master->dev = pdev->dev;
 		nx_dw_spi_dma_init(dws);
