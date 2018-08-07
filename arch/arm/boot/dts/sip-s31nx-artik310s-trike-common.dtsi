@@ -31,8 +31,7 @@
 			"Microphone", "In Jack";
 		simple-audio-card,routing =
 			"IN1P", "MICBIAS1",
-			"IN1P", "In Jack",
-			"IN1P", "Main Mic";
+			"IN1P", "In Jack";
 		status = "okay";
 
 		simple-audio-card,dai-link@0 {
