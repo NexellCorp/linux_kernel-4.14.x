@@ -291,32 +291,8 @@ static const struct dw_spi_dma_ops nx_dma_ops = {
 	.dma_stop	= nx_spi_dma_stop,
 };
 
-/* HW info for MRST Clk Control Unit, 32b reg per controller */
-#define MRST_SPI_CLK_BASE	100000000	/* 100m */
-#define MRST_CLK_SPI_REG	0xff11d86c
-#define CLK_SPI_BDIV_OFFSET	0
-#define CLK_SPI_BDIV_MASK	0x00000007
-#define CLK_SPI_CDIV_OFFSET	9
-#define CLK_SPI_CDIV_MASK	0x00000e00
-#define CLK_SPI_DISABLE_OFFSET	8
-
 static int nx_dw_spi_dma_init(struct dw_spi *dws)
 {
-	void __iomem *clk_reg;
-	u32 clk_cdiv;
-
-	clk_reg = ioremap_nocache(MRST_CLK_SPI_REG, 16);
-	if (!clk_reg)
-		return -ENOMEM;
-
-	/* Get SPI controller operating freq info */
-	clk_cdiv = readl(clk_reg + dws->bus_num * sizeof(u32));
-	clk_cdiv &= CLK_SPI_CDIV_MASK;
-	clk_cdiv >>= CLK_SPI_CDIV_OFFSET;
-	dws->max_freq = MRST_SPI_CLK_BASE / (clk_cdiv + 1);
-
-	iounmap(clk_reg);
-
 	dws->dma_tx = &nx_dma_tx;
 	dws->dma_rx = &nx_dma_rx;
 	dws->dma_ops = &nx_dma_ops;
