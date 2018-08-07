@@ -353,6 +353,10 @@ static int dw_spi_transfer_one(struct spi_master *master,
 		cr0 |= (dws->spi_mode << SPI_FF_OFFSET);
 	}
 
+	/* slave output enable */
+	if (spi_controller_is_slave(dws->master))
+		cr0 &= ~(1 << SPI_SLVOE_OFFSET);
+
 	dw_writel(dws, DW_SPI_CTRL0, cr0);
 
 	/* Check if current transfer is a DMA transaction */
