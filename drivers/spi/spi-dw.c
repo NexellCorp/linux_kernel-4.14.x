@@ -241,7 +241,16 @@ static irqreturn_t interrupt_transfer(struct dw_spi *dws)
 		return IRQ_HANDLED;
 	}
 	if (irq_status & SPI_INT_TXEI) {
+		struct chip_data *chip = spi_get_ctldata(dws->spi);
+
 		spi_mask_intr(dws, SPI_INT_TXEI);
+
+		if ((chip && chip->tmode == SPI_TMOD_TO) &&
+		    dws->tx_end == dws->tx) {
+			spi_finalize_current_transfer(dws->master);
+			return IRQ_HANDLED;
+		}
+
 		dw_writer(dws);
 		/* Enable TX irq always, it will be disabled when RX finished */
 		spi_umask_intr(dws, SPI_INT_TXEI);
