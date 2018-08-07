@@ -512,7 +512,11 @@ int dw_spi_add_host(struct device *dev, struct dw_spi *dws)
 
 	BUG_ON(dws == NULL);
 
-	master = spi_alloc_master(dev, 0);
+	if (dws->slave)
+		master = spi_alloc_slave(dev, 0);
+	else
+		master = spi_alloc_master(dev, 0);
+
 	if (!master)
 		return -ENOMEM;
 

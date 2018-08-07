@@ -140,6 +140,7 @@ struct dw_spi {
 	void			*dma_tx;
 	void			*dma_rx;
 	u32			spi_mode;
+	bool			slave;
 
 	struct dw_spi_chip	*chip_info;
 	/* Bus interface info */
