@@ -44,7 +44,7 @@ static void __init nxp3220_cmu_usb_init(struct device_node *np)
 		return;
 	}
 
-	ctx = nexell_clk_init(reg, CLK_CPU_NR);
+	ctx = nexell_clk_init(reg, CLK_USB_NR);
 	if (!ctx) {
 		pr_err("%s: Failed to initialize clock data\n", __func__);
 		return;
