@@ -214,6 +214,7 @@
 			reg = <0x27000000 0x8000>,
 			    <0x27010000 0x8000>;
 			#clock-cells = <1>;
+			#reset-cells = <1>;
 
 			clock-names = "oscclk",
 				"pll0",
@@ -305,6 +306,7 @@
 			compatible = "nexell,nxp3220-cmu-mm";
 			reg = <0x25000000 0x1000>;
 			#clock-cells = <1>;
+			#reset-cells = <1>;
 
 			clk-names = "src_mm0_axi",
 				"src_vip0_padout0",
