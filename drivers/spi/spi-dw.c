@@ -328,6 +328,10 @@ static int dw_spi_transfer_one(struct spi_master *master,
 		| (spi->mode << SPI_MODE_OFFSET)
 		| (chip->tmode << SPI_TMOD_OFFSET);
 
+	/* Support DFS_32 */
+	if (dws->chip_info && dws->chip_info->ssi_max_xfer_size == 32)
+		cr0 |= (transfer->bits_per_word - 1) << SPI_DFS_32_OFFSET;
+
 	/*
 	 * Adjust transfer mode if necessary. Requires platform dependent
 	 * chipselect mechanism.
