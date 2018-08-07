@@ -250,6 +250,7 @@ struct dw_spi_chip {
 	u8 type;	/* SPI/SSP/MicroWire */
 	u8 ssi_max_xfer_size;	/* Max transfer size: 16 or 32 */
 	void (*cs_control)(u32 command);
+	void (*prefare_transfer)(struct dw_spi *dws);
 };
 
 extern int dw_spi_add_host(struct device *dev, struct dw_spi *dws);

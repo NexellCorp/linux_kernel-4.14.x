@@ -283,6 +283,17 @@ static int poll_transfer(struct dw_spi *dws)
 	return 0;
 }
 
+static int dw_spi_prepare_transfer_hardware(struct spi_master *master)
+{
+	struct dw_spi *dws = spi_master_get_devdata(master);
+	struct dw_spi_chip *chip_info = dws->chip_info;
+
+	if (chip_info && chip_info->prefare_transfer)
+		chip_info->prefare_transfer(dws);
+
+	return 0;
+}
+
 static int dw_spi_transfer_one(struct spi_master *master,
 		struct spi_device *spi, struct spi_transfer *transfer)
 {
@@ -524,6 +535,7 @@ int dw_spi_add_host(struct device *dev, struct dw_spi *dws)
 	master->setup = dw_spi_setup;
 	master->cleanup = dw_spi_cleanup;
 	master->set_cs = dw_spi_set_cs;
+	master->prepare_transfer_hardware = dw_spi_prepare_transfer_hardware;
 	master->transfer_one = dw_spi_transfer_one;
 	master->handle_err = dw_spi_handle_err;
 	master->max_speed_hz = dws->max_freq;
