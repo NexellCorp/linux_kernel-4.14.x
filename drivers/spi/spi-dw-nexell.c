@@ -17,6 +17,10 @@
 #include <linux/of_gpio.h>
 #include <linux/of_platform.h>
 #include <linux/property.h>
+#include <linux/delay.h>
+#include <linux/reset.h>
+#include <linux/regmap.h>
+#include <linux/mfd/syscon.h>
 
 #include <linux/dma-mapping.h>
 #include <linux/dmaengine.h>
@@ -31,24 +35,16 @@
 #define TX_BUSY		1
 
 struct dw_spi_nx {
-	struct dw_spi	dws;
-	struct clk	*clk;
-	struct clk	*pclk;
+	struct dw_spi		dws;
+	struct clk		*clk;
+	struct clk		*pclk;
+	struct reset_control	*rst;
+	struct regmap		*regmap;
+	u32			slave_sel_offset;
 };
 
-static struct dw_dma_slave nx_dma_tx = { .dst_id = 1 };
-static struct dw_dma_slave nx_dma_rx = { .src_id = 0 };
-
-static bool nx_spi_dma_chan_filter(struct dma_chan *chan, void *param)
-{
-	struct dw_dma_slave *s = param;
-
-	if (s->dma_dev != chan->device->dev)
-		return false;
-
-	chan->private = s;
-	return true;
-}
+static struct dw_dma_slave nx_dma_tx;
+static struct dw_dma_slave nx_dma_rx;
 
 static int nx_spi_dma_init(struct dw_spi *dws)
 {
@@ -61,14 +57,16 @@ static int nx_spi_dma_init(struct dw_spi *dws)
 
 	/* 1. Init rx channel */
 	rx->dma_dev = &dws->master->dev;
-	dws->rxchan = dma_request_channel(mask, nx_spi_dma_chan_filter, rx);
+	dws->rxchan = dma_request_slave_channel_compat(mask, NULL, NULL,
+						       rx->dma_dev, "rx");
 	if (!dws->rxchan)
 		goto err_exit;
 	dws->master->dma_rx = dws->rxchan;
 
 	/* 2. Init tx channel */
 	tx->dma_dev = &dws->master->dev;
-	dws->txchan = dma_request_channel(mask, nx_spi_dma_chan_filter, tx);
+	dws->txchan = dma_request_slave_channel_compat(mask, NULL, NULL,
+						       tx->dma_dev, "tx");
 	if (!dws->txchan)
 		goto free_rxchan;
 	dws->master->dma_tx = dws->txchan;
@@ -300,12 +298,35 @@ static int nx_dw_spi_dma_init(struct dw_spi *dws)
 	return 0;
 }
 
+static void nx_spi_cs_control(u32 command)
+{
+	/* Dummy callback */
+}
+
+static void nx_spi_prefare_transfer(struct dw_spi *dws)
+{
+	struct dw_spi_nx *dws_nx = container_of(dws, struct dw_spi_nx, dws);
+
+	if (!dws->slave)
+		return;
+
+	reset_control_assert(dws_nx->rst);
+	udelay(1);
+	reset_control_deassert(dws_nx->rst);
+}
+
+static struct dw_spi_chip nx_spi_chip = {
+	.ssi_max_xfer_size = 32,
+	.cs_control = nx_spi_cs_control,
+	.prefare_transfer = nx_spi_prefare_transfer,
+};
+
 static int nx_dw_spi_probe(struct platform_device *pdev)
 {
 	struct dw_spi_nx *dws_nx;
 	struct dw_spi *dws;
 	struct resource *mem;
-	int ret;
+	int ret, num_cs;
 
 	dws_nx = devm_kzalloc(&pdev->dev, sizeof(struct dw_spi_nx),
 			GFP_KERNEL);
@@ -322,12 +343,17 @@ static int nx_dw_spi_probe(struct platform_device *pdev)
 		return PTR_ERR(dws->regs);
 	}
 
+	dws->paddr = mem->start;
+
 	dws->irq = platform_get_irq(pdev, 0);
 	if (dws->irq < 0) {
 		dev_err(&pdev->dev, "no irq resource?\n");
 		return dws->irq; /* -ENXIO */
 	}
 
+	/* Optional: Reset control */
+	dws_nx->rst = devm_reset_control_get_optional_exclusive(&pdev->dev,
+								NULL);
 	dws_nx->pclk = devm_clk_get(&pdev->dev, "apb");
 	if (IS_ERR(dws_nx->pclk)) {
 		return PTR_ERR(dws_nx->pclk);
@@ -350,20 +376,47 @@ static int nx_dw_spi_probe(struct platform_device *pdev)
 
 	if (device_property_read_u32(&pdev->dev, "spi-mode", &dws->spi_mode))
 		dws->spi_mode = 0;
-	if (device_property_read_u16(&pdev->dev, "num-cs", &dws->num_cs))
+	if (device_property_read_u32(&pdev->dev, "num-cs", &num_cs))
 		dws->num_cs = 1;
+	else
+		dws->num_cs = (u16)num_cs;
+
 	if (device_property_read_u32(&pdev->dev, "reg-io-width",
 				&dws->reg_io_width))
 		dws->reg_io_width = 4;
 
-	if (of_find_property(pdev->dev.of_node, "support-dma", NULL)) {
-		dws->master->dev = pdev->dev;
+	if (device_property_read_bool(&pdev->dev, "spi-dma"))
 		nx_dw_spi_dma_init(dws);
+
+	if (device_property_read_bool(&pdev->dev, "spi-slave")) {
+		struct device_node *of_node = pdev->dev.of_node;
+
+		dws_nx->regmap = syscon_regmap_lookup_by_phandle(of_node,
+								 "syscon0");
+		if (IS_ERR(dws_nx->regmap)) {
+			dev_err(&pdev->dev, "regmap lookup failed: %ld\n",
+				PTR_ERR(dws_nx->regmap));
+			goto err_clk;
+		}
+
+		if (device_property_read_u32(&pdev->dev, "slave-sel-offset",
+					     &dws_nx->slave_sel_offset)) {
+			dev_err(&pdev->dev, "cannot find slave-sel-offset\n");
+			goto err_clk;
+		}
+
+		/* Set Slave Mode */
+		regmap_update_bits(dws_nx->regmap, dws_nx->slave_sel_offset,
+				   BIT(0), 0x1);
+		dws->slave = true;
 	}
 
 	ret = dw_spi_add_host(&pdev->dev, dws);
 	if (ret)
 		goto err_pclk;
+
+	/* set chip info to support TR/RO/TO mode */
+	dws->chip_info = &nx_spi_chip;
 
 	platform_set_drvdata(pdev, dws_nx);
 
@@ -381,6 +434,12 @@ err_pclk:
 static int nx_dw_spi_remove(struct platform_device *pdev)
 {
 	struct dw_spi_nx *dws_nx = platform_get_drvdata(pdev);
+
+	if (dws_nx->dws.slave) {
+		/* Back to Master Mode */
+		regmap_update_bits(dws_nx->regmap, dws_nx->slave_sel_offset,
+				   BIT(0), 0x0);
+	}
 
 	dw_spi_remove_host(&dws_nx->dws);
 	clk_disable_unprepare(dws_nx->clk);

@@ -17,9 +17,17 @@ Required properties:
 
 Optional properties:
 - cs-gpios : Specifies the gpio pis to be used for chipselects.
+- dmas : DMA specifier, consisting of a phandle to DMA controller node
+- dma-names : Names for the dma channels
 - num-cs : The number of chipselects. If omitted, this will default to 4.
 - reg-io-width : The I/O register width (in bytes) implemented by this
   device.  Supported values are 2 or 4 (the default).
+- resets : phandle of the internal reset line
+- slave-sel-offset : Register offset to configure slave mode
+- spi-slave : make spi to slave mode
+- spi-dma: Set to run dma mode if transfer size is bigger than fifo length.
+- syscon : a pointer to the syscon node so we can access the syscon registers
+          to set the slave mode.
 - status : Set node status. disabled or okay
 
 Child nodes as per the generic SPI binding.
