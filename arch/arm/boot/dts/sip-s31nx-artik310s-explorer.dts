@@ -2,6 +2,7 @@
 
 /dts-v1/;
 #include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/reset/nexell,nxp3220-reset.h>
 #include "sip-s31nx-artik310s-trike-common.dtsi"
 
 / {
@@ -10,8 +11,16 @@
 		   "nexell,nxp3220";
 };
 
+&pdm {
+	ref-iis = <1>;
+	strobe-hz = <1024000>;
+	status = "okay";
+};
+
 &sound0 {
 	simple-audio-card,name = "nxp3220 Audio Card Loopback";
+	/delete-property/simple-audio-card,widgets;
+	/delete-property/simple-audio-card,routing;
 
 	simple-audio-card,dai-link@0 {
 		mclk-fs = <256>;
@@ -60,6 +69,21 @@
 
 &mmc2_clk {
 	nexell,pin-strength = <NX_PIN_STR1>;
+};
+
+&spi_1 {
+	status = "okay";
+	syscon0 = <&sys_reg_sys>;
+	spi-dma;
+	spi-slave;
+	slave-sel-offset = <0x34>;
+
+	resets = <&cmu CLK_RESET_SPI1_CORE>;
+	/delete-node/spidev@0;
+
+	slave {
+		compatible = "linux,spidev";
+	};
 };
 
 &spi_2 {
