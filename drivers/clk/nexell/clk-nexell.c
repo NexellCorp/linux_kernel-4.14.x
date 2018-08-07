@@ -216,3 +216,46 @@ struct nexell_clk_data *__init nexell_clk_init(void __iomem *reg,
 
 	return clk_data;
 }
+
+static int nexell_clk_reset_update(struct reset_controller_dev *rcdev,
+				   unsigned long id, bool assert)
+{
+	struct nexell_clk_data *clk_data =
+		container_of(rcdev, struct nexell_clk_data, reset);
+	unsigned long flags;
+	void __iomem *reg;
+	struct nexell_clk_reset *reset;
+
+	if (id >= clk_data->max_reset_id)
+		return -EINVAL;
+
+	reset = &clk_data->reset_table[id];
+
+	if (assert)
+		reg = clk_data->reg + reset->offset_assert;
+	else
+		reg = clk_data->reg + reset->offset_deassert;
+
+	spin_lock_irqsave(&clk_data->lock, flags);
+	clk_writel(BIT(reset->bit_idx), reg);
+	spin_unlock_irqrestore(&clk_data->lock, flags);
+
+	return 0;
+}
+
+static int nexell_clk_reset_assert(struct reset_controller_dev *rcdev,
+				   unsigned long id)
+{
+	return nexell_clk_reset_update(rcdev, id, true);
+}
+
+static int nexell_clk_reset_deassert(struct reset_controller_dev *rcdev,
+				     unsigned long id)
+{
+	return nexell_clk_reset_update(rcdev, id, false);
+}
+
+const struct reset_control_ops nexell_clk_reset_ops = {
+	.assert = nexell_clk_reset_assert,
+	.deassert = nexell_clk_reset_deassert,
+};

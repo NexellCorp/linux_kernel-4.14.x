@@ -8,11 +8,16 @@
 #define __CLK_NEXELL_H
 
 #include <linux/clk-provider.h>
+#include <linux/reset-controller.h>
 
+struct nexell_clk_reset;
 struct nexell_clk_data {
 	void __iomem *reg;
 	spinlock_t lock;
 	struct clk_onecell_data clk_data;
+	struct reset_controller_dev reset;
+	const struct nexell_clk_reset *reset_table;
+	int max_reset_id;
 };
 
 struct nexell_fixed_factor_clock {
@@ -209,6 +214,18 @@ struct nexell_composite_clock {
 #define COMP_GATE_NONE					\
 	.has_gate	= false,			\
 
+struct nexell_clk_reset {
+	unsigned long	offset_assert;
+	unsigned long	offset_deassert;
+	u8		bit_idx;
+};
+
+#define CLK_RESET(_oa, _od, _b)				\
+	{						\
+		.offset_assert	= _oa,			\
+		.offset_deassert = _od,			\
+		.bit_idx = _b,				\
+	}
 
 #define PNAME(x) static const char * const x[] __initconst
 
@@ -243,5 +260,7 @@ nexell_clk_register_composite(struct nexell_clk_data *ctx,
 			      unsigned int clk_num);
 extern struct nexell_clk_data *__init
 nexell_clk_init(void __iomem *reg, unsigned long clk_num);
+
+extern const struct reset_control_ops nexell_clk_reset_ops;
 
 #endif
