@@ -6,6 +6,7 @@
 
 #include <linux/of_address.h>
 #include <dt-bindings/clock/nxp3220-clk.h>
+#include <dt-bindings/reset/nexell,nxp3220-reset.h>
 #include "clk-nexell.h"
 #include "clk-nxp3220.h"
 
@@ -82,6 +83,37 @@ static const struct nexell_gate_clock mm_gate_clks[] __initconst = {
 	     MM_CODA960_CORE + 0x10, 0, 0, 0),
 };
 
+static const struct nexell_clk_reset mm_resets[] = {
+	[CLK_RESET_MM_AXI] =
+		CLK_RESET(MM_AXI + 0x40, MM_AXI + 0x30, 0),
+	[CLK_RESET_MM_ROTATOR_AXI] =
+		CLK_RESET(MM_AXI + 0x40, MM_AXI + 0x30, 2),
+	[CLK_RESET_MM_G2D_AXI] =
+		CLK_RESET(MM_AXI + 0x40, MM_AXI + 0x30, 3),
+	[CLK_RESET_MM_DEINTERLACE_AXI] =
+		CLK_RESET(MM_AXI + 0x40, MM_AXI + 0x30, 4),
+	[CLK_RESET_MM_VIP_AXI] =
+		CLK_RESET(MM_AXI + 0x40, MM_AXI + 0x30, 5),
+	[CLK_RESET_MM_DPC_AXI] =
+		CLK_RESET(MM_AXI + 0x40, MM_AXI + 0x30, 6),
+	[CLK_RESET_MM_CODA960_AXI] =
+		CLK_RESET(MM_AXI + 0x40, MM_AXI + 0x30, 7),
+	[CLK_RESET_MM_APB] =
+		CLK_RESET(MM_AXI + 0x40, MM_AXI + 0x30, 8),
+	[CLK_RESET_MM_SYSREG_APB] =
+		CLK_RESET(MM_AXI + 0x40, MM_AXI + 0x30, 9),
+	[CLK_RESET_MM_DEINTERLACE_APB] =
+		CLK_RESET(MM_AXI + 0x40, MM_AXI + 0x30, 10),
+	[CLK_RESET_MM_CODA960_APB] =
+		CLK_RESET(MM_AXI + 0x40, MM_AXI + 0x30, 13),
+	[CLK_RESET_MM_DPC_X2] =
+		CLK_RESET(MM_DPC_X2 + 0x40, MM_DPC_X2 + 0x30, 0),
+	[CLK_RESET_MM_LVDS_VCLK] =
+		CLK_RESET(MM_LVDS_VCLK + 0x40, MM_LVDS_VCLK + 0x30, 0),
+	[CLK_RESET_MM_CODA960_CORE] =
+		CLK_RESET(MM_CODA960_CORE + 0x40, MM_CODA960_CORE + 0x30, 0),
+};
+
 static void __init nxp3220_cmu_mm_init(struct device_node *np)
 {
 	void __iomem *reg;
@@ -104,6 +136,18 @@ static void __init nxp3220_cmu_mm_init(struct device_node *np)
 
 	if (of_clk_add_provider(np, of_clk_src_onecell_get, &ctx->clk_data))
 		pr_err("%s: failed to add clock provider\n", __func__);
+
+	/* Register reset controls */
+	ctx->reset.ops = &nexell_clk_reset_ops;
+	ctx->reset.nr_resets = ARRAY_SIZE(mm_resets);
+	ctx->reset.of_node = np;
+
+	ctx->reset_table = mm_resets;
+	ctx->max_reset_id = CLK_RESET_MM_NR;
+
+	if (reset_controller_register(&ctx->reset))
+		pr_err("%s: failed to register clock reset controller\n",
+		       __func__);
 }
 CLK_OF_DECLARE(nxp3220_cmu_mm, "nexell,nxp3220-cmu-mm",
 	       nxp3220_cmu_mm_init);

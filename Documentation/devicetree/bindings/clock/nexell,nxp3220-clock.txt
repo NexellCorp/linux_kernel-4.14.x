@@ -30,6 +30,7 @@ Required Properties:
  (Note: nexell,nxp3220-cmu should specify two memory regions which are for
   CMU_SRC and CMU_SYS)
 - #clock-cells: should be 1.
+- #reset-cells: should be 1.
 - clocks:	phandles to the parent clocks used as input to the module.
 - clock-names:	clock names of the parent clocks which described in
 		clock-bindings.txt.
@@ -63,6 +64,9 @@ Required Properties:
 Each clock can be assigned its identifier and a clock consumer client can use
 the identifier with cmu's phandle. All available clock identifiers are defined
 in include/dt-bindings/clock/nxp3220-clk.h>
+
+Similarly reset IDs of each clocks can be found in
+include/dt-bindings/reset/nexell,nxp3220-reset.h
 
 Example 1: Examples of 'oscclk' source clock node
 	oscclk: xti {
