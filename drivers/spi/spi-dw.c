@@ -389,7 +389,12 @@ static int dw_spi_transfer_one(struct spi_master *master,
 		}
 	} else if (!chip->poll_mode) {
 		txlevel = min_t(u16, dws->fifo_len / 2, dws->len / dws->n_bytes);
-		dw_writel(dws, DW_SPI_TXFLTR, txlevel);
+		if (!spi_controller_is_slave(dws->master))
+			dw_writel(dws, DW_SPI_TXFLTR, txlevel);
+		else {
+			dw_writel(dws, DW_SPI_TXFLTR, txlevel - 1);
+			dw_writel(dws, DW_SPI_RXFLTR, txlevel - 1);
+		}
 
 		/* Set the interrupt mask */
 		imask |= SPI_INT_TXEI | SPI_INT_TXOI |
