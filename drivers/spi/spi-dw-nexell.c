@@ -369,11 +369,11 @@ static int nx_dw_spi_probe(struct platform_device *pdev)
 
 	return 0;
 
-err_pclk:
-	clk_disable_unprepare(dws_nx->pclk);
-
 err_clk:
 	clk_disable_unprepare(dws_nx->clk);
+
+err_pclk:
+	clk_disable_unprepare(dws_nx->pclk);
 
 	return ret;
 }
@@ -383,8 +383,8 @@ static int nx_dw_spi_remove(struct platform_device *pdev)
 	struct dw_spi_nx *dws_nx = platform_get_drvdata(pdev);
 
 	dw_spi_remove_host(&dws_nx->dws);
-	clk_disable_unprepare(dws_nx->pclk);
 	clk_disable_unprepare(dws_nx->clk);
+	clk_disable_unprepare(dws_nx->pclk);
 
 	return 0;
 }
