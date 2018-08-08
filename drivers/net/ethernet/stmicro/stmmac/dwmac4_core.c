@@ -393,11 +393,54 @@ static void dwmac4_set_eee_timer(struct mac_device_info *hw, int ls, int tw)
 	writel(value, ioaddr + GMAC4_LPI_TIMER_CTRL);
 }
 
+static void __dwmac4_set_mchash(void __iomem *ioaddr, u32 *mcfilterbits,
+				int mcbitslog2)
+{
+	int numhashregs, regs;
+
+	switch (mcbitslog2) {
+	case 6:
+		numhashregs = 2;
+		break;
+	case 7:
+		numhashregs = 4;
+		break;
+	case 8:
+		numhashregs = 8;
+		break;
+	default:
+		pr_debug("STMMAC: err in setting multicast filter\n");
+		return;
+	}
+
+	for (regs = 0; regs < numhashregs; regs++)
+		writel(mcfilterbits[regs],
+		       ioaddr + GMAC_HASH_TAB_0_31 + regs * 4);
+}
+
 static void dwmac4_set_filter(struct mac_device_info *hw,
 			      struct net_device *dev)
 {
 	void __iomem *ioaddr = (void __iomem *)dev->base_addr;
 	unsigned int value = 0;
+	u32 mc_filter[8];
+	int hash_table_sz;
+	int mcbitslog2;
+	u32 hw_cap;
+
+	pr_debug("%s: # mcasts %d, # unicast %d\n", __func__,
+		 netdev_mc_count(dev), netdev_uc_count(dev));
+
+	memset(mc_filter, 0, sizeof(mc_filter));
+
+	hw_cap = readl(ioaddr + GMAC_HW_FEATURE1);
+	hash_table_sz = (hw_cap & GMAC_HW_HASHTBLSZ) >> 24;
+	if (hash_table_sz) {
+		hash_table_sz = 64 << (hash_table_sz - 1);
+		mcbitslog2 = ilog2(hash_table_sz);
+	} else {
+		mcbitslog2 = 26;
+	}
 
 	if (dev->flags & IFF_PROMISC) {
 		value = GMAC_PACKET_FILTER_PR;
@@ -405,34 +448,30 @@ static void dwmac4_set_filter(struct mac_device_info *hw,
 			(netdev_mc_count(dev) > HASH_TABLE_SIZE)) {
 		/* Pass all multi */
 		value = GMAC_PACKET_FILTER_PM;
-		/* Set the 64 bits of the HASH tab. To be updated if taller
-		 * hash table is used
-		 */
-		writel(0xffffffff, ioaddr + GMAC_HASH_TAB_0_31);
-		writel(0xffffffff, ioaddr + GMAC_HASH_TAB_32_63);
 	} else if (!netdev_mc_empty(dev)) {
-		u32 mc_filter[2];
 		struct netdev_hw_addr *ha;
 
 		/* Hash filter for multicast */
 		value = GMAC_PACKET_FILTER_HMC;
 
-		memset(mc_filter, 0, sizeof(mc_filter));
 		netdev_for_each_mc_addr(ha, dev) {
-			/* The upper 6 bits of the calculated CRC are used to
-			 * index the content of the Hash Table Reg 0 and 1.
+			/* The upper n bits of the calculated CRC are used to
+			 * index the contents of the hash table. The number of
+			 * bits used depends on the hardware configuration
+			 * selected at core configuration time.
 			 */
-			int bit_nr =
-				(bitrev32(~crc32_le(~0, ha->addr, 6)) >> 26);
+			int bit_nr = bitrev32(~crc32_le(~0, ha->addr,
+					      ETH_ALEN)) >>
+					      (32 - mcbitslog2);
 			/* The most significant bit determines the register
 			 * to use while the other 5 bits determines the bit
 			 * within the selected register
 			 */
 			mc_filter[bit_nr >> 5] |= (1 << (bit_nr & 0x1F));
 		}
-		writel(mc_filter[0], ioaddr + GMAC_HASH_TAB_0_31);
-		writel(mc_filter[1], ioaddr + GMAC_HASH_TAB_32_63);
 	}
+
+	__dwmac4_set_mchash(ioaddr, mc_filter, mcbitslog2);
 
 	/* Handle multiple unicast addresses */
 	if (netdev_uc_count(dev) > GMAC_MAX_PERFECT_ADDRESSES) {
