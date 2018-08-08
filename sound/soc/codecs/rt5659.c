@@ -3627,6 +3627,8 @@ static int rt5659_probe(struct snd_soc_codec *codec)
 
 	rt5659->codec = codec;
 
+	schedule_delayed_work(&rt5659->calibrate_work, msecs_to_jiffies(100));
+
 	return 0;
 }
 
@@ -3994,6 +3996,19 @@ static void rt5659_calibrate(struct rt5659_priv *rt5659)
 	regmap_write(rt5659->regmap, RT5659_HP_CHARGE_PUMP_1, 0x0c16);
 }
 
+static void rt5659_calibrate_handler(struct work_struct *work)
+{
+	struct rt5659_priv *rt5659 = container_of(work, struct rt5659_priv,
+		calibrate_work.work);
+
+	while (!rt5659->codec->component.card->instantiated) {
+		pr_debug("%s\n", __func__);
+		usleep_range(10000, 11000);
+	}
+
+	rt5659_calibrate(rt5659);
+}
+
 static int rt5659_i2c_probe(struct i2c_client *i2c,
 		    const struct i2c_device_id *id)
 {
@@ -4051,8 +4066,6 @@ static int rt5659_i2c_probe(struct i2c_client *i2c,
 		/* Otherwise mark the mclk pointer to NULL */
 		rt5659->mclk = NULL;
 	}
-
-	rt5659_calibrate(rt5659);
 
 	regmap_multi_reg_write(rt5659->regmap, rt5659_patch,
 		ARRAY_SIZE(rt5659_patch));
@@ -4190,6 +4203,8 @@ static int rt5659_i2c_probe(struct i2c_client *i2c,
 	}
 
 	INIT_DELAYED_WORK(&rt5659->jack_detect_work, rt5659_jack_detect_work);
+	INIT_DELAYED_WORK(&rt5659->calibrate_work,
+			rt5659_calibrate_handler);
 
 	if (i2c->irq) {
 		ret = devm_request_threaded_irq(&i2c->dev, i2c->irq, NULL,
