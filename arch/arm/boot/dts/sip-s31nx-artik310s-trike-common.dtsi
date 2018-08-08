@@ -81,8 +81,6 @@
 
 &adc {
 	status = "okay";
-	assigned-clocks = <&cmu CLK_ADC0_APB>;
-	assigned-clock-rates = <100000000>;
 };
 
 &dwc2otg {
