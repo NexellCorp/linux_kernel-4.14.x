@@ -24,8 +24,14 @@
 #define PLLCTRL_DIRTYFLAG_MASK	BIT_MASK(PLLCTRL_DIRTYFLAG_SHIFT)
 #define PLLCTRL_RUN_CHANGE_SHIFT	0
 #define PLLCTRL_RUN_CHANGE_MASK	BIT_MASK(PLLCTRL_RUN_CHANGE_SHIFT)
+#define PLLCTRL_RUN_PLL_UPDATE	15
+#define PLLCTRL_RUN_PLL_UPDATE_MASK	BIT_MASK(PLLCTRL_RUN_PLL_UPDATE)
 
 #define PLLDBG0			0x4
+
+#define PLLCFG0			0x30
+#define PLLCFG0_RESET_SHIFT	0
+#define PLLCFG0_RESET_MASK	BIT_MASK(PLLCFG0_RESET_SHIFT)
 
 #define PLLCFG1			0x30
 #define PLLCFG1_M_SHIFT		16
@@ -239,20 +245,36 @@ static int nexell_clk_pll_set_rate(struct clk_hw *hw, unsigned long rate,
 	 */
 	clk_pll_wait_ready(pll);
 
-	clk_pll_set_oscmux(pll, MUXSEL_PLLFOUT);
+	clk_pll_set_oscmux(pll, MUXSEL_OSCCLK);
 
 	regmap_update_bits(regmap, PLLCFG1, (PLLCFG1_P_MASK | PLLCFG1_M_MASK),
 			   PLLCFG1_M(pms.m) | pms.p);
 	regmap_update_bits(regmap, PLLCFG2, PLLCFG2_S_MASK | PLLCFG2_K_MASK,
 			   PLLCFG2_K(pms.k) | pms.s);
 
+	regmap_update_bits(regmap, PLLCFG0, PLLCFG0_RESET_MASK, 0);
+
 	regmap_update_bits(regmap, PLLCTRL, PLLCTRL_DIRTYFLAG_MASK,
 			   BIT(PLLCTRL_DIRTYFLAG_SHIFT));
 
-	regmap_update_bits(regmap, PLLCTRL, PLLCTRL_RUN_CHANGE_MASK,
-			   BIT(PLLCTRL_RUN_CHANGE_SHIFT));
+	regmap_update_bits(regmap, PLLCTRL, PLLCTRL_RUN_PLL_UPDATE_MASK,
+			   BIT(PLLCTRL_RUN_PLL_UPDATE));
+
+	usleep_range(10, 20);
+
+	regmap_update_bits(regmap, PLLCFG0, PLLCFG0_RESET_MASK,
+			   BIT(PLLCFG0_RESET_SHIFT));
+
+	regmap_update_bits(regmap, PLLCTRL, PLLCTRL_DIRTYFLAG_MASK,
+			   BIT(PLLCTRL_DIRTYFLAG_SHIFT));
+	regmap_update_bits(regmap, PLLCTRL, PLLCTRL_RUN_PLL_UPDATE_MASK,
+			   BIT(PLLCTRL_RUN_PLL_UPDATE));
+
+	usleep_range(200, 250);
 
 	clk_pll_wait_ready(pll);
+
+	clk_pll_set_oscmux(pll, MUXSEL_PLLFOUT);
 
 	return 0;
 }
