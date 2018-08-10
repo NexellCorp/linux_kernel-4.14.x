@@ -327,8 +327,10 @@
 			reg = <0x25140000 0x1000>, <0x25140800 0x1000>;
 			reg-names = "mlc.0", "dpc.0";
 			interrupts = <GIC_SPI 38 IRQ_TYPE_NONE>;
-			assigned-clocks = <&cmu_mm CLK_MM_DPC_AXI>;
-			assigned-clock-rates = <200000000>;
+			assigned-clocks = <&cmu CLK_SRC_DPC0_X2>,
+					  <&cmu_mm CLK_MM_DPC_AXI>;
+			assigned-clock-parents = <&pll_0 0>, <0>;
+			assigned-clock-rates = <0>, <200000000>;
 			clocks = <&cmu_mm CLK_MM_DPC_AXI>,
 			       <&cmu_mm CLK_MM_DPC_X1>,
 			       <&cmu_mm CLK_MM_DPC_X2>;
