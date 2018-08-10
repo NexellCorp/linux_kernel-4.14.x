@@ -20,6 +20,9 @@
 #define DIV_MM(_id, cname, pname, o)	\
 	__DIV(_id, NULL, cname, pname, o, 0, 8, 0, 0)
 
+#define DIV_MM_F(_id, cname, pname, o, f, df)	\
+	__DIV(_id, NULL, cname, pname, o, 0, 8, f, df)
+
 static const struct nexell_div_clock mm_div_clks[] __initconst = {
 	DIV_MM(CLK_MM_DIV_AXI, "div_mm_axi", "src_mm0_axi",
 	       MM_AXI + 0x60),
@@ -29,10 +32,10 @@ static const struct nexell_div_clock mm_div_clks[] __initconst = {
 	       "src_vip0_padout0", MM_VIP_PADOUT0 + 0x60),
 	DIV_MM(CLK_MM_DIV_VIP_PADOUT1, "div_mm_vip_padout1",
 	       "src_vip0_padout1", MM_VIP_PADOUT1 + 0x60),
-	DIV_MM(CLK_MM_DIV_DPC_X2, "div_mm_dpc_x2", "src_dpc0_x2",
-	       MM_DPC_X2 + 0x60),
-	DIV_MM(CLK_MM_DIV_DPC_X1, "div_mm_dpc_x1", "div_mm_dpc_x2",
-	       MM_DPC_X2 + 0x64),
+	DIV_MM_F(CLK_MM_DIV_DPC_X2, "div_mm_dpc_x2", "src_dpc0_x2",
+	       MM_DPC_X2 + 0x60, 0, CLK_DIVIDER_ROUND_CLOSEST),
+	DIV_MM_F(CLK_MM_DIV_DPC_X1, "div_mm_dpc_x1", "div_mm_dpc_x2",
+	       MM_DPC_X2 + 0x64, 0, CLK_DIVIDER_ROUND_CLOSEST),
 	DIV_MM(CLK_MM_DIV_LVDS_VCLK, "div_mm_lvds_vclk", "src_lvds0_vclk",
 	       MM_LVDS_VCLK + 0x60),
 	DIV_MM(CLK_MM_DIV_CODA960_CORE, "div_mm_coda960_core",
@@ -74,9 +77,9 @@ static const struct nexell_gate_clock mm_gate_clks[] __initconst = {
 	GATE_MM(CLK_MM_VIP_PADOUT1, "mm_vip_padout1", "div_mm_vip_padout1",
 	     MM_VIP_PADOUT1 + 0x10, 0, 0, 0),
 	GATE_MM(CLK_MM_DPC_X2, "mm_dpc_x2", "div_mm_dpc_x2",
-	     MM_DPC_X2 + 0x10, 0, 0, 0),
+	     MM_DPC_X2 + 0x10, 0, CLK_DIVIDER_ROUND_CLOSEST, 0),
 	GATE_MM(CLK_MM_DPC_X1, "mm_dpc_x1", "div_mm_dpc_x1",
-	     MM_DPC_X2 + 0x10, 1, 0, 0),
+	     MM_DPC_X2 + 0x10, 1, CLK_DIVIDER_ROUND_CLOSEST, 0),
 	GATE_MM(CLK_MM_LVDS_VCLK, "mm_lvds_vclk", "div_mm_lvds_vclk",
 	     MM_LVDS_VCLK + 0x10, 0, 0, 0),
 	GATE_MM(CLK_MM_CODA960_CORE, "mm_coda960_core", "div_mm_coda960_core",
