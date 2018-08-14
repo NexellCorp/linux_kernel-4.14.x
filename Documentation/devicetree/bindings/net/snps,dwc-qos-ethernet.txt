@@ -182,14 +182,12 @@ gmac0: ethernet@26100000 {
 		 <&cmu CLK_GMAC_RGMII0_PTP_REF>;
 	clock-names = "master_bus", "slave_bus", "tx", "ptp_ref";
 
-	snps,write-requests = <8>;
-	snps,read-requests = <8>;
+	snps,write-requests = <3>;
+	snps,read-requests = <3>;
 	snps,burst-map = <0x4>;
-	snps,txpbl = <16>;
-	snps,rxpbl = <16>;
+	snps,txpbl = <32>;
+	snps,rxpbl = <32>;
 	snps,no-pbl-x8;
-	snps,fixed-burst;
-
 
 	phy-mode = "rgmii";
 	phy-handle = <&ethphy0>;
@@ -212,7 +210,7 @@ gmac0: ethernet@26100000 {
 	};
 };
 
-gmac1: ethernet@126110000 {
+gmac1: ethernet@26110000 {
 	compatible = "nexell,nxp3220-dwmac";
 	reg = <0x26110000 0x8000>;
 	interrupts = <GIC_SPI 42 IRQ_TYPE_NONE>;
@@ -222,14 +220,12 @@ gmac1: ethernet@126110000 {
 		 <&cmu CLK_GMAC_RMII0_PTP_REF>;
 	clock-names = "master_bus", "slave_bus", "ptp_ref";
 
-	snps,write-requests = <8>;
-	snps,read-requests = <8>;
+	snps,write-requests = <3>;
+	snps,read-requests = <3>;
 	snps,burst-map = <0x4>;
-	snps,txpbl = <16>;
-	snps,rxpbl = <16>;
+	snps,txpbl = <32>;
+	snps,rxpbl = <32>;
 	snps,no-pbl-x8;
-	snps,fixed-burst;
-
 
 	phy-mode = "rmii";
 	phy-handle = <&ethphy1>;
