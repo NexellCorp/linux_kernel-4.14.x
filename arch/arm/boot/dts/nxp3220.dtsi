@@ -412,13 +412,12 @@
 			clock-names = "master_bus", "slave_bus", "tx", "ptp_ref";
 			status = "disabled";
 
-			snps,write-requests = <8>;
-			snps,read-requests = <8>;
+			snps,write-requests = <3>;
+			snps,read-requests = <3>;
 			snps,burst-map = <0x4>;
-			snps,txpbl = <16>;
-			snps,rxpbl = <16>;
+			snps,txpbl = <32>;
+			snps,rxpbl = <32>;
 			snps,no-pbl-x8;
-			snps,fixed-burst;
 		};
 
 		gmac1: ethernet@126110000 {
@@ -432,13 +431,12 @@
 			clock-names = "master_bus", "slave_bus", "ptp_ref";
 			status = "disabled";
 
-			snps,write-requests = <8>;
-			snps,read-requests = <8>;
+			snps,write-requests = <3>;
+			snps,read-requests = <3>;
 			snps,burst-map = <0x4>;
-			snps,txpbl = <16>;
-			snps,rxpbl = <16>;
+			snps,txpbl = <32>;
+			snps,rxpbl = <32>;
 			snps,no-pbl-x8;
-			snps,fixed-burst;
 		};
 
 		i2c_0: i2c@20500000 {
