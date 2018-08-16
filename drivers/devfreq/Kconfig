@@ -91,6 +91,15 @@ config ARM_EXYNOS_BUS_DEVFREQ
 	  and adjusts the operating frequencies and voltages with OPP support.
 	  This does not yet operate with optimal voltages.
 
+config ARM_NXP3220_BUS_DEVFREQ
+	tristate "Nexell NXP3220 BUS DEVFREQ Driver"
+	depends on ARCH_NEXELL
+	select DEVFREQ_GOV_USERSPACE
+	select DEVFREQ_GOV_PASSIVE
+	select PM_OPP
+	help
+	  This adds the BUS DEVFREQ driver for the Nexell NXP3220 of SoCs.
+
 config ARM_TEGRA_DEVFREQ
 	tristate "Tegra DEVFREQ Driver"
 	depends on ARCH_TEGRA_124_SOC
