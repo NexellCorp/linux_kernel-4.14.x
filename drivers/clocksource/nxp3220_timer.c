@@ -166,11 +166,11 @@ static void timer_source_suspend(struct clocksource *cs)
 	struct timer_info *info = &dev->timer_source;
 	void __iomem *base = info->base;
 
-	if (info->clk)
-		clk_disable_unprepare(info->clk);
-
 	info->rcount = (info->tcount - timer_read(base));
 	timer_stop(base, 0);
+
+	if (info->clk)
+		clk_disable_unprepare(info->clk);
 }
 
 static void timer_source_resume(struct clocksource *cs)
