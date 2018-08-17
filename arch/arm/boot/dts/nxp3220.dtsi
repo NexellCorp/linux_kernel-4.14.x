@@ -865,6 +865,32 @@
 			status = "disabled";
 		};
 
+		sys_bus_opp_table: bus_opp_table0 {
+			compatible = "operating-points-v2";
+			opp-shared;
+
+			opp-0 {
+				opp-hz = /bits/ 64 <100000000>;
+				opp-microvolt = <975000>;
+			};
+			opp-1 {
+				opp-hz = /bits/ 64 <166666667>;
+				opp-microvolt = <975000>;
+			};
+			opp-2 {
+				opp-hz = /bits/ 64 <333333334>;
+				opp-microvolt = <1000000>;
+			};
+		};
+
+		sys_bus: sys_bus {
+			compatible = "nexell,nxp3220-bus";
+			bus-name = "sys";
+			clocks = <&cmu CLK_SRC_SYS0_AXI>;
+			clock-names = "bus";
+			operating-points-v2 = <&sys_bus_opp_table>;
+		};
+
 		rtc: rtc@2008c000 {
 			compatible = "nexell,nx-rtc";
 			reg = <0x2008C000 0x100>;
