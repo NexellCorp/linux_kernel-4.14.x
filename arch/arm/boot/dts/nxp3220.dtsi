@@ -230,6 +230,8 @@
 			       <&cmu_ddr CLK_DDR_DIV_PLL_DDR1>;
 
 			assigned-clocks = <&pll_0 0>,
+					  <&cmu CLK_SRC_SYS0_AXI>,
+					  <&cmu CLK_SYS_DIV_SYS0_AXI>,
 					  <&cmu CLK_SRC_TIMER0_TCLK0>,
 					  <&cmu CLK_SRC_TIMER0_TCLK1>,
 					  <&cmu CLK_SRC_SDMMC0_CORE>,
@@ -245,6 +247,8 @@
 					  <&cmu CLK_SYS_DIV_I2C0_APB>;
 			assigned-clock-parents = <0>,
 						 <&pll_0 0>,
+						 <0>,
+						 <&pll_0 0>,
 						 <&pll_0 0>,
 						 <&cmu CLK_PLL1_DIV>,
 						 <&pll_0 0>,
@@ -258,6 +262,8 @@
 						 <0>,
 						 <0>;
 			assigned-clock-rates = <1000000000>,
+					       <333333334>,
+					       <333333334>,
 					       <0>,
 					       <0>,
 					       <400000000>,
