@@ -55,15 +55,16 @@ static int artik_zb_power_control(struct artik_zb_power_platform_data *pdata,
 	if (onoff) {
 		ret = regulator_bulk_enable(pdata->num_supplies,
 				pdata->supplies);
-		gpiod_set_value(pdata->reset_gpio, 0);
+		gpiod_direction_output(pdata->reset_gpio, 0);
 		msleep(5);
-		gpiod_set_value(pdata->reset_gpio, 1);
-		if (!IS_ERR_OR_NULL(pdata->bootloader_gpio))
+		gpiod_direction_input(pdata->reset_gpio);
+		if (!IS_ERR_OR_NULL(pdata->bootloader_gpio)) {
 			gpiod_set_value(pdata->bootloader_gpio, 1);
+		}
 	} else {
 		if (!IS_ERR_OR_NULL(pdata->bootloader_gpio))
 			gpiod_set_value(pdata->bootloader_gpio, 0);
-		gpiod_set_value(pdata->reset_gpio, 0);
+		gpiod_direction_output(pdata->reset_gpio, 0);
 		ret = regulator_bulk_disable(pdata->num_supplies,
 				pdata->supplies);
 	}
@@ -78,7 +79,7 @@ static void artik_zb_recovery_control(struct artik_zb_power_platform_data *pdata
 {
 	if (onoff != pdata->recovery_mode) {
 		 /* Turn off */
-		 gpiod_set_value(pdata->reset_gpio, 0);
+		 gpiod_direction_output(pdata->reset_gpio, 0);
 		 if (!IS_ERR_OR_NULL(pdata->bootloader_gpio))
 			  gpiod_set_value(pdata->bootloader_gpio, 0);
 
@@ -87,12 +88,12 @@ static void artik_zb_recovery_control(struct artik_zb_power_platform_data *pdata
 
 		 if (onoff) {
 			  /* Go to recovery mode */
-			  gpiod_set_value(pdata->reset_gpio, 1);
+			  gpiod_direction_input(pdata->reset_gpio);
 		 } else {
 			  /* Go to normal mode */
 			  if (!IS_ERR_OR_NULL(pdata->bootloader_gpio))
 				   gpiod_set_value(pdata->bootloader_gpio, 1);
-			  gpiod_set_value(pdata->reset_gpio, 1);
+			  gpiod_direction_input(pdata->reset_gpio);
 		 }
 		 pdata->recovery_mode = onoff;
 	}
