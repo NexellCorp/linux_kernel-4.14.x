@@ -224,7 +224,7 @@ static int nexell_clk_reset_update(struct reset_controller_dev *rcdev,
 		container_of(rcdev, struct nexell_clk_data, reset);
 	unsigned long flags;
 	void __iomem *reg;
-	struct nexell_clk_reset *reset;
+	const struct nexell_clk_reset *reset;
 
 	if (id >= clk_data->max_reset_id)
 		return -EINVAL;
