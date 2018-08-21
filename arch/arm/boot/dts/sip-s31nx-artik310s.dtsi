@@ -182,7 +182,7 @@
 
 			buck5_reg: BUCK5 {
 				regulator-name = "VDD_CORE_1P0";
-				regulator-min-microvolt = <1000000>;
+				regulator-min-microvolt = <975000>;
 				regulator-max-microvolt = <1000000>;
 				regulator-always-on;
 				regulator-boot-on;
@@ -374,4 +374,9 @@
 
 	pinctrl-names = "default";
 	pinctrl-0 = <&mmc1_clk &mmc1_cmd &mmc1_bus4 &cfg_wlanhostwake>;
+};
+
+&sys_bus {
+	status = "okay";
+	vdd-supply = <&buck5_reg>; /* "VDD_CORE_1P0" */
 };
