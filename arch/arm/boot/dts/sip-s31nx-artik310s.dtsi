@@ -497,6 +497,7 @@
 	no-prescan-powerup;
 	keep-power-in-suspend;
 	pm-ignore-notify;
+	powered-resumed-nonremovable-card;
 
 	nexell,drive_shift = <0x2>;
 	nexell,sample_shift = <0x2>;
