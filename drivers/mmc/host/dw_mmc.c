@@ -3165,6 +3165,9 @@ static void dw_mci_parse_custom_dt(struct dw_mci *host)
 
 	if (of_find_property(np, "pm-ignore-notify", NULL))
 		slot->mmc->pm_caps |= MMC_PM_IGNORE_PM_NOTIFY;
+
+	if (of_find_property(np, "powered-resumed-nonremovable-card", NULL))
+		slot->mmc->pm_caps |= MMC_PM_IGNORE_REINIT_SDIO;
 }
 #else /* CONFIG_OF */
 static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
