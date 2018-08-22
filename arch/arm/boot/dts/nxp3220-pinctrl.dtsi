@@ -412,6 +412,13 @@
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
 
+	otg_vbus_en: otg-vbus-en {
+		nexell,pins = "gpioc-15";
+		nexell,pin-function = <NX_PIN_FUNC2>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
 	pdm_lr0: pdm-lr0{
 		nexell,pins = "gpioc-9";
 		nexell,pin-function = <NX_PIN_FUNC2>;
@@ -475,9 +482,23 @@
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
 
-	otg_vbus_en: otg-vbus-en {
-		nexell,pins = "gpioc-15";
-		nexell,pin-function = <NX_PIN_FUNC2>;
+	spi0_bus: spi0-bus {
+		nexell,pins = "gpiob-31", "gpioc-0", "gpioc-3", "gpioc-4";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	spi1_bus: spi1-bus {
+		nexell,pins = "gpioa-6", "gpioa-7", "gpioa-8", "gpioa-9";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	spi2_bus: spi2-bus {
+		nexell,pins = "gpioa-10", "gpioa-11", "gpioa-12", "gpioa-13";
+		nexell,pin-function = <NX_PIN_FUNC1>;
 		nexell,pin-pull = <NX_PIN_PULL_NONE>;
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
@@ -576,27 +597,6 @@
 
 	uart6_hflow: uart6-hflow {
 		nexell,pins = "gpiod-28", "gpiod-29";
-		nexell,pin-function = <NX_PIN_FUNC1>;
-		nexell,pin-pull = <NX_PIN_PULL_NONE>;
-		nexell,pin-strength = <NX_PIN_STR0>;
-	};
-
-	spi0_bus: spi0-bus {
-		nexell,pins = "gpiob-31", "gpioc-0", "gpioc-3", "gpioc-4";
-		nexell,pin-function = <NX_PIN_FUNC1>;
-		nexell,pin-pull = <NX_PIN_PULL_NONE>;
-		nexell,pin-strength = <NX_PIN_STR0>;
-	};
-
-	spi1_bus: spi1-bus {
-		nexell,pins = "gpioa-6", "gpioa-7", "gpioa-8", "gpioa-9";
-		nexell,pin-function = <NX_PIN_FUNC1>;
-		nexell,pin-pull = <NX_PIN_PULL_NONE>;
-		nexell,pin-strength = <NX_PIN_STR0>;
-	};
-
-	spi2_bus: spi2-bus {
-		nexell,pins = "gpioa-10", "gpioa-11", "gpioa-12", "gpioa-13";
 		nexell,pin-function = <NX_PIN_FUNC1>;
 		nexell,pin-pull = <NX_PIN_PULL_NONE>;
 		nexell,pin-strength = <NX_PIN_STR0>;
