@@ -496,6 +496,7 @@
 	supports-detect-complete;
 	no-prescan-powerup;
 	keep-power-in-suspend;
+	pm-ignore-notify;
 
 	nexell,drive_shift = <0x2>;
 	nexell,sample_shift = <0x2>;
