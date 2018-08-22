@@ -2784,8 +2784,10 @@ static int dw_mci_init_slot_caps(struct dw_mci_slot *slot)
 	 */
 	mmc->caps |= MMC_CAP_ERASE;
 
-	if (host->pdata->pm_caps)
+	if (host->pdata->pm_caps) {
 		mmc->pm_caps = host->pdata->pm_caps;
+		mmc->pm_flags = mmc->pm_caps;
+	}
 
 	if (host->dev->of_node) {
 		ctrl_id = of_alias_get_id(host->dev->of_node, "mshc");
@@ -3145,24 +3147,24 @@ static void dw_mci_parse_custom_dt(struct dw_mci *host)
 {
 	struct device *dev = host->dev;
 	struct device_node *np = dev->of_node;
+	struct dw_mci_slot *slot = host->slot;
+	if (!slot)
+		return;
 
 	if (of_find_property(np, "supports-detect-complete", NULL)) {
-		 struct dw_mci_slot *slot = host->slot;
-		 if (!slot)
-			  return;
 		 slot->mmc->supports_detect_complete = true;
 		 dev_info(dev, "%s: supports detect complete\n",
 				   mmc_hostname(slot->mmc));
 	}
 
 	if (of_find_property(np, "no-prescan-powerup", NULL)) {
-		struct dw_mci_slot *slot = host->slot;
-		if (!slot)
-			return;
 		slot->mmc->caps2 |= MMC_CAP2_NO_PRESCAN_POWERUP;
 		dev_info(dev, "%s: add MMC_CAP2_NO_PRESCAN_POWERUP, mmc->caps2=0x%x\n",
 				mmc_hostname(slot->mmc), slot->mmc->caps);
 	}
+
+	if (of_find_property(np, "pm-ignore-notify", NULL))
+		slot->mmc->pm_caps |= MMC_PM_IGNORE_PM_NOTIFY;
 }
 #else /* CONFIG_OF */
 static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
