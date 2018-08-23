@@ -549,6 +549,13 @@ static int nexell_adc_probe(struct platform_device *pdev)
 		reset_control_reset(adc->rst);
 	}
 
+	/* setup: adc */
+	ret = nexell_adc_setup(adc, pdev);
+	if (ret < 0) {
+		dev_err(&pdev->dev, "failed setup iio ADC device\n");
+		goto err_unprepare_clk;
+	}
+
 	/* setup: irq */
 	if (adc->data->version >= 2) {
 		irq = platform_get_irq(pdev, 0);
@@ -565,13 +572,6 @@ static int nexell_adc_probe(struct platform_device *pdev)
 		}
 
 		adc->irq = irq;
-	}
-
-	/* setup: adc */
-	ret = nexell_adc_setup(adc, pdev);
-	if (ret < 0) {
-		dev_err(&pdev->dev, "failed setup iio ADC device\n");
-		goto err_unprepare_clk;
 	}
 
 	platform_set_drvdata(pdev, iio);
