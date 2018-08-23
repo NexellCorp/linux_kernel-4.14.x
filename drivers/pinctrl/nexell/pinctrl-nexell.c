@@ -273,19 +273,12 @@ static int nexell_dt_node_to_map(struct pinctrl_dev *pctldev,
 static void nexell_get_group_status(struct pinctrl_dev *pctldev,
 		struct seq_file *s, unsigned int offset)
 {
-	if (nx_soc_is_gpio_pin(offset)) {
-		seq_printf(s, "\t: Func(%d), Dir(%d), Val(%d), Pull(%d), Drv(%d)",
-				nx_soc_gpio_get_io_func(offset),
-				nx_soc_gpio_get_io_dir(offset),
-				nx_soc_gpio_get_value(offset),
-				nx_soc_gpio_get_io_pull(offset),
-				nx_soc_gpio_get_io_drv(offset));
-	} else {
-		seq_printf(s, "\t: Func(N), Dir(%d), Val(%d), Pull(%d), Drv(N)",
-				nx_soc_gpio_get_io_dir(offset),
-				nx_soc_gpio_get_value(offset),
-				nx_soc_gpio_get_io_pull(offset));
-	}
+	seq_printf(s, "\t: Func(%d), Dir(%d), Val(%d), Pull(%d), Drv(%d)",
+			nx_soc_gpio_get_io_func(offset),
+			nx_soc_gpio_get_io_dir(offset),
+			nx_soc_gpio_get_value(offset),
+			nx_soc_gpio_get_io_pull(offset),
+			nx_soc_gpio_get_io_drv(offset));
 }
 
 /* list of pinctrl callbacks for the pinctrl core */
