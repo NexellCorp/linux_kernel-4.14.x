@@ -21,6 +21,7 @@ config ARCH_NXP3220_COMMON
 	bool
 	select CPU_V7
 	select ARM_GIC
+	select HAVE_ARM_ARCH_TIMER
 
 config ARCH_NXP3220
 	bool "NXP3220"
