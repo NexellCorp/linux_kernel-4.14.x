@@ -1438,7 +1438,7 @@ static struct nexell_pin_bank nxp3220_pin_banks[] = {
 	SOC_PIN_BANK_EINTG(32, "gpioc"),
 	SOC_PIN_BANK_EINTG(32, "gpiod"),
 	SOC_PIN_BANK_EINTG(32, "gpioe"),
-	SOC_PIN_BANK_EINTW(10, "alive"),
+	SOC_PIN_BANK_EINTW(14, "alive"),
 };
 
 /*
