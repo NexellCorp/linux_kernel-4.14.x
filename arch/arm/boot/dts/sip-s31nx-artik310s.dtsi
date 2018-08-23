@@ -152,7 +152,7 @@
 		interrupt-parent = <&alive_0>;
 		interrupts = <1 IRQ_TYPE_NONE>;
 		pinctrl-names = "default";
-		pinctrl-0 = <&pmic_irq>;
+		pinctrl-0 = <&pmic_irq &rtc_out>;
 		reg = <0x47>;
 
 		voltage-regulators {
