@@ -557,7 +557,7 @@ static int pwm_nexell_resume(struct device *dev)
 		writel(nx_pwm->tcmpb[ch], nx_pwm->base + REG_TCMPB(ch));
 		writel(nx_pwm->tintr[ch], nx_pwm->base + REG_TINTR(ch));
 
-		if (nx_chan->period_ns) {
+		if (nx_chan && nx_chan->period_ns) {
 			__pwm_nexell_config(chip, pwm, nx_chan->duty_ns,
 					    nx_chan->period_ns, true);
 			pwm_nexell_manual_update(nx_pwm, pwm);
