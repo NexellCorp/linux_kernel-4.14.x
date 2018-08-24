@@ -36,7 +36,7 @@ struct dw_mci_nexell_priv_data {
 	u32	smp_phase;
 };
 
-static int dw_mci_nexell_priv_init(struct dw_mci *host)
+static int dw_mci_nexell_set_priv(struct dw_mci *host)
 {
 	struct dw_mci_nexell_priv_data *priv = host->priv;
 
@@ -44,6 +44,13 @@ static int dw_mci_nexell_priv_init(struct dw_mci *host)
 	mci_writel(host, SMP_PHASE, priv->smp_phase);
 
 	mci_writel(host, SRAM, SRAM_AWAKE);
+
+	return 0;
+}
+
+static int dw_mci_nexell_priv_init(struct dw_mci *host)
+{
+	dw_mci_nexell_set_priv(host);
 
 	host->bus_hz /= DWMMC_PRE_DIV;
 
@@ -73,10 +80,13 @@ static void dw_mci_nexell_set_ios(struct dw_mci *host, struct mmc_ios *ios)
 static int dw_mci_nexell_runtime_resume(struct device *dev)
 {
 	struct dw_mci *host = dev_get_drvdata(dev);
+	int ret;
 
-	dw_mci_nexell_priv_init(host);
+	ret = dw_mci_runtime_resume(dev);
+	if (!ret)
+		ret = dw_mci_nexell_set_priv(host);
 
-	return dw_mci_runtime_resume(dev);
+	return ret;
 }
 #endif
 
