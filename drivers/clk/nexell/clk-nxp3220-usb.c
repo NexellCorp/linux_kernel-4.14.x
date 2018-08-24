@@ -24,7 +24,7 @@ static const struct nexell_div_clock usb_div_clks[] __initconst = {
 
 static const struct nexell_gate_clock usb_gate_clks[] __initconst = {
 	GATE_USB(CLK_USB_AHB, "usb_ahb", "div_usb_ahb",
-		 USB_AHB + 0x10, 0, CLK_IGNORE_UNUSED, 0),
+		 USB_AHB + 0x10, 0, CLK_IS_CRITICAL, 0),
 	GATE_USB(CLK_USB_SYSREG_APB, "usb_sysreg_apb", "div_usb_ahb",
 		 USB_AHB + 0x10, 2, 0, 0),
 	GATE_USB(CLK_USB_USB20HOST, "usb20host", "div_usb_ahb",
