@@ -28,6 +28,7 @@ static struct {
 } gpio_modules[NR_GPIO_MODULE];
 
 static void __iomem *alive_regs;
+static u32 alive_detect_save;
 
 /*
  * gpio functions
@@ -330,6 +331,13 @@ const unsigned char nxp3220_pio_fn_no[][GPIO_NUM_PER_BANK] = {
 /*----------------------------------------------------------------------------*/
 static spinlock_t lock[NR_GPIO_MODULE + 1]; /* A, B, C, D, E, AliveGPIO */
 static unsigned long lock_flags[NR_GPIO_MODULE + 1];
+
+static u32 alive_wake_mask = 0xffffffff;
+
+u32 get_wake_mask(void)
+{
+	return alive_wake_mask;
+}
 
 #define IO_LOCK_INIT(x) spin_lock_init(&lock[x])
 #define IO_LOCK(x) spin_lock_irqsave(&lock[x], lock_flags[x])
@@ -779,11 +787,22 @@ static int nxp3220_gpio_resume(int idx)
 
 static int nxp3220_alive_suspend(void)
 {
+	void __iomem *base = alive_regs;
+
+	alive_detect_save = readl(base + ALIVE_DET_READ);
+	writel(0xffffffff, base + ALIVE_DET_RST);
+	writel(~get_wake_mask(), base + ALIVE_DET_SET);
+
 	return 0;
 }
 
 static int nxp3220_alive_resume(void)
 {
+	void __iomem *base = alive_regs;
+
+	writel(0xffffffff, base + ALIVE_DET_RST);
+	writel(alive_detect_save, base + ALIVE_DET_SET);
+
 	return 0;
 }
 
@@ -1158,13 +1177,6 @@ static int irq_alive_set_type(struct irq_data *irqd, unsigned int type)
 	return 0;
 }
 
-static u32 alive_wake_mask = 0xffffffff;
-
-u32 get_wake_mask(void)
-{
-	return alive_wake_mask;
-}
-
 static int irq_set_alive_wake(struct irq_data *irqd, unsigned int on)
 {
 	int bit = (int)(irqd->hwirq);
@@ -1173,9 +1185,9 @@ static int irq_set_alive_wake(struct irq_data *irqd, unsigned int on)
 			bit, on ? "enabled" : "disabled", irqd->irq);
 
 	if (!on)
-		alive_wake_mask |= bit;
+		alive_wake_mask |= (1 << bit);
 	else
-		alive_wake_mask &= ~bit;
+		alive_wake_mask &= ~(1 << bit);
 
 	return 0;
 }
