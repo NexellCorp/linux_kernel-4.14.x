@@ -171,6 +171,7 @@
 		#sound-dai-cells = <0>;
 		compatible = "realtek,rt5659";
 		reg = <0x1a>;
+		realtek,dmic1-data-pin = <2>;
 	};
 };
 
