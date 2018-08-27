@@ -218,6 +218,10 @@ ifeq ($(GCC_VERSION),1)
 	ccflags-y += -Wno-packed-bitfield-compat
 endif
 
+ifeq ($(CONFIG_MRVL_SDIO_OOB_IRQ),m)
+	EXTRA_CFLAGS += -DSDIO_OOB_IRQ
+endif
+
 #############################################################################
 # Make Targets
 #############################################################################

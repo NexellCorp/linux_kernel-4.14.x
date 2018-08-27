@@ -85,9 +85,17 @@ int mfg_mode;
 #endif
 
 /** SDIO interrupt mode (0: INT_MODE_SDIO, 1: INT_MODE_GPIO) */
+#ifdef SDIO_OOB_IRQ
+int intmode = INT_MODE_GPIO;
+#else
 int intmode = INT_MODE_SDIO;
+#endif
 /** GPIO interrupt pin number */
+#ifdef SDIO_OOB_IRQ
+int gpiopin = GPIO_INT_NEW_MODE;
+#else
 int gpiopin;
+#endif
 
 #ifdef CONFIG_OF
 #if defined(STA_CFG80211) || defined(UAP_CFG80211)

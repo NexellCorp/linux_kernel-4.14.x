@@ -38,7 +38,13 @@
 static char *fw_name;
 /** fw serial download flag */
 extern int bt_fw_serial;
+
+#ifdef SDIO_OOB_IRQ
+int bt_intmode = INT_MODE_GPIO;
+#else
 int bt_intmode = INT_MODE_SDIO;
+#endif
+
 /** request firmware nowait */
 int bt_req_fw_nowait;
 static int multi_fn = BIT(2);
@@ -70,6 +76,13 @@ static const struct sdio_device_id bt_ids[] = {
 };
 
 MODULE_DEVICE_TABLE(sdio, bt_ids);
+
+#ifdef SDIO_OOB_IRQ
+extern int mrvl_sdio_claim_irq(struct sdio_func *func, sdio_irq_handler_t *handler);
+extern int mrvl_sdio_release_irq(struct sdio_func *func);
+extern int mrvl_sdio_suspend(struct sdio_func *func);
+extern int mrvl_sdio_resume(struct sdio_func *func);
+#endif
 
 /********************************************************
 		Global Variables
@@ -1203,6 +1216,9 @@ bt_sdio_suspend(struct device *dev)
 	struct sdio_mmc_card *cardp;
 	struct m_dev *m_dev = NULL;
 	struct hci_dev *hcidev;
+#ifdef SDIO_OOB_IRQ
+    int ret = BT_STATUS_SUCCESS;
+#endif
 
 	ENTER();
 
@@ -1243,6 +1259,7 @@ bt_sdio_suspend(struct device *dev)
 
 	priv->adapter->is_suspended = TRUE;
 
+#ifndef SDIO_OOB_IRQ
 	LEAVE();
 	/* We will keep the power when hs enabled successfully */
 	if ((mbt_pm_keep_power) && (priv->adapter->hs_state == HS_ACTIVATED)) {
@@ -1260,6 +1277,29 @@ bt_sdio_suspend(struct device *dev)
 		PRINTM(CMD, "BT: suspend without MMC_PM_KEEP_POWER\n");
 		return BT_STATUS_SUCCESS;
 	}
+#else
+	/* We will keep the power when hs enabled successfully */
+	if ((mbt_pm_keep_power) && (priv->adapter->hs_state == HS_ACTIVATED)) {
+#ifdef MMC_PM_SKIP_RESUME_PROBE
+		PRINTM(CMD, "BT: suspend with MMC_PM_KEEP_POWER and "
+				"MMC_PM_SKIP_RESUME_PROBE\n");
+		ret = sdio_set_host_pm_flags(func,
+				MMC_PM_KEEP_POWER |
+				MMC_PM_SKIP_RESUME_PROBE);
+#else
+		PRINTM(CMD, "BT: suspend with MMC_PM_KEEP_POWER\n");
+		ret = sdio_set_host_pm_flags(func, MMC_PM_KEEP_POWER);
+#endif
+	} else {
+		PRINTM(CMD, "BT: suspend without MMC_PM_KEEP_POWER\n");
+		ret = BT_STATUS_SUCCESS;
+	}
+
+	mrvl_sdio_suspend(func);
+
+	LEAVE();
+	return ret;
+#endif
 }
 
 void

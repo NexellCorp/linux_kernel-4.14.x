@@ -84,6 +84,10 @@ ifeq ($(CONFIG_SDIO_SUSPEND_RESUME),y)
 	EXTRA_CFLAGS += -DSDIO_SUSPEND_RESUME
 endif
 
+ifeq ($(CONFIG_MRVL_SDIO_OOB_IRQ),m)
+	EXTRA_CFLAGS += -DSDIO_OOB_IRQ
+endif
+
 #############################################################################
 # Make Targets
 #############################################################################

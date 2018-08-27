@@ -112,6 +112,13 @@ static struct sdio_driver REFDATA wlan_sdio = {
 #endif
 };
 
+#ifdef SDIO_OOB_IRQ
+extern int mrvl_sdio_claim_irq(struct sdio_func *func, sdio_irq_handler_t *handler);
+extern int mrvl_sdio_release_irq(struct sdio_func *func);
+extern int mrvl_sdio_suspend(struct sdio_func *func);
+extern int mrvl_sdio_resume(struct sdio_func *func);
+#endif
+
 /********************************************************
 		Local Functions
 ********************************************************/
@@ -489,6 +496,9 @@ woal_sdio_suspend(struct device *dev)
 
 	/* Indicate device suspended */
 	handle->is_suspended = MTRUE;
+#ifdef SDIO_OOB_IRQ
+	mrvl_sdio_suspend(func);
+#endif
 done:
 	PRINTM(MCMND, "<--- Leave woal_sdio_suspend --->\n");
 	LEAVE();
@@ -528,6 +538,9 @@ woal_sdio_resume(struct device *dev)
 		return MLAN_STATUS_SUCCESS;
 	}
 	handle->is_suspended = MFALSE;
+#ifdef SDIO_OOB_IRQ
+	mrvl_sdio_resume(func);
+#endif
 	if (woal_check_driver_status(handle)) {
 		PRINTM(MERROR, "Resuem, device is in hang state\n");
 		LEAVE();
@@ -852,7 +865,11 @@ woal_unregister_dev(moal_handle *handle)
 	if (handle->card) {
 		/* Release the SDIO IRQ */
 		sdio_claim_host(((struct sdio_mmc_card *)handle->card)->func);
+#ifdef SDIO_OOB_IRQ
+        mrvl_sdio_release_irq(((struct sdio_mmc_card *)handle->card)->func);
+#else
 		sdio_release_irq(((struct sdio_mmc_card *)handle->card)->func);
+#endif
 		sdio_disable_func(((struct sdio_mmc_card *)handle->card)->func);
 		sdio_release_host(((struct sdio_mmc_card *)handle->card)->func);
 
@@ -887,7 +904,11 @@ woal_register_dev(moal_handle *handle)
 	func = card->func;
 	sdio_claim_host(func);
 	/* Request the SDIO IRQ */
+#ifdef SDIO_OOB_IRQ
+    ret = mrvl_sdio_claim_irq(func, woal_sdio_interrupt);
+#else
 	ret = sdio_claim_irq(func, woal_sdio_interrupt);
+#endif
 	if (ret) {
 		PRINTM(MFATAL, "sdio_claim_irq failed: ret=%d\n", ret);
 		goto release_host;
@@ -911,7 +932,11 @@ woal_register_dev(moal_handle *handle)
 	return MLAN_STATUS_SUCCESS;
 
 release_irq:
+#ifdef SDIO_OOB_IRQ
+    mrvl_sdio_release_irq(func);
+#else
 	sdio_release_irq(func);
+#endif
 release_host:
 	sdio_release_host(func);
 	handle->card = NULL;
