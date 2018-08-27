@@ -593,7 +593,7 @@ static int nx_i2s_suspend(struct snd_soc_dai *dai)
 	struct nx_i2s_data *i2s = snd_soc_dai_get_drvdata(dai);
 	struct i2s_reg *reg = i2s->base;
 
-	if (__clk_is_enabled(i2s->clk))
+	if (i2s_is_active(i2s->base))
 		clk_disable_unprepare(i2s->clk);
 
 	i2s->iis_mod = readl(&reg->mod);
@@ -615,6 +615,9 @@ static int nx_i2s_resume(struct snd_soc_dai *dai)
 	writel(0, &reg->fic);
 	writel(i2s->iis_mod, &reg->mod);
 	writel(i2s->iis_con, &reg->con);
+
+	if (i2s_is_active(i2s->base))
+		clk_prepare_enable(i2s->clk);
 
 	return 0;
 }
