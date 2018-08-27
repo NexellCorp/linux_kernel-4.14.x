@@ -603,7 +603,6 @@ static int nxp3220_qos_remove(struct platform_device *pdev)
 		reset_control_assert(eqos->rst);
 	gpiod_set_value(eqos->phy_reset, 1);
 	clk_disable_unprepare(eqos->clk_tx);
-	clk_disable_unprepare(eqos->clk_slave);
 	clk_disable_unprepare(eqos->clk_master);
 
 	return 0;
