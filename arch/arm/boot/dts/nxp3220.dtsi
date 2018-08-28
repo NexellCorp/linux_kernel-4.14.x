@@ -553,6 +553,7 @@
 				      "pwm_tclk2", "pwm_tclk3";
 			nexell,pwm-outputs = <0>, <1>, <2>, <3>;
 			tclk_freq = <100000000>, <100000000>, <100000000>, <100000000>;
+			#pwm-cells = <3>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&pwm0_pin &pwm1_pin &pwm2_pin &pwm3_pin>;
 			status = "disabled";
