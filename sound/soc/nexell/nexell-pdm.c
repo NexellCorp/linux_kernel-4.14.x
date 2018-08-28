@@ -908,6 +908,55 @@ static const struct snd_soc_component_driver nx_pdm_component = {
 	.name = "nexell-pdm",
 };
 
+static ssize_t select_pads_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct nx_pdm_data *pdm = dev_get_drvdata(dev);
+	int *pad = pdm->i_pads;
+
+	return snprintf(buf, PAGE_SIZE,
+			"%d,%d,%d,%d\n", pad[0], pad[1], pad[2], pad[3]);
+}
+
+static ssize_t select_pads_store(struct device *dev,
+				 struct device_attribute *attr,
+				 const char *buf, size_t size)
+{
+	struct nx_pdm_data *pdm = dev_get_drvdata(dev);
+	int *pad = pdm->i_pads;
+	char *c, *s = (char *)buf;
+	int num;
+	int i = 0, ret;
+
+	while (s) {
+		c = strchr(s, ',');
+		if (c)
+			*c++ = '\0';
+
+		ret = kstrtoint(s, 10, &num);
+		if (ret != 0)
+			return ret;
+
+		pad[i++] = num;
+		if (i > MAX_PDM_PADS-1)
+			break;
+		s = c;
+	}
+
+	return size;
+}
+
+static DEVICE_ATTR(select_pads, 0644, select_pads_show, select_pads_store);
+
+static const struct attribute *pdm_attrs[] = {
+	&dev_attr_select_pads.attr,
+	NULL,
+};
+
+static const struct attribute_group pdm_attr_group = {
+	.attrs = (struct attribute **)pdm_attrs,
+};
+
 static int nx_pdm_dai_init(struct nx_pdm_data *pdm)
 {
 	struct snd_soc_pcm_stream *capt = &nx_pdm_dai_driver.capture;
@@ -1194,7 +1243,11 @@ static int nx_pdm_parse_of_dt(struct platform_device *pdev,
 static struct nx_pdm_data *nx_pdm_allocate(struct platform_device *pdev)
 {
 	struct nx_pdm_data *pdm;
-	int i;
+	int i, ret;
+
+	ret = sysfs_create_group(&pdev->dev.kobj, &pdm_attr_group);
+	if (ret)
+		return NULL;
 
 	pdm = kzalloc(sizeof(*pdm), GFP_KERNEL);
 	if (!pdm)
