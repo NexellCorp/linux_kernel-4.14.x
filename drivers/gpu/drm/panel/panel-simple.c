@@ -1428,6 +1428,28 @@ static const struct panel_desc netron_dy_e231732 = {
 	.bus_format = MEDIA_BUS_FMT_RGB666_1X18,
 };
 
+static const struct drm_display_mode newhaven_nhd_50_800480tf_atxl_mode = {
+	.clock = 30000,
+	.hdisplay = 800,
+	.hsync_start = 800 + 40,
+	.hsync_end = 800 + 88,
+	.htotal = 800 + 40 + 88,
+	.vdisplay = 480,
+	.vsync_start = 480 + 13,
+	.vsync_end = 480 + 32,
+	.vtotal = 480 + 13 + 32,
+	.vrefresh = 60,
+};
+
+static const struct panel_desc newhaven_nhd_50_800480tf_atxl = {
+	.modes = &newhaven_nhd_50_800480tf_atxl_mode,
+	.num_modes = 1,
+	.size = {
+		.width = 108,
+		.height = 65,
+	},
+};
+
 static const struct display_timing nlt_nl192108ac18_02d_timing = {
 	.pixelclock = { 130000000, 148350000, 163000000 },
 	.hactive = { 1920, 1920, 1920 },
@@ -2088,6 +2110,9 @@ static const struct of_device_id platform_of_match[] = {
 	}, {
 		.compatible = "netron-dy,e231732",
 		.data = &netron_dy_e231732,
+	}, {
+		.compatible = "newhaven,nhd-5.0-800480tf-atxl",
+		.data = &newhaven_nhd_50_800480tf_atxl,
 	}, {
 		.compatible = "nlt,nl192108ac18-02d",
 		.data = &nlt_nl192108ac18_02d,
