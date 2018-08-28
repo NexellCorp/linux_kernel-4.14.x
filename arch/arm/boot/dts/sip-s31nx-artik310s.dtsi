@@ -334,6 +334,13 @@
 };
 
 &pinctrl_0 {
+	key_pwr: key-pwr {
+		nexell,pins = "alive-0";
+		nexell,pin-function = <NX_PIN_FUNC0>;
+		nexell,pin-pull = <NX_PIN_PULL_UP>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
 	pmic_irq: sm5011-irq {
 		nexell,pins = "alive-1";
 		nexell,pin-function = <NX_PIN_FUNC0>;
