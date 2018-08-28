@@ -5,6 +5,7 @@
  */
 
 #include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
 #include "sip-s31nx-artik310s.dtsi"
 
 / {
@@ -14,6 +15,21 @@
 
 	chosen {
 		stdout-path = &uart0;
+	};
+
+	gpio_keys {
+		compatible = "gpio-keys";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&key_pwr>;
+
+		power {
+			label = "Power";
+			gpios = <&alive_0 0 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_POWER>;
+			wakeup-source;
+		};
 	};
 
 	/* Null codec for PDM reference i2s */
