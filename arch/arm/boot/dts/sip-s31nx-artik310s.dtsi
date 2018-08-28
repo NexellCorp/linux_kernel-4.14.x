@@ -132,6 +132,8 @@
 };
 
 &dwmmc_0 {
+	clock-frequency = <333333334>;
+
 	cap-mmc-highspeed;
 	non-removable;
 	mmc-ddr-3_3v;
