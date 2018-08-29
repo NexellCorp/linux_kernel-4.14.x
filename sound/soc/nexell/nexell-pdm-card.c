@@ -42,7 +42,7 @@ static int nx_pdm_card_probe(struct platform_device *pdev)
 	data->dai.capture_only = true;
 
 	data->card.dev = &pdev->dev;
-	data->card.name = "Sound PDM/PCM";
+	data->card.name = "Sound PDM-PCM";
 	data->card.dai_link = &data->dai;
 	data->card.num_links = 1;
 	data->card.owner = THIS_MODULE;
