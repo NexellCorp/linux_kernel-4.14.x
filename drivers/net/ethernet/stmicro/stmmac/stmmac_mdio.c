@@ -121,6 +121,10 @@ static int stmmac_mdio_write(struct mii_bus *bus, int phyaddr, int phyreg,
 	writel(phydata, priv->ioaddr + mii_data);
 	writel(value, priv->ioaddr + mii_address);
 
+#ifdef CONFIG_REALTEK_PHY
+	/* realtek work-around */
+	stmmac_mdio_read(bus, phyaddr, phyreg);
+#endif
 	/* Wait until any existing MII operation is complete */
 	return readl_poll_timeout(priv->ioaddr + mii_address, v, !(v & MII_BUSY),
 				  100, 10000);
