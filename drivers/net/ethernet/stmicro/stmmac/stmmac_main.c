@@ -4333,8 +4333,10 @@ int stmmac_suspend(struct device *dev)
 	if (!ndev || !netif_running(ndev))
 		return 0;
 
-	if (ndev->phydev)
+	if (ndev->phydev) {
+		phy_suspend(ndev->phydev);
 		phy_stop(ndev->phydev);
+	}
 
 	mutex_lock(&priv->lock);
 
