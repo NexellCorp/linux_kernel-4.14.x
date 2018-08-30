@@ -57,11 +57,41 @@ struct nxp3220_eqos {
 	struct clk *clk_slave;
 	struct clk *clk_tx;
 	struct clk *ptp_ref;
+	int wolopts;
 
 	struct gpio_desc *phy_reset;
 	struct gpio_desc *phy_intr;
 	struct gpio_desc *phy_pme;
 };
+
+static void nxp3220_get_wol(struct net_device *ndev, struct ethtool_wolinfo *wol)
+{
+	struct stmmac_priv *stpriv = netdev_priv(ndev);
+	wol->supported = WAKE_MAGIC;
+	wol->wolopts = stpriv->wolopts;
+}
+
+static int nxp3220_set_wol(struct net_device *ndev, struct ethtool_wolinfo *wol)
+{
+	struct stmmac_priv *stpriv = netdev_priv(ndev);
+	u32 support = WAKE_MAGIC;
+	int err;
+
+	if (wol->wolopts & ~support)
+		return -EOPNOTSUPP;
+
+	err = phy_ethtool_set_wol(ndev->phydev, wol);
+	if (err < 0) {
+		dev_err(stpriv->device, "The PHY does not support set_wol\n");
+		return -EOPNOTSUPP;
+	}
+
+	mutex_lock(&stpriv->lock);
+	stpriv->wolopts |= wol->wolopts;
+	mutex_unlock(&stpriv->lock);
+
+	return 0;
+}
 
 static int dwc_eth_dwmac_config_dt(struct platform_device *pdev,
 				   struct plat_stmmacenet_data *plat_dat)
@@ -652,9 +682,13 @@ static void *nxp3220_qos_probe(struct platform_device *pdev,
 	nxp3220_qos_init(pdev, eqos);
 	data->clk_csr = get_csr_rate(eqos);
 
+	eqos->wolopts = 0;
+
 	data->fix_mac_speed = nxp3220_qos_fix_speed;
 	data->init = nxp3220_qos_init;
 	data->exit = nxp3220_qos_exit;
+	data->set_wol = nxp3220_set_wol;
+	data->get_wol = nxp3220_get_wol;
 	data->bsp_priv = eqos;
 
 out:
