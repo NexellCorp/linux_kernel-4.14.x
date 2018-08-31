@@ -137,8 +137,8 @@
 	cap-mmc-highspeed;
 	non-removable;
 	mmc-ddr-3_3v;
-	nexell,drive_shift = <0x04>;
-	nexell,sample_shift = <0x04>;
+	nexell,drive_shift = <0x03>;
+	nexell,sample_shift = <0x03>;
 	card-detect-delay = <200>;
 	disable-wp;
 	status = "okay";
