@@ -20,6 +20,9 @@
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/pm_opp.h>
+#ifdef CONFIG_CPUFREQ_DT_PMQOS
+#include <linux/pm_qos.h>
+#endif
 #include <linux/platform_device.h>
 #include <linux/regulator/consumer.h>
 #include <linux/slab.h>
@@ -44,8 +47,29 @@ static int set_target(struct cpufreq_policy *policy, unsigned int index)
 {
 	struct private_data *priv = policy->driver_data;
 
+#ifdef CONFIG_CPUFREQ_DT_PMQOS
+	unsigned long freq;
+	int ret = 0;
+
+	freq = policy->freq_table[index].frequency;
+
+	freq = max_t(unsigned long, pm_qos_request(PM_QOS_CPU_FREQ_MIN), freq);
+	freq = min_t(unsigned long, pm_qos_request(PM_QOS_CPU_FREQ_MAX), freq);
+
+	/* freq to index */
+	index = cpufreq_frequency_table_get_index(policy, freq);
+
+	ret = dev_pm_opp_set_rate(priv->cpu_dev,
+		policy->freq_table[index].frequency * 1000);
+
+	if (!ret)
+		policy->cur = freq;
+
+	return ret;
+#else
 	return dev_pm_opp_set_rate(priv->cpu_dev,
 				   policy->freq_table[index].frequency * 1000);
+#endif
 }
 
 /*
@@ -340,6 +364,66 @@ static void cpufreq_ready(struct cpufreq_policy *policy)
 	of_node_put(np);
 }
 
+#ifdef CONFIG_CPUFREQ_DT_PMQOS
+static int cpufreq_min_qos_handler(struct notifier_block *b,
+		unsigned long val, void *v)
+{
+	struct cpufreq_policy *policy;
+	int ret = NOTIFY_BAD;
+
+	policy = cpufreq_cpu_get(0);
+	if (!policy || !policy->governor)
+		return ret;
+
+	if (policy->cur >= val) {
+		ret = NOTIFY_OK;
+		goto out;
+	}
+
+	ret = __cpufreq_driver_target(policy, val, CPUFREQ_RELATION_L);
+	if (!ret)
+		ret = NOTIFY_OK;
+
+out:
+	cpufreq_cpu_put(policy);
+
+	return ret;
+}
+
+static int cpufreq_max_qos_handler(struct notifier_block *b,
+		unsigned long val, void *v)
+{
+	struct cpufreq_policy *policy;
+	int ret = NOTIFY_BAD;
+
+	policy = cpufreq_cpu_get(0);
+	if (!policy || !policy->governor)
+		goto out;
+
+	if (policy->cur <= val) {
+		ret = NOTIFY_OK;
+		goto out;
+	}
+
+	ret = __cpufreq_driver_target(policy, val, CPUFREQ_RELATION_H);
+	if (!ret)
+		ret = NOTIFY_OK;
+
+out:
+	cpufreq_cpu_put(policy);
+
+	return ret;
+}
+
+static struct notifier_block cpufreq_min_qos_notifier = {
+	.notifier_call = cpufreq_min_qos_handler,
+};
+
+static struct notifier_block cpufreq_max_qos_notifier = {
+	.notifier_call = cpufreq_max_qos_handler,
+};
+#endif
+
 static struct cpufreq_driver dt_cpufreq_driver = {
 	.flags = CPUFREQ_STICKY | CPUFREQ_NEED_INITIAL_FREQ_CHECK,
 	.verify = cpufreq_generic_frequency_table_verify,
@@ -376,11 +460,21 @@ static int dt_cpufreq_probe(struct platform_device *pdev)
 	if (ret)
 		dev_err(&pdev->dev, "failed register driver: %d\n", ret);
 
+#ifdef CONFIG_CPUFREQ_DT_PMQOS
+	pm_qos_add_notifier(PM_QOS_CPU_FREQ_MIN, &cpufreq_min_qos_notifier);
+	pm_qos_add_notifier(PM_QOS_CPU_FREQ_MAX, &cpufreq_max_qos_notifier);
+#endif
+
 	return ret;
 }
 
 static int dt_cpufreq_remove(struct platform_device *pdev)
 {
+#ifdef CONFIG_CPUFREQ_DT_PMQOS
+	pm_qos_remove_notifier(PM_QOS_CPU_FREQ_MIN, &cpufreq_min_qos_notifier);
+	pm_qos_remove_notifier(PM_QOS_CPU_FREQ_MAX, &cpufreq_max_qos_notifier);
+#endif
+
 	cpufreq_unregister_driver(&dt_cpufreq_driver);
 	return 0;
 }

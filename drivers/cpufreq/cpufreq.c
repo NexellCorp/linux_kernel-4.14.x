@@ -1920,6 +1920,10 @@ static int __target_index(struct cpufreq_policy *policy, int index)
 		pr_err("%s: Failed to change cpu frequency: %d\n", __func__,
 		       retval);
 
+#ifdef CONFIG_CPUFREQ_DT_PMQOS
+	freqs.new = policy->cur;
+#endif
+
 	if (notify) {
 		cpufreq_freq_transition_end(policy, &freqs, retval);
 

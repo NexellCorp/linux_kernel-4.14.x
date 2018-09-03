@@ -227,6 +227,15 @@ config CPUFREQ_DT_PLATDEV
 
 	  If in doubt, say N.
 
+config CPUFREQ_DT_PMQOS
+	tristate "SUPPORT PMQOS CPU Frequency boosting"
+	depends on CPUFREQ_DT
+	help
+	  This enables cpufreq boosting using pm_qos. cpufreq can be limited by
+	  MIN/MAX cpufreq set by pm_qos.
+
+	  If in doubt, say N.
+
 if X86
 source "drivers/cpufreq/Kconfig.x86"
 endif
