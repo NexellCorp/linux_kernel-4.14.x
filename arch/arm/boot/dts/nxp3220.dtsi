@@ -42,6 +42,7 @@
 			clock-frequency = <800000000>;
 			operating-points-v2 = <&cpu0_opp_table>;
 			#cooling-cells = <2>;
+			cpu-idle-states = <&CPU_SLEEP>;
 		};
 
 		cpu1: cpu@1 {
@@ -50,6 +51,16 @@
 			reg = <1>;
 			clock-frequency = <800000000>;
 			operating-points-v2 = <&cpu0_opp_table>;
+			cpu-idle-states = <&CPU_SLEEP>;
+		};
+
+		idle-states {
+			CPU_SLEEP: sleep {
+				compatible = "nexell,idle-state";
+				entry-latency-us = <150>;
+				exit-latency-us = <200>;
+				min-residency-us = <2000>;
+			};
 		};
 	};
 
