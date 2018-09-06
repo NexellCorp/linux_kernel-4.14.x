@@ -369,7 +369,7 @@
 			assigned-clocks = <&cmu CLK_SRC_DPC0_X2>,
 					  <&cmu_mm CLK_MM_DPC_AXI>;
 			assigned-clock-parents = <&pll_0 0>, <0>;
-			assigned-clock-rates = <0>, <200000000>;
+			assigned-clock-rates = <0>, <333333334>;
 			clocks = <&cmu_mm CLK_MM_DPC_AXI>,
 			       <&cmu_mm CLK_MM_DPC_X1>,
 			       <&cmu_mm CLK_MM_DPC_X2>;
