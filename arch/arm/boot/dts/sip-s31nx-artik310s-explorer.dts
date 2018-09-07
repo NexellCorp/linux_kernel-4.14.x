@@ -214,5 +214,5 @@
 
 &usb2phy {
 	status = "okay";
-	otg,vbus-tune = <1>;
+	otg,vbus-tune = <0>;
 };
