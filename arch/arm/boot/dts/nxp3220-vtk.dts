@@ -6,6 +6,7 @@
 
 /dts-v1/;
 #include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
 #include "nxp3220.dtsi"
 
 / {
@@ -19,6 +20,35 @@
 	memory@40000000 {
 		device_type = "memory";
 		reg = <0x40000000 0x20000000>;
+	};
+
+	gpio_keys {
+		compatible = "gpio-keys";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&key_3 &key_8 &key_17>;
+
+		button@3 {
+			label = "key3";
+			gpios = <&alive_0 3 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_3>;
+			gpio-key,wakeup;
+		};
+
+		button@8 {
+			label = "key8";
+			gpios = <&alive_0 8 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_8>;
+			gpio-key,wakeup;
+		};
+
+		button@17 {
+			label = "key17";
+			gpios = <&gpio_c 17 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_W>;
+			gpio-key,wakeup;
+		};
 	};
 
 	sound0: sound0 {
@@ -327,6 +357,29 @@
 	assigned-clocks = <&cmu CLK_CAN1_CORE>;
 	assigned-clock-rates = <10000000>;
 	status = "okay";
+};
+
+&pinctrl_0 {
+	key_3: key@3 {
+		nexell,pins = "alive-3";
+		nexell,pin-function = <NX_PIN_FUNC0>;
+		nexell,pin-pull = <NX_PIN_PULL_UP>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	key_8: key@8 {
+		nexell,pins = "alive-8";
+		nexell,pin-function = <NX_PIN_FUNC0>;
+		nexell,pin-pull = <NX_PIN_PULL_UP>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	key_17: key@17 {
+		nexell,pins = "gpioc-17";
+		nexell,pin-function = <NX_PIN_FUNC0>;
+		nexell,pin-pull = <NX_PIN_PULL_UP>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
 };
 
 &pwm {
