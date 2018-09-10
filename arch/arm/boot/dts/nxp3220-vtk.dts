@@ -209,11 +209,6 @@
 	pinctrl-0 = <&gmac0_pins>;
 	phy-mode = "rgmii";
 	phy-handle = <&ethphy0>;
-	assigned-clocks = <&cmu CLK_GMAC_RGMII0_AXI>,
-			  <&cmu CLK_GMAC_RGMII0_APB>,
-			  <&cmu CLK_GMAC_RGMII0_PTP_REF>;
-	assigned-clock-rates = <250000000>, <125000000>, <25000000>;
-
 	phy-reset-gpios = <&alive_0 5 GPIO_ACTIVE_LOW>;
 	phy-intr-gpios = <&alive_0 4 GPIO_ACTIVE_LOW>;
 	phy-pme-gpios = <&alive_0 6 GPIO_ACTIVE_LOW>;
@@ -235,11 +230,6 @@
 	pinctrl-0 = <&gmac1_pins>;
 	phy-mode = "rmii";
 	phy-handle = <&ethphy1>;
-	assigned-clocks = <&cmu CLK_GMAC_RMII0_AXI>,
-			  <&cmu CLK_GMAC_RMII0_APB>,
-			  <&cmu CLK_GMAC_RMII0_PTP_REF>;
-	assigned-clock-rates = <250000000>, <125000000>, <25000000>;
-
 	phy-reset-gpios = <&alive_0 9 GPIO_ACTIVE_LOW>;
 	phy-intr-gpios = <&alive_0 7 GPIO_ACTIVE_LOW>;
 
@@ -318,44 +308,32 @@
 &i2s0 {
 	frame-bit = <32>;
 	sample-rate = <48000>;
-	assigned-clocks = <&cmu CLK_I2S0_CORE>;
-	assigned-clock-rates = <12288000>;
 	status = "okay";
 };
 
 &i2s1 {
 	frame-bit = <32>;
 	sample-rate = <48000>;
-	assigned-clocks = <&cmu CLK_I2S1_CORE>;
-	assigned-clock-rates = <12288000>;
 	status = "okay";
 };
 
 &i2s2 {
 	frame-bit = <32>;
 	sample-rate = <48000>;
-	assigned-clocks = <&cmu CLK_I2S2_CORE>;
-	assigned-clock-rates = <12288000>;
 	status = "okay";
 };
 
 &i2s3 {
 	frame-bit = <32>;
 	sample-rate = <48000>;
-	assigned-clocks = <&cmu CLK_I2S3_CORE>;
-	assigned-clock-rates = <12288000>;
 	status = "okay";
 };
 
 &m_can0 {
-	assigned-clocks = <&cmu CLK_CAN0_CORE>;
-	assigned-clock-rates = <10000000>;
 	status = "okay";
 };
 
 &m_can1 {
-	assigned-clocks = <&cmu CLK_CAN1_CORE>;
-	assigned-clock-rates = <10000000>;
 	status = "okay";
 };
 
@@ -384,8 +362,6 @@
 
 &pwm {
 	status = "okay";
-	assigned-clocks = <&cmu CLK_PWM0_APB>;
-	assigned-clock-rates = <166000000>;
 };
 
 &tmuctrl_0 {

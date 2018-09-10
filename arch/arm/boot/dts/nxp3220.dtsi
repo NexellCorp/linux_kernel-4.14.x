@@ -267,49 +267,46 @@
 					  <&cmu CLK_SYS_DIV_SYS0_AXI>,
 					  <&cmu CLK_SRC_TIMER0_TCLK0>,
 					  <&cmu CLK_SRC_TIMER0_TCLK1>,
-					  <&cmu CLK_SRC_SDMMC0_CORE>,
-					  <&cmu CLK_SRC_SDMMC1_CORE>,
-					  <&cmu CLK_SRC_SDMMC2_CORE>,
 					  <&cmu CLK_SRC_I2C0_APB>,
 					  <&cmu CLK_SRC_USB0_AHB>,
-					  <&cmu CLK_SRC_GMAC_RGMII0_PTP_REF>,
-					  <&cmu CLK_SRC_GMAC_RGMII0_TX>,
-					  <&cmu CLK_SRC_GMAC_RMII0_PTP_REF>,
+					  <&cmu CLK_SRC_SPI0_APB>,
+					  <&cmu CLK_SRC_SPI0_CORE>,
+					  <&cmu CLK_SRC_PWM0_APB>,
+					  <&cmu CLK_SRC_UART0_CORE>,
+					  <&cmu CLK_SRC_UART0_APB>,
 					  <&cmu CLK_SYS_DIV_SYS0_HSIF_APB>,
 					  <&cmu CLK_SYS_DIV_SYS0_HSIF_AXI>,
 					  <&cmu CLK_SYS_DIV_I2C0_APB>;
-			assigned-clock-parents = <0>,
-						 <&pll_0 0>,
-						 <0>,
-						 <&pll_0 0>,
-						 <&pll_0 0>,
-						 <&cmu CLK_PLL1_DIV>,
-						 <&pll_0 0>,
-						 <&pll_0 0>,
-						 <&pll_0 0>,
-						 <&pll_0 0>,
-						 <&pll_0 0>,
-						 <&pll_0 0>,
-						 <&pll_0 0>,
-						 <0>,
-						 <0>,
-						 <0>;
-			assigned-clock-rates = <1000000000>,
-					       <333333334>,
-					       <333333334>,
-					       <0>,
-					       <0>,
-					       <400000000>,
-					       <200000000>,
-					       <200000000>,
-					       <0>,
-					       <250000000>,
-					       <25000000>,
-					       <125000000>,
-					       <25000000>,
-					       <125000000>,
-					       <250000000>,
-					       <100000000>;
+			assigned-clock-parents = <0>,		/* PLL_0 */
+						 <&pll_0 0>,	/* SRC_SYS0_AXI */
+						 <0>,		/* SYS_DIV_SYS0_AXI */
+						 <&pll_0 0>,	/* SRC_TIMER0_TCLK0 */
+						 <&pll_0 0>,	/* SRC_TIMER0_TCLK1 */
+						 <&pll_0 0>,	/* SRC_I2C0_APB */
+						 <&pll_0 0>,	/* SRC_USB0_AHB */
+						 <&pll_0 0>,	/* SRC_SPI0_APB */
+						 <&pll_0 0>,	/* SRC_SPI0_CORE */
+						 <&pll_0 0>,	/* SRC_PWM0_APB */
+						 <&pll_0 0>,	/* SRC_UART0_CORE */
+						 <&pll_0 0>,	/* SRC_UART0_APB */
+						 <0>,		/* SYS_DIV_SYS0_HSIF_APB */
+						 <0>,		/* SYS_DIV_SYS0_HSIF_AXI */
+						 <0>;		/* SYS_DIV_I2C0_APB */
+			assigned-clock-rates = <1000000000>,	/* PLL_0 */
+					       <333333334>,     /* SRC_SYS0_AXI */
+					       <333333334>,     /* SYS_DIV_SYS0_AXI */
+					       <0>,             /* SRC_TIMER0_TCLK0 */
+					       <0>,             /* SRC_TIMER0_TCLK1 */
+					       <0>,             /* SRC_I2C0_APB */
+					       <250000000>,     /* SRC_USB0_AHB */
+					       <0>,             /* SRC_SPI0_APB */
+					       <0>,             /* SRC_SPI0_CORE */
+					       <0>,             /* SRC_PWM0_APB */
+					       <0>,             /* SRC_UART0_CORE */
+					       <0>,             /* SRC_UART0_APB */
+					       <125000000>,     /* SYS_DIV_SYS0_HSIF_APB */
+					       <250000000>,     /* SYS_DIV_SYS0_HSIF_AXI */
+					       <100000000>;	/* SYS_DIV_I2C0_APB */
 		};
 
 		cmu_cpu: clock-controller@22000000 {
@@ -367,9 +364,10 @@
 			reg-names = "mlc.0", "dpc.0";
 			interrupts = <GIC_SPI 38 IRQ_TYPE_NONE>;
 			assigned-clocks = <&cmu CLK_SRC_DPC0_X2>,
-					  <&cmu_mm CLK_MM_DPC_AXI>;
-			assigned-clock-parents = <&pll_0 0>, <0>;
-			assigned-clock-rates = <0>, <333333334>;
+					  <&cmu_mm CLK_MM_DPC_AXI>,
+					  <&pll_0 0>;
+			assigned-clock-parents = <&pll_0 0>, <0>, <0>;
+			assigned-clock-rates = <0>, <333333334>, <0>;
 			clocks = <&cmu_mm CLK_MM_DPC_AXI>,
 			       <&cmu_mm CLK_MM_DPC_X1>,
 			       <&cmu_mm CLK_MM_DPC_X2>;
@@ -392,7 +390,10 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0x26080000 0x1000>;
-			clock-frequency = <400000000>;
+			assigned-clocks = <&cmu CLK_SRC_SDMMC0_CORE>,
+					  <&pll_0 0>;
+			assigned-clock-parents = <&pll_0 0>;
+			clock-frequency = <333333334>;
 			clock-names = "biu", "ciu";
 			clocks = <&cmu CLK_SDMMC0_AHB>,
 			         <&cmu CLK_SDMMC0_CORE>;
@@ -409,6 +410,9 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0x26090000 0x1000>;
+			assigned-clocks = <&cmu CLK_SRC_SDMMC1_CORE>,
+					  <&pll_0 0>;
+			assigned-clock-parents = <&pll_0 0>;
 			clock-frequency = <200000000>;
 			clock-names = "biu", "ciu";
 			clocks = <&cmu CLK_SDMMC1_AHB>,
@@ -426,6 +430,9 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0x260a0000 0x1000>;
+			assigned-clocks = <&cmu CLK_SRC_SDMMC1_CORE>,
+					  <&pll_0 0>;
+			assigned-clock-parents = <&pll_0 0>;
 			clock-frequency = <200000000>;
 			clock-names = "biu","ciu";
 			clocks = <&cmu CLK_SDMMC2_AHB>,
@@ -469,6 +476,20 @@
 			reg = <0x26100000 0x8000>;
 			interrupts = <GIC_SPI 39 IRQ_TYPE_NONE>;
 			interrupt-names = "macirq0";
+			assigned-clocks = <&cmu CLK_SRC_GMAC_RGMII0_PTP_REF>,
+					  <&cmu CLK_SRC_GMAC_RGMII0_TX>,
+					  <&cmu CLK_GMAC_RGMII0_AXI>,
+					  <&cmu CLK_GMAC_RGMII0_APB>,
+					  <&cmu CLK_GMAC_RGMII0_PTP_REF>,
+					  <&pll_0 0>;
+			assigned-clock-parents = <&pll_0 0>,
+						 <&pll_0 0>,
+						 <0>, <0>, <0>;
+			assigned-clock-rates = <25000000>,
+					       <125000000>,
+					       <250000000>,
+					       <125000000>,
+					       <25000000>;
 			clocks = <&cmu CLK_GMAC_RGMII0_AXI>,
 				 <&cmu CLK_GMAC_RGMII0_APB>,
 				 <&cmu CLK_GMAC_RGMII0_TX>,
@@ -489,6 +510,16 @@
 			reg = <0x26110000 0x8000>;
 			interrupts = <GIC_SPI 42 IRQ_TYPE_NONE>;
 			interrupt-names = "macirq1";
+			assigned-clocks = <&cmu CLK_SRC_GMAC_RMII0_PTP_REF>,
+					  <&cmu CLK_GMAC_RMII0_AXI>,
+					  <&cmu CLK_GMAC_RMII0_APB>,
+					  <&cmu CLK_GMAC_RMII0_PTP_REF>,
+					  <&pll_0 0>;
+			assigned-clock-parents = <&pll_0 0>;
+			assigned-clock-rates = <25000000>,
+					       <250000000>,
+					       <125000000>,
+					       <25000000>;
 			clocks = <&cmu CLK_GMAC_RMII0_AXI>,
 				 <&cmu CLK_GMAC_RMII0_APB>,
 				 <&cmu CLK_GMAC_RMII0_PTP_REF>;
@@ -561,6 +592,17 @@
 		pwm: pwm@20880000 {
 			compatible = "nexell,nxp3220-pwm";
 			reg = <0x20880000 0x400>;
+			assigned-clocks = <&cmu CLK_SRC_PWM0_TCLK0>,
+					  <&cmu CLK_SRC_PWM0_TCLK1>,
+					  <&cmu CLK_SRC_PWM0_TCLK2>,
+					  <&cmu CLK_SRC_PWM0_TCLK3>,
+					  <&cmu CLK_PWM0_APB>,
+					  <&pll_0 0>;
+			assigned-clock-rates = <0>, <0>, <0>, <0>, <166000000>,
+					       <0>;
+			assigned-clock-parents = <&pll_0 0>, <&pll_0 0>,
+						 <&pll_0 0>, <&pll_0 0>,
+						 <0>, <0>;
 			clocks = <&cmu CLK_PWM0_APB>,
 				 <&cmu CLK_PWM0_TCLK0>,
 				 <&cmu CLK_PWM0_TCLK1>,
@@ -580,6 +622,11 @@
 			compatible = "nexell,nxp3220-i2s";
 			#sound-dai-cells = <0>;
 			reg = <0x20780000 0x1000>;
+			assigned-clocks = <&cmu CLK_SRC_I2S0_CORE>,
+					  <&cmu CLK_I2S0_CORE>,
+					  <&cmu CLK_PLL1_DIV>;
+			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>, <0>;
+			assigned-clock-rates = <0>, <12288000>, <0>;
 			clocks = <&cmu CLK_I2S0_CORE>, <&cmu CLK_I2S0_APB>;
 			clock-names = "i2s", "pclk";
 			dmas = <&pdma0 5 &pdma0 4>;
@@ -593,6 +640,11 @@
 			compatible = "nexell,nxp3220-i2s";
 			#sound-dai-cells = <0>;
 			reg = <0x20790000 0x1000>;
+			assigned-clocks = <&cmu CLK_SRC_I2S1_CORE>,
+					  <&cmu CLK_I2S0_CORE>,
+					  <&cmu CLK_PLL1_DIV>;
+			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>, <0>;
+			assigned-clock-rates = <0>, <12288000>, <0>;
 			clocks = <&cmu CLK_I2S1_CORE>, <&cmu CLK_I2S1_APB>;
 			clock-names = "i2s", "pclk";
 			dmas = <&pdma1 5 &pdma1 4>;
@@ -606,6 +658,11 @@
 			compatible = "nexell,nxp3220-i2s";
 			#sound-dai-cells = <0>;
 			reg = <0x207a0000 0x1000>;
+			assigned-clocks = <&cmu CLK_SRC_I2S2_CORE>,
+					  <&cmu CLK_I2S0_CORE>,
+					  <&cmu CLK_PLL1_DIV>;
+			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>, <0>;
+			assigned-clock-rates = <0>, <12288000>, <0>;
 			clocks = <&cmu CLK_I2S2_CORE>, <&cmu CLK_I2S2_APB>;
 			clock-names = "i2s", "pclk";
 			dmas = <&pdma0 7 &pdma0 6>;
@@ -619,6 +676,11 @@
 			compatible = "nexell,nxp3220-i2s";
 			#sound-dai-cells = <0>;
 			reg = <0x207b0000 0x1000>;
+			assigned-clocks = <&cmu CLK_SRC_I2S3_CORE>,
+					  <&cmu CLK_I2S0_CORE>,
+					  <&cmu CLK_PLL1_DIV>;
+			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>, <0>;
+			assigned-clock-rates = <0>, <12288000>, <0>;
 			clocks = <&cmu CLK_I2S3_CORE>, <&cmu CLK_I2S3_APB>;
 			clock-names = "i2s", "pclk";
 			dmas = <&pdma1 7 &pdma1 6>;
@@ -634,6 +696,11 @@
 			reg-names = "m_can", "message_ram";
 			interrupts = <GIC_SPI 27 IRQ_TYPE_NONE>;
 			interrupt-names = "int0";
+			assigned-clocks = <&cmu CLK_SRC_CAN0_CORE>,
+					  <&cmu CLK_CAN0_CORE>,
+					  <&pll_0 0>;
+			assigned-clock-parents = <&pll_0 0>, <0>, <0>;
+			assigned-clock-rates = <0>, <10000000>, <0>;
 			clocks = <&cmu CLK_CAN0_APB>, <&cmu CLK_CAN0_CORE>;
 			clock-names = "hclk", "cclk";
 			pinctrl-names = "default";
@@ -648,6 +715,11 @@
 			reg-names = "m_can", "message_ram";
 			interrupts = <GIC_SPI 29 IRQ_TYPE_NONE>;
 			interrupt-names = "int0";
+			assigned-clocks = <&cmu CLK_SRC_CAN1_CORE>,
+					  <&cmu CLK_CAN1_CORE>,
+					  <&pll_0 0>;
+			assigned-clock-parents = <&pll_0 0>, <0>, <0>;
+			assigned-clock-rates = <0>, <10000000>, <0>;
 			clocks = <&cmu CLK_CAN1_APB>, <&cmu CLK_CAN1_CORE>;
 			clock-names = "hclk", "cclk";
 			pinctrl-names = "default";
@@ -671,6 +743,15 @@
 			#sound-dai-cells = <0>;
 			reg = <0x20c00000 0x1000>, <0x20c04000 0x4000>;
 			reg-names = "pdm", "sram";
+			assigned-clocks = <&cmu CLK_SRC_PDM0_CORE>,
+					  <&cmu CLK_SRC_PDM0_AXI>,
+					  <&cmu CLK_PDM0_AXI>,
+					  <&cmu CLK_PLL1_DIV>;
+			assigned-clock-parents = <&cmu CLK_PLL1_DIV>,
+						 <&cmu CLK_PLL1_DIV>,
+						 <0>,
+						 <0>;
+			assigned-clock-rates = <0>, <0>, <200000000>, <0>;
 			clocks = <&cmu CLK_PDM0_AXI>,
 			       <&cmu CLK_PDM0_CORE>;
 			clock-names = "axi", "core";
@@ -852,6 +933,9 @@
 			compatible = "nexell,nxp3220-dw-spi";
 			reg = <0x30000000 0x1000>;
 			interrupts = <GIC_SPI 93 IRQ_TYPE_NONE>;
+			assigned-clocks = <&cmu CLK_SPI0_APB>,
+					  <&cmu CLK_SPI0_CORE>;
+			assigned-clock-rates = <200000000>, <200000000>;
 			clocks = <&cmu CLK_SPI0_CORE>,
 				<&cmu CLK_SPI0_APB>;
 			clock-names = "core", "apb";
@@ -869,6 +953,9 @@
 			compatible = "nexell,nxp3220-dw-spi";
 			reg = <0x20a90000 0x1000>;
 			interrupts = <GIC_SPI 94 IRQ_TYPE_NONE>;
+			assigned-clocks = <&cmu CLK_SPI1_APB>,
+					  <&cmu CLK_SPI1_CORE>;
+			assigned-clock-rates = <200000000>, <200000000>;
 			clocks = <&cmu CLK_SPI1_CORE>,
 				<&cmu CLK_SPI1_APB>;
 			clock-names = "core", "apb";
@@ -886,6 +973,9 @@
 			compatible = "nexell,nxp3220-dw-spi";
 			reg = <0x20aa0000 0x1000>;
 			interrupts = <GIC_SPI 95 IRQ_TYPE_NONE>;
+			assigned-clocks = <&cmu CLK_SPI2_APB>,
+					  <&cmu CLK_SPI2_CORE>;
+			assigned-clock-rates = <200000000>, <200000000>;
 			clocks = <&cmu CLK_SPI2_CORE>,
 				<&cmu CLK_SPI2_APB>;
 			clock-names = "core", "apb";
