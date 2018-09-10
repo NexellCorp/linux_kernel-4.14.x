@@ -75,10 +75,12 @@ PNAME(src_mux_p)		= { "pll0", "pll1_div", "div_cpu_pll",
 	"div_pll_ddr0", "div_pll_ddr1", "ext_src", "oscclk"};
 
 #define COMP_BASE_SRC(_id, cname) \
-	COMP_BASE(_id, NULL, cname, src_mux_p, CLK_IGNORE_UNUSED)
+	COMP_BASE(_id, NULL, cname, src_mux_p, \
+		  CLK_SET_RATE_NO_REPARENT | CLK_IGNORE_UNUSED)
 
 #define COMP_BASE_SRC_CRIT(_id, cname) \
-	COMP_BASE(_id, NULL, cname, src_mux_p, CLK_IS_CRITICAL)
+	COMP_BASE(_id, NULL, cname, src_mux_p, \
+		  CLK_SET_RATE_NO_REPARENT | CLK_IS_CRITICAL)
 
 #define COMP_BASE_SRC_F(_id, cname, f) \
 	COMP_BASE(_id, NULL, cname, src_mux_p, f)
@@ -352,8 +354,7 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 		COMP_DIV_SRC(VIP0_PADOUT1)
 		COMP_GATE_SRC(VIP0_PADOUT1)
 	}, {
-		COMP_BASE_SRC_F(CLK_SRC_DPC0_X2, "src_dpc0_x2",
-				CLK_SET_RATE_NO_REPARENT)
+		COMP_BASE_SRC(CLK_SRC_DPC0_X2, "src_dpc0_x2")
 		COMP_MUX_SRC(DPC0_X2)
 		COMP_DIV_SRC_F(DPC0_X2, CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_GATE_SRC(DPC0_X2)
