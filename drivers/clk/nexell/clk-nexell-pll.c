@@ -67,6 +67,7 @@ struct clk_pll {
 	struct regmap *regmap;
 	struct pll_pms pms;
 	enum pll_type type;
+	spinlock_t lock;
 };
 
 #define to_clk_pll(hw) container_of(hw, struct clk_pll, hw)
@@ -234,11 +235,14 @@ static int nexell_clk_pll_set_rate(struct clk_hw *hw, unsigned long rate,
 	struct clk_pll *pll = to_clk_pll(hw);
 	struct pll_pms pms;
 	struct regmap *regmap = pll->regmap;
+	unsigned long flags;
 	int ret;
 
 	ret = pll_round_rate(pll, rate, parent_rate, &pms);
 	if (ret < 0)
 		return ret;
+
+	spin_lock_irqsave(&pll->lock, flags);
 
 	/* TODO: do we really need to check the clock is stable before changing
 	 * pms values?
@@ -260,7 +264,7 @@ static int nexell_clk_pll_set_rate(struct clk_hw *hw, unsigned long rate,
 	regmap_update_bits(regmap, PLLCTRL, PLLCTRL_RUN_PLL_UPDATE_MASK,
 			   BIT(PLLCTRL_RUN_PLL_UPDATE));
 
-	usleep_range(10, 20);
+	udelay(2);
 
 	regmap_update_bits(regmap, PLLCFG0, PLLCFG0_RESET_MASK,
 			   BIT(PLLCFG0_RESET_SHIFT));
@@ -270,11 +274,13 @@ static int nexell_clk_pll_set_rate(struct clk_hw *hw, unsigned long rate,
 	regmap_update_bits(regmap, PLLCTRL, PLLCTRL_RUN_PLL_UPDATE_MASK,
 			   BIT(PLLCTRL_RUN_PLL_UPDATE));
 
-	usleep_range(200, 250);
+	udelay(150);
 
 	clk_pll_wait_ready(pll);
 
 	clk_pll_set_oscmux(pll, MUXSEL_PLLFOUT);
+
+	spin_unlock_irqrestore(&pll->lock, flags);
 
 	return 0;
 }
@@ -315,6 +321,8 @@ static void __init nexell_clk_register_pll(struct device_node *np,
 	init.flags = CLK_SET_RATE_GATE;
 
 	pll->hw.init = &init;
+
+	spin_lock_init(&pll->lock);
 
 	if (clk_hw_register(NULL, &pll->hw))
 		goto out_free;
