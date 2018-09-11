@@ -9,6 +9,7 @@
 #include <linux/of.h>
 #include <linux/mfd/syscon.h>
 #include <linux/regmap.h>
+#include <linux/syscore_ops.h>
 
 #define REF_CLK 24000000UL
 
@@ -68,7 +69,10 @@ struct clk_pll {
 	struct pll_pms pms;
 	enum pll_type type;
 	spinlock_t lock;
+	struct list_head node;
 };
+
+static LIST_HEAD(pll_list);
 
 #define to_clk_pll(hw) container_of(hw, struct clk_pll, hw)
 
@@ -106,6 +110,14 @@ static struct pll_pms pll2651_pms_table[] = {
 	{ .rate =  300000000U, .p = 2, .m = 100, .s = 2, .k = 0 },
 	{ .rate =  200000000U, .p = 3, .m = 200, .s = 3, .k = 0 },
 };
+
+static inline bool is_match_pms(struct pll_pms p1, struct pll_pms p2)
+{
+	if (p1.p == p2.p && p1.m == p2.m && p1.s == p2.s && p1.k == p2.k)
+		return true;
+
+	return false;
+}
 
 static void clk_pll_set_oscmux(struct clk_pll *pll, unsigned int muxsel)
 {
@@ -179,45 +191,63 @@ static long pll_round_rate(struct clk_pll *pll, unsigned long rate,
 	return -ERANGE;
 }
 
+static int __pll_get_pms(struct clk_pll *pll, struct pll_pms *pms)
+{
+	struct regmap *regmap = pll->regmap;
+	u32 cfg1, cfg2;
+	int ret;
+
+	if (pms == NULL)
+		return -EINVAL;
+
+	ret = regmap_read(regmap, PLLCFG1, &cfg1);
+	if (ret)
+		return ret;
+
+	ret = regmap_read(regmap, PLLCFG2, &cfg2);
+	if (ret)
+		return ret;
+
+	pms->p = (cfg1 & PLLCFG1_P_MASK) >> PLLCFG1_P_SHIFT;
+	pms->m = (cfg1 & PLLCFG1_M_MASK) >> PLLCFG1_M_SHIFT;
+	pms->s = (cfg2 & PLLCFG2_S_MASK) >> PLLCFG2_S_SHIFT;
+	pms->k = (s16)((cfg2 & PLLCFG2_K_MASK) >> PLLCFG2_K_SHIFT);
+
+	return 0;
+}
+
 static unsigned long nexell_clk_pll_recalc_rate(struct clk_hw *hw,
 						unsigned long parent_rate)
 {
 	struct clk_pll *pll = to_clk_pll(hw);
-	struct regmap *regmap = pll->regmap;
-	u32 cfg1, cfg2;
-	u32 p, m, s;
-	s16 k;
+	struct pll_pms pms;
 	u64 fout = parent_rate;
 	int ret;
 
 	if (fout > REF_CLK)
 		fout = REF_CLK;
 
-	ret = regmap_read(regmap, PLLCFG1, &cfg1);
+	ret = __pll_get_pms(pll, &pms);
 	if (ret)
 		return 0;
-
-	ret = regmap_read(regmap, PLLCFG2, &cfg2);
-	if (ret)
-		return 0;
-
-	p = (cfg1 & PLLCFG1_P_MASK) >> PLLCFG1_P_SHIFT;
-	m = (cfg1 & PLLCFG1_M_MASK) >> PLLCFG1_M_SHIFT;
-	s = (cfg2 & PLLCFG2_S_MASK) >> PLLCFG2_S_SHIFT;
-	k = (s16)((cfg2 & PLLCFG2_K_MASK) >> PLLCFG2_K_SHIFT);
 
 	if (pll->type == PLL2555)
-		fout *= m;
+		fout *= pms.m;
 	else if (pll->type == PLL2651)
-		fout *= (m << 16) + k;
-	else
-		return 0;
+		fout *= (pms.m << 16) + pms.k;
+	else {
+		fout = 0;
+		goto out;
+	}
 
-	do_div(fout, (p << s));
+	do_div(fout, (pms.p << pms.s));
 
 	if (pll->type == PLL2651)
 		fout >>= 16;
 
+	pll->pms = pms;
+
+out:
 	return fout;
 }
 
@@ -229,20 +259,9 @@ static long nexell_clk_pll_round_rate(struct clk_hw *hw, unsigned long rate,
 	return pll_round_rate(pll, rate, *parent_rate, NULL);
 }
 
-static int nexell_clk_pll_set_rate(struct clk_hw *hw, unsigned long rate,
-				   unsigned long parent_rate)
+static void __pll_set_rate_locked(struct clk_pll *pll, struct pll_pms *pms)
 {
-	struct clk_pll *pll = to_clk_pll(hw);
-	struct pll_pms pms;
 	struct regmap *regmap = pll->regmap;
-	unsigned long flags;
-	int ret;
-
-	ret = pll_round_rate(pll, rate, parent_rate, &pms);
-	if (ret < 0)
-		return ret;
-
-	spin_lock_irqsave(&pll->lock, flags);
 
 	/* TODO: do we really need to check the clock is stable before changing
 	 * pms values?
@@ -252,9 +271,9 @@ static int nexell_clk_pll_set_rate(struct clk_hw *hw, unsigned long rate,
 	clk_pll_set_oscmux(pll, MUXSEL_OSCCLK);
 
 	regmap_update_bits(regmap, PLLCFG1, (PLLCFG1_P_MASK | PLLCFG1_M_MASK),
-			   PLLCFG1_M(pms.m) | pms.p);
+			   PLLCFG1_M(pms->m) | pms->p);
 	regmap_update_bits(regmap, PLLCFG2, PLLCFG2_S_MASK | PLLCFG2_K_MASK,
-			   PLLCFG2_K(pms.k) | pms.s);
+			   PLLCFG2_K(pms->k) | pms->s);
 
 	regmap_update_bits(regmap, PLLCFG0, PLLCFG0_RESET_MASK, 0);
 
@@ -279,7 +298,23 @@ static int nexell_clk_pll_set_rate(struct clk_hw *hw, unsigned long rate,
 	clk_pll_wait_ready(pll);
 
 	clk_pll_set_oscmux(pll, MUXSEL_PLLFOUT);
+}
 
+static int nexell_clk_pll_set_rate(struct clk_hw *hw, unsigned long rate,
+				   unsigned long parent_rate)
+{
+	struct clk_pll *pll = to_clk_pll(hw);
+	struct pll_pms pms;
+	unsigned long flags;
+	int ret;
+
+	ret = pll_round_rate(pll, rate, parent_rate, &pms);
+	if (ret < 0)
+		return ret;
+
+	spin_lock_irqsave(&pll->lock, flags);
+	__pll_set_rate_locked(pll, &pms);
+	pll->pms = pms;
 	spin_unlock_irqrestore(&pll->lock, flags);
 
 	return 0;
@@ -289,6 +324,33 @@ static const struct clk_ops pll_ops = {
 	.recalc_rate = nexell_clk_pll_recalc_rate,
 	.round_rate = nexell_clk_pll_round_rate,
 	.set_rate = nexell_clk_pll_set_rate,
+};
+
+static int nexell_clk_pll_suspend(void)
+{
+	return 0;
+}
+
+static void nexell_clk_pll_resume(void)
+{
+	struct clk_pll *pll;
+	int ret;
+
+	list_for_each_entry(pll, &pll_list, node) {
+		struct pll_pms pms;
+
+		ret = __pll_get_pms(pll, &pms);
+		if (ret)
+			continue;
+
+		if (!is_match_pms(pll->pms, pms))
+			__pll_set_rate_locked(pll, &pll->pms);
+	}
+}
+
+static struct syscore_ops nexell_clk_pll_syscore_ops = {
+	.suspend = nexell_clk_pll_suspend,
+	.resume = nexell_clk_pll_resume,
 };
 
 static void __init nexell_clk_register_pll(struct device_node *np,
@@ -329,6 +391,11 @@ static void __init nexell_clk_register_pll(struct device_node *np,
 
 	if (of_clk_add_hw_provider(np, of_clk_hw_simple_get, &pll->hw))
 		goto out_unregister;
+
+	if (list_empty(&pll_list))
+		register_syscore_ops(&nexell_clk_pll_syscore_ops);
+
+	list_add_tail(&pll->node, &pll_list);
 
 	return;
 
