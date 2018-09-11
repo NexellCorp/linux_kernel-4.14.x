@@ -356,6 +356,10 @@
 			       <&cmu CLK_SRC_DPC0_X2>,
 			       <&cmu CLK_SRC_LVDS0_VCLK>,
 			       <&cmu CLK_SRC_CODA960_0_CORE>;
+
+			assigned-clocks = <&cmu_mm CLK_MM_DIV_AXI>,
+					  <&cmu_mm CLK_MM_DIV_APB>;
+			assigned-clock-rates = <333333334>, <166666667>;
 		};
 
 		drm: drm@25140000 {
