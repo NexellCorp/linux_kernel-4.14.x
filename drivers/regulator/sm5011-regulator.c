@@ -24,13 +24,24 @@
 #define SM5011_RAMP_RATE_MASK		0x18
 #define SM5011_RAMP_RATE_SHIFT		3
 
+#define SM5011_ONSLOT_MASK		0x30
+#define SM5011_ONSLOT_SHIFT		0x4
+#define SM5011_OFFSLOT_MASK		0xC
+#define SM5011_OFFSLOT_SHIFT		0x2
+
+#define SM5011_ENPWRSTM_MASK		0x8
+#define SM5011_ENPWRSTM_SHIFT		0x3
+
+#define SM5011_ONOFFSLOT_MAX		4
+
 static int sm5011_enable(struct regulator_dev *rdev)
 {
 	unsigned int val;
 
-	/* TODO: check pin status of nPWRSTM */
-
-	val = SM5011_OPMODE_ON;
+	if (rdev->constraints->state_mem.disabled)
+		val = SM5011_OPMODE_ONOFF_TRANS;
+	else
+		val = SM5011_OPMODE_ON;
 
 	return regmap_update_bits(rdev->regmap, rdev->desc->enable_reg,
 				  rdev->desc->enable_mask, val);
@@ -39,8 +50,6 @@ static int sm5011_enable(struct regulator_dev *rdev)
 static int sm5011_disable(struct regulator_dev *rdev)
 {
 	unsigned int val;
-
-	/* TODO: check pin status of nPWRSTM */
 
 	val = SM5011_OPMODE_OFF;
 
@@ -81,7 +90,19 @@ static int sm5011_of_parse_cb(struct device_node *np,
 			      const struct regulator_desc *desc,
 			      struct regulator_config *config)
 {
-	/* TODO: get custom properties */
+	int ret = 0;
+	unsigned int val;
+
+	/* Slots for PWRSTM will be set when DT nodes are exist. */
+	ret = of_property_read_u32(np, "pwrstm-enter-slot", &val);
+	if (!ret && val < SM5011_ONOFFSLOT_MAX)
+		regmap_update_bits(config->regmap, desc->enable_reg,
+		    SM5011_OFFSLOT_MASK, val << SM5011_OFFSLOT_SHIFT);
+
+	ret = of_property_read_u32(np, "pwrstm-exit-slot", &val);
+	if (!ret && val < SM5011_ONOFFSLOT_MAX)
+		regmap_update_bits(config->regmap, desc->enable_reg,
+		    SM5011_ONSLOT_MASK, val << SM5011_ONSLOT_SHIFT);
 
 	return 0;
 }
@@ -108,6 +129,7 @@ static struct regulator_ops sm5011_buck_ops = {
 	.name		= "BUCK"#num,	\
 	.of_match	= "BUCK"#num,	\
 	.regulators_node	= of_match_ptr("voltage-regulators"),	\
+	.of_parse_cb	= sm5011_of_parse_cb,	\
 	.id		= SM5011_BUCK##num,	\
 	.ops		= &sm5011_buck_ops,	\
 	.type		= REGULATOR_VOLTAGE,	\
@@ -204,6 +226,11 @@ static int sm5011_pmic_probe(struct platform_device *pdev)
 				id, ret);
 			return ret;
 		}
+	}
+
+	if (!of_property_read_bool(config.of_node, "enable-pwrstm")) {
+		regmap_update_bits(config.regmap, SM5011_REG_CNTL2,
+			SM5011_ENPWRSTM_MASK, 1 << SM5011_ENPWRSTM_SHIFT);
 	}
 
 	return 0;
