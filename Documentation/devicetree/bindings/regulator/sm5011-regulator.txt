@@ -9,6 +9,7 @@ over I2C.
 Following properties should be present in main device node of the MFD chip.
 
 Optional node:
+- enable-pwrstm : This boolean value enables PWRSTM feature.
 - voltage-regulators : The regulators of sm5011 have to be instantiated
   under subnode named "voltage-regulators" using the following format.
 
@@ -25,6 +26,9 @@ to get matched with their hardware counterparts as follow:
 			example: LDO1, LDO2, LDO26.
 	-BUCKn 	:	for BUCKs, where n can be in range 2 to 6.
 			example: BUCK2, BUCK5, BUCK6.
+  sub-node:
+	- pwrstm-enter/exit-slot : This integer value indicates the on/off
+slot when pmic enter/exit PWRSTM mode. It can be 0 to 3.(4 slots are supported)
 
 Example:
 
@@ -43,6 +47,12 @@ Example:
 				regulator-max-microvolt = <2150000>;
 				regulator-always-on;
 				regulator-boot-on;
+				pwrstm-enter-slot = <3>;
+				pwrstm-exit-slot = <0>;
+
+				regulator-state-mem {
+					regulator-off-in-suspend;
+				};
 			};
 
 			ldo1_reg: LDO1 {
