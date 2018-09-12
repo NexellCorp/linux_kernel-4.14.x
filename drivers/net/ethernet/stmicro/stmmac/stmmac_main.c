@@ -2515,10 +2515,13 @@ static int stmmac_hw_setup(struct net_device *dev, bool init_ptp)
 	}
 
 #ifdef CONFIG_DEBUG_FS
-	ret = stmmac_init_fs(dev);
-	if (ret < 0)
-		netdev_warn(priv->dev, "%s: failed debugFS registration\n",
-			    __func__);
+	/* Since the init_ptp option is used to check for suspend... */
+	if (init_ptp) {
+		ret = stmmac_init_fs(dev);
+		if (ret < 0)
+			netdev_warn(priv->dev, "%s: failed debugFS registration\n",
+				    __func__);
+	}
 #endif
 	/* Start the ball rolling... */
 	stmmac_start_all_dma(priv);
