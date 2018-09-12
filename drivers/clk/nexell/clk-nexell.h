@@ -229,6 +229,29 @@ struct nexell_clk_reset {
 
 #define PNAME(x) static const char * const x[] __initconst
 
+#define CLK_REG_CLR(o, co, m)				\
+	{						\
+		.offset = o,				\
+		.clr_offset = co,			\
+		.mask = m,				\
+	}						\
+
+#define CLK_REG(o, m)	CLK_REG_CLR(o, -1, m)
+
+struct nexell_clk_reg {
+	u32		offset;
+	s32		clr_offset;
+	u32		mask;
+	u32		value;
+};
+
+struct nexell_clk_reg_cache {
+	struct list_head	node;
+	void __iomem		*reg_base;
+	struct nexell_clk_reg	*regs;
+	int			num_regs;
+};
+
 static inline void nexell_clk_add_lookup(struct clk_onecell_data *clk_data,
 					 struct clk *clk, unsigned int id)
 {
@@ -260,6 +283,17 @@ nexell_clk_register_composite(struct nexell_clk_data *ctx,
 			      unsigned int clk_num);
 extern struct nexell_clk_data *__init
 nexell_clk_init(void __iomem *reg, unsigned long clk_num);
+
+extern void nexell_clk_save(void __iomem *base, struct nexell_clk_reg *regs,
+			    unsigned int num_regs);
+extern void nexell_clk_restore(void __iomem *base,
+			       const struct nexell_clk_reg *regs,
+			       unsigned int num_regs);
+extern void __init nexell_clk_sleep_init(void __iomem *reg_base,
+				   struct syscore_ops *ops,
+				   struct list_head *list,
+				   const struct nexell_clk_reg *regs,
+				   int nr_regs);
 
 extern const struct reset_control_ops nexell_clk_reset_ops;
 

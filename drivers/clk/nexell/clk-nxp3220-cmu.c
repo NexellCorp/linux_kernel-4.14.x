@@ -5,6 +5,7 @@
  */
 
 #include <linux/of_address.h>
+#include <linux/syscore_ops.h>
 #include <dt-bindings/clock/nxp3220-clk.h>
 #include <dt-bindings/reset/nexell,nxp3220-reset.h>
 #include "clk-nexell.h"
@@ -784,6 +785,152 @@ static const struct nexell_clk_reset sys_resets[] = {
 		CLK_RESET(SPI0_CORE + 0x40, SPI0_CORE + 0x30, 2),
 };
 
+#define CLK_SRC_REG(o)						\
+	CLK_REG(o, 0xff),					\
+	CLK_REG_CLR(o + 0x10, o + 0x20, 0x1),			\
+	CLK_REG(o + 0x60, 0xff)					\
+
+static const struct nexell_clk_reg src_regs[] __initconst = {
+	CLK_SRC_REG(SYS0_AXI),
+	CLK_SRC_REG(SYS0_HSIF_AXI),
+	CLK_SRC_REG(CPU_BACKUP0),
+	CLK_SRC_REG(CSSYS0_HCLK),
+	CLK_SRC_REG(BLK_CMU0_APB),
+	CLK_SRC_REG(VIP_PADOUT0),
+	CLK_SRC_REG(VIP_PADOUT1),
+	CLK_SRC_REG(VIP_PADOUT2),
+	CLK_SRC_REG(VIP_PADOUT3),
+	CLK_SRC_REG(VIP_PADOUT4),
+	CLK_SRC_REG(HPM_SYS0),
+	CLK_SRC_REG(UART0_CORE),
+	CLK_SRC_REG(UART0_APB),
+	CLK_SRC_REG(I2S0_CORE),
+	CLK_SRC_REG(I2S1_CORE),
+	CLK_SRC_REG(I2S2_CORE),
+	CLK_SRC_REG(I2S3_CORE),
+	CLK_SRC_REG(I2C0_APB),
+	CLK_SRC_REG(SDMMC0_CORE),
+	CLK_SRC_REG(SDMMC1_CORE),
+	CLK_SRC_REG(SDMMC2_CORE),
+	CLK_SRC_REG(SPI0_APB),
+	CLK_SRC_REG(SPI0_CORE),
+	CLK_SRC_REG(PDM0_AXI),
+	CLK_SRC_REG(PDM0_CORE),
+	CLK_SRC_REG(PWM0_APB),
+	CLK_SRC_REG(PWM0_TCLK0),
+	CLK_SRC_REG(PWM0_TCLK1),
+	CLK_SRC_REG(PWM0_TCLK2),
+	CLK_SRC_REG(PWM0_TCLK3),
+	CLK_SRC_REG(CAN0_CORE),
+	CLK_SRC_REG(CAN1_CORE),
+	CLK_SRC_REG(TIMER0_APB),
+	CLK_SRC_REG(TIMER0_TCLK0),
+	CLK_SRC_REG(TIMER0_TCLK1),
+	CLK_SRC_REG(TIMER0_TCLK2),
+	CLK_SRC_REG(TIMER0_TCLK3),
+	CLK_SRC_REG(SECURE_TIMER0_APB),
+	CLK_SRC_REG(SECURE_TIMER0_TCLK0),
+	CLK_SRC_REG(SECURE_TIMER0_TCLK1),
+	CLK_SRC_REG(SECURE_TIMER0_TCLK2),
+	CLK_SRC_REG(SECURE_TIMER0_TCLK3),
+	CLK_SRC_REG(SMC0_AXI),
+	CLK_SRC_REG(SPDIFTX0_CORE),
+	CLK_SRC_REG(GMAC_RGMII0_TX),
+	CLK_SRC_REG(GMAC_RGMII0_PTP_REF),
+	CLK_SRC_REG(GMAC_RMII0_PTP_REF),
+	CLK_SRC_REG(NANDC0_AXI),
+	CLK_SRC_REG(MM0_AXI),
+	CLK_SRC_REG(VIP0_PADOUT0),
+	CLK_SRC_REG(VIP0_PADOUT1),
+	CLK_SRC_REG(DPC0_X2),
+	CLK_SRC_REG(LVDS0_VCLK),
+	CLK_SRC_REG(CODA960_0_CORE),
+	CLK_SRC_REG(USB0_AHB),
+};
+
+#define CLK_SYS_REG(o)						\
+	CLK_REG_CLR(o + 0x10, o + 0x20, 0xffffffff),		\
+	CLK_REG(o + 0x60, 0xff)					\
+
+static const struct nexell_clk_reg sys_regs[] __initconst = {
+	CLK_SYS_REG(SYS0_AXI),
+	CLK_SYS_REG(SYS0_AXI + 0x4),
+	CLK_SRC_REG(SYS0_HSIF_AXI),
+	CLK_REG(SYS0_HSIF_AXI + 0x64, 0xff),
+	CLK_SYS_REG(CPU_BACKUP0),
+	CLK_SYS_REG(CSSYS0_HCLK),
+	CLK_SYS_REG(BLK_CMU0_APB),
+	CLK_SYS_REG(VIP_PADOUT0),
+	CLK_SYS_REG(VIP_PADOUT1),
+	CLK_SYS_REG(VIP_PADOUT2),
+	CLK_SYS_REG(VIP_PADOUT3),
+	CLK_SYS_REG(VIP_PADOUT4),
+	CLK_SYS_REG(HPM_SYS0),
+	CLK_SYS_REG(UART0_CORE),
+	CLK_SYS_REG(UART0_APB),
+	CLK_SYS_REG(I2S0_CORE),
+	CLK_SYS_REG(I2S1_CORE),
+	CLK_SYS_REG(I2S2_CORE),
+	CLK_SYS_REG(I2S3_CORE),
+	CLK_SYS_REG(I2C0_APB),
+	CLK_SYS_REG(SDMMC0_CORE),
+	CLK_SYS_REG(SDMMC1_CORE),
+	CLK_SYS_REG(SDMMC2_CORE),
+	CLK_SYS_REG(SPI0_APB),
+	CLK_SYS_REG(SPI0_CORE),
+	CLK_SYS_REG(PDM0_AXI),
+	CLK_SYS_REG(PDM0_CORE),
+	CLK_SYS_REG(PWM0_APB),
+	CLK_SYS_REG(PWM0_TCLK0),
+	CLK_SYS_REG(PWM0_TCLK1),
+	CLK_SYS_REG(PWM0_TCLK2),
+	CLK_SYS_REG(PWM0_TCLK3),
+	CLK_SYS_REG(CAN0_CORE),
+	CLK_SYS_REG(CAN1_CORE),
+	CLK_SYS_REG(TIMER0_APB),
+	CLK_SYS_REG(TIMER0_TCLK0),
+	CLK_SYS_REG(TIMER0_TCLK1),
+	CLK_SYS_REG(TIMER0_TCLK2),
+	CLK_SYS_REG(TIMER0_TCLK3),
+	CLK_SYS_REG(SECURE_TIMER0_APB),
+	CLK_SYS_REG(SECURE_TIMER0_TCLK0),
+	CLK_SYS_REG(SECURE_TIMER0_TCLK1),
+	CLK_SYS_REG(SECURE_TIMER0_TCLK2),
+	CLK_SYS_REG(SECURE_TIMER0_TCLK3),
+	CLK_SYS_REG(SMC0_AXI),
+	CLK_SYS_REG(SPDIFTX0_CORE),
+	CLK_SYS_REG(GMAC_RGMII0_TX),
+	CLK_SYS_REG(GMAC_RGMII0_PTP_REF),
+	CLK_SYS_REG(GMAC_RMII0_PTP_REF),
+	CLK_SYS_REG(NANDC0_AXI),
+};
+
+static LIST_HEAD(nxp3220_cmu_reg_cache_list);
+
+static int nxp3220_cmu_clk_suspend(void)
+{
+	struct nexell_clk_reg_cache *reg_cache;
+
+	list_for_each_entry(reg_cache, &nxp3220_cmu_reg_cache_list, node)
+		nexell_clk_save(reg_cache->reg_base, reg_cache->regs,
+				reg_cache->num_regs);
+	return 0;
+}
+
+static void nxp3220_cmu_clk_resume(void)
+{
+	struct nexell_clk_reg_cache *reg_cache;
+
+	list_for_each_entry(reg_cache, &nxp3220_cmu_reg_cache_list, node)
+		nexell_clk_restore(reg_cache->reg_base, reg_cache->regs,
+				reg_cache->num_regs);
+}
+
+static struct syscore_ops nxp3220_cmu_syscore_ops = {
+	.suspend = nxp3220_cmu_clk_suspend,
+	.resume = nxp3220_cmu_clk_resume,
+};
+
 static void __init nxp3220_cmu_init(struct device_node *np)
 {
 	void __iomem *reg, *sys_reg;
@@ -812,6 +959,10 @@ static void __init nxp3220_cmu_init(struct device_node *np)
 					 ARRAY_SIZE(src_fixed_factor_clks));
 	nxp3220_clk_register_composite(ctx, src_clks, ARRAY_SIZE(src_clks));
 
+	nexell_clk_sleep_init(ctx->reg, &nxp3220_cmu_syscore_ops,
+			      &nxp3220_cmu_reg_cache_list,
+			      src_regs, ARRAY_SIZE(src_regs));
+
 	/* Register CMU_SYS clocks */
 	ctx->reg = sys_reg;
 
@@ -821,6 +972,10 @@ static void __init nxp3220_cmu_init(struct device_node *np)
 
 	if (of_clk_add_provider(np, of_clk_src_onecell_get, &ctx->clk_data))
 		pr_err("%s: failed to add clock provider\n", __func__);
+
+	nexell_clk_sleep_init(ctx->reg, &nxp3220_cmu_syscore_ops,
+			      &nxp3220_cmu_reg_cache_list,
+			      sys_regs, ARRAY_SIZE(sys_regs));
 
 	/* Register reset controls */
 	ctx->reset.ops = &nexell_clk_reset_ops;

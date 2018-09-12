@@ -5,6 +5,7 @@
  */
 
 #include <linux/of_address.h>
+#include <linux/syscore_ops.h>
 #include <dt-bindings/clock/nxp3220-clk.h>
 #include "clk-nexell.h"
 #include "clk-nxp3220.h"
@@ -79,6 +80,49 @@ static const struct nexell_gate_clock cpu_gate_clks[] __initconst = {
 	     HPM_CPU0 + 0x10, 0, 0, 0),
 };
 
+#define CLK_CPU_REG(o)						\
+	CLK_REG_CLR(o + 0x10, o + 0x20, 0xffffffff),		\
+	CLK_REG(o + 0x60, 0xff)					\
+
+static const struct nexell_clk_reg cmu_cpu_regs[] __initconst = {
+	CLK_REG(CPU_CPU0_ARM, 0xf),
+	CLK_CPU_REG(CPU_CPU0_ARM),
+	CLK_REG(CPU_CPU0_ARM + 0x64, 0xff),
+	CLK_REG(CPU_CPU0_ARM + 0x68, 0xff),
+	CLK_REG(CPU_CPU0_ARM + 0x6c, 0xff),
+	CLK_REG(CPU_CPU0_ARM + 0x70, 0xff),
+	CLK_REG(CPU_CPU0_ARM + 0x74, 0xff),
+	CLK_REG(CPU_CPU0_ARM + 0x78, 0xff),
+	CLK_CPU_REG(PLL_CPU_DIV0),
+	CLK_CPU_REG(HPM_CPU0),
+};
+
+static LIST_HEAD(nxp3220_cmu_cpu_reg_cache_list);
+
+static int nxp3220_cmu_cpu_clk_suspend(void)
+{
+	struct nexell_clk_reg_cache *reg_cache;
+
+	list_for_each_entry(reg_cache, &nxp3220_cmu_cpu_reg_cache_list, node)
+		nexell_clk_save(reg_cache->reg_base, reg_cache->regs,
+				reg_cache->num_regs);
+	return 0;
+}
+
+static void nxp3220_cmu_cpu_clk_resume(void)
+{
+	struct nexell_clk_reg_cache *reg_cache;
+
+	list_for_each_entry(reg_cache, &nxp3220_cmu_cpu_reg_cache_list, node)
+		nexell_clk_restore(reg_cache->reg_base, reg_cache->regs,
+				reg_cache->num_regs);
+}
+
+static struct syscore_ops nxp3220_cmu_cpu_syscore_ops = {
+	.suspend = nxp3220_cmu_cpu_clk_suspend,
+	.resume = nxp3220_cmu_cpu_clk_resume,
+};
+
 static void __init nxp3220_cmu_cpu_init(struct device_node *np)
 {
 	void __iomem *reg;
@@ -102,6 +146,10 @@ static void __init nxp3220_cmu_cpu_init(struct device_node *np)
 	nexell_clk_register_div(ctx, cpu_div_clks, ARRAY_SIZE(cpu_div_clks));
 	nxp3220_clk_register_gate(ctx, cpu_gate_clks,
 				  ARRAY_SIZE(cpu_gate_clks));
+
+	nexell_clk_sleep_init(ctx->reg, &nxp3220_cmu_cpu_syscore_ops,
+			      &nxp3220_cmu_cpu_reg_cache_list,
+			      cmu_cpu_regs, ARRAY_SIZE(cmu_cpu_regs));
 
 	if (of_clk_add_provider(np, of_clk_src_onecell_get, &ctx->clk_data))
 		pr_err("%s: failed to add clock provider\n", __func__);

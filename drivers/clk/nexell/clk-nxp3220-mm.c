@@ -5,6 +5,7 @@
  */
 
 #include <linux/of_address.h>
+#include <linux/syscore_ops.h>
 #include <dt-bindings/clock/nxp3220-clk.h>
 #include <dt-bindings/reset/nexell,nxp3220-reset.h>
 #include "clk-nexell.h"
@@ -117,6 +118,47 @@ static const struct nexell_clk_reset mm_resets[] = {
 		CLK_RESET(MM_CODA960_CORE + 0x40, MM_CODA960_CORE + 0x30, 0),
 };
 
+#define CLK_MM_REG(o)						\
+	CLK_REG_CLR(o + 0x10, o + 0x20, 0xffffffff),		\
+	CLK_REG(o + 0x60, 0xff)					\
+
+static const struct nexell_clk_reg cmu_mm_regs[] __initconst = {
+	CLK_MM_REG(MM_AXI),
+	CLK_REG(MM_AXI + 0x64, 0xff),
+	CLK_MM_REG(MM_VIP_PADOUT0),
+	CLK_MM_REG(MM_VIP_PADOUT1),
+	CLK_MM_REG(MM_DPC_X2),
+	CLK_REG(MM_DPC_X2 + 0x64, 0xff),
+	CLK_MM_REG(MM_LVDS_VCLK),
+	CLK_MM_REG(MM_CODA960_CORE),
+};
+
+static LIST_HEAD(nxp3220_cmu_mm_reg_cache_list);
+
+static int nxp3220_cmu_mm_clk_suspend(void)
+{
+	struct nexell_clk_reg_cache *reg_cache;
+
+	list_for_each_entry(reg_cache, &nxp3220_cmu_mm_reg_cache_list, node)
+		nexell_clk_save(reg_cache->reg_base, reg_cache->regs,
+				reg_cache->num_regs);
+	return 0;
+}
+
+static void nxp3220_cmu_mm_clk_resume(void)
+{
+	struct nexell_clk_reg_cache *reg_cache;
+
+	list_for_each_entry(reg_cache, &nxp3220_cmu_mm_reg_cache_list, node)
+		nexell_clk_restore(reg_cache->reg_base, reg_cache->regs,
+				reg_cache->num_regs);
+}
+
+static struct syscore_ops nxp3220_cmu_mm_syscore_ops = {
+	.suspend = nxp3220_cmu_mm_clk_suspend,
+	.resume = nxp3220_cmu_mm_clk_resume,
+};
+
 static void __init nxp3220_cmu_mm_init(struct device_node *np)
 {
 	void __iomem *reg;
@@ -136,6 +178,10 @@ static void __init nxp3220_cmu_mm_init(struct device_node *np)
 
 	nexell_clk_register_div(ctx, mm_div_clks, ARRAY_SIZE(mm_div_clks));
 	nxp3220_clk_register_gate(ctx, mm_gate_clks, ARRAY_SIZE(mm_gate_clks));
+
+	nexell_clk_sleep_init(ctx->reg, &nxp3220_cmu_mm_syscore_ops,
+			      &nxp3220_cmu_mm_reg_cache_list,
+			      cmu_mm_regs, ARRAY_SIZE(cmu_mm_regs));
 
 	if (of_clk_add_provider(np, of_clk_src_onecell_get, &ctx->clk_data))
 		pr_err("%s: failed to add clock provider\n", __func__);

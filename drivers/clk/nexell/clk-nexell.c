@@ -8,6 +8,7 @@
 #include <linux/clkdev.h>
 #include <linux/clk.h>
 #include <linux/of.h>
+#include <linux/syscore_ops.h>
 #include "clk-nexell.h"
 
 void __init
@@ -259,3 +260,58 @@ const struct reset_control_ops nexell_clk_reset_ops = {
 	.assert = nexell_clk_reset_assert,
 	.deassert = nexell_clk_reset_deassert,
 };
+
+void nexell_clk_save(void __iomem *base, struct nexell_clk_reg *regs,
+		     unsigned int num_regs)
+{
+	int i;
+
+	for (i = 0; i < num_regs; i++)
+		regs[i].value = readl(base + regs[i].offset) & regs[i].mask;
+}
+
+void nexell_clk_restore(void __iomem *base, const struct nexell_clk_reg *regs,
+			unsigned int num_regs)
+{
+	int i;
+	u32 clr_val;
+
+	for (i = 0; i < num_regs; i++) {
+		writel(regs[i].value, base + regs[i].offset);
+
+		if (regs[i].clr_offset >= 0) {
+			clr_val = ~regs[i].value & regs[i].mask;
+			if (clr_val)
+				writel(clr_val, base + regs[i].clr_offset);
+		}
+	}
+}
+
+void __init nexell_clk_sleep_init(void __iomem *reg_base,
+				  struct syscore_ops *ops,
+				  struct list_head *list,
+				  const struct nexell_clk_reg *regs,
+				  int nr_regs)
+{
+	struct nexell_clk_reg_cache *reg_cache;
+	int i;
+
+	reg_cache = kzalloc(sizeof(struct nexell_clk_reg_cache), GFP_KERNEL);
+	if (!reg_cache)
+		return;
+
+	reg_cache->regs = kcalloc(nr_regs, sizeof(struct nexell_clk_reg),
+				  GFP_KERNEL);
+	if (!reg_cache->regs)
+		return;
+
+	for (i = 0; i < nr_regs; i++)
+		reg_cache->regs[i] = regs[i];
+
+	if (list_empty(list))
+		register_syscore_ops(ops);
+
+	reg_cache->reg_base = reg_base;
+	reg_cache->num_regs = nr_regs;
+	list_add_tail(&reg_cache->node, list);
+}
