@@ -588,9 +588,10 @@ wlan_update_rsn_ie(mlan_private *pmpriv, MrvlIEtypes_RsnParamSet_t *ptlv_rsn_ie)
 		       "Mismatch in PMF config of STA and AP, can't associate to AP\n");
 		return MLAN_STATUS_FAILURE;
 	}
-	/* If PMF is required by AP, just leave the same value with AP */
-	if (!(*prsn_cap & (0x1 << MFPR_BIT)))
+	if ((pmpriv->pmfcfg.mfpr && pmpriv->pmfcfg.mfpc) || pmpriv->pmfcfg.mfpc) {
+		*prsn_cap |= PMF_MASK;
 		*prsn_cap &= pmf_mask;
+	}
 
 	return ret;
 }
@@ -760,7 +761,8 @@ wlan_cmd_802_11_associate(IN mlan_private *pmpriv,
 	PRINTM(MINFO, "ASSOC_CMD: Rates size = %d\n", rates_size);
 
 	/* Add the Authentication type to be used for Auth frames if needed */
-	if (pmpriv->sec_info.authentication_mode != MLAN_AUTH_MODE_AUTO) {
+	if ((pmpriv->sec_info.authentication_mode != MLAN_AUTH_MODE_AUTO)
+		) {
 		pauth_tlv = (MrvlIEtypes_AuthType_t *)pos;
 		pauth_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_AUTH_TYPE);
 		pauth_tlv->header.len = sizeof(pauth_tlv->auth_type);
@@ -774,6 +776,10 @@ wlan_cmd_802_11_associate(IN mlan_private *pmpriv,
 			 MLAN_AUTH_MODE_FT)
 			pauth_tlv->auth_type =
 				wlan_cpu_to_le16(AssocAgentAuth_FastBss_Skip);
+		else if (pmpriv->sec_info.authentication_mode ==
+			 MLAN_AUTH_MODE_SAE)
+			pauth_tlv->auth_type =
+				wlan_cpu_to_le16(AssocAgentAuth_Wpa3Sae);
 		else
 			pauth_tlv->auth_type =
 				wlan_cpu_to_le16(MLAN_AUTH_MODE_OPEN);

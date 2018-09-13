@@ -75,7 +75,7 @@ void *woal_get_netdev_priv(struct net_device *dev);
 #ifdef STA_SUPPORT
 /** get scan interface */
 moal_private *woal_get_scan_interface(moal_handle *handle);
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 /** AUTH pending flag */
 #define HOST_MLME_AUTH_PENDING			MBIT(0)
 /** AUTH complete flag */

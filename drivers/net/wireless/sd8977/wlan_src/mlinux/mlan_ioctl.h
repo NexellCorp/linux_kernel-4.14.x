@@ -327,7 +327,8 @@ enum _mlan_scan_mode {
 enum _mlan_scan_type {
 	MLAN_SCAN_TYPE_UNCHANGED = 0,
 	MLAN_SCAN_TYPE_ACTIVE,
-	MLAN_SCAN_TYPE_PASSIVE
+	MLAN_SCAN_TYPE_PASSIVE,
+	MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE
 };
 
 /** Enumeration for passive to active scan */
@@ -809,6 +810,8 @@ typedef struct _mlan_deauth_param {
 #define PROTOCOL_EAP                0x40
 /** WAPI */
 #define PROTOCOL_WAPI               0x80
+/** WPA3 SAE */
+#define PROTOCOL_WPA3_SAE         64
 
 /** Key_mgmt_psk */
 #define KEY_MGMT_NONE   0x04
@@ -2245,6 +2248,7 @@ enum _mlan_auth_mode {
 	MLAN_AUTH_MODE_OPEN = 0x00,
 	MLAN_AUTH_MODE_SHARED = 0x01,
 	MLAN_AUTH_MODE_FT = 0x02,
+	MLAN_AUTH_MODE_SAE = 0x03,
 	MLAN_AUTH_MODE_NETWORKEAP = 0x80,
 	MLAN_AUTH_MODE_AUTO = 0xFF,
 };
@@ -2256,6 +2260,7 @@ typedef enum {
 	AssocAgentAuth_FastBss,
 	AssocAgentAuth_FastBss_Skip,
 	AssocAgentAuth_Network_EAP,
+	AssocAgentAuth_Wpa3Sae,
 	AssocAgentAuth_Auto,
 } AssocAgentAuthType_e;
 

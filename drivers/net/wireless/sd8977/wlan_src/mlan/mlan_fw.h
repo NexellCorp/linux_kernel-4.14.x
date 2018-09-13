@@ -240,8 +240,8 @@ typedef enum _KEY_INFO_WAPI {
      become active. (polling the scratch register). */
 #define MAX_FIRMWARE_POLL_TRIES		100
 
-/** This is for firmware specific length */
-#define EXTRA_LEN	36
+/** FW fill in rx_len with extra 204 bytes */
+#define EXTRA_LEN	256
 
 /** Buffer size for ethernet Tx packets */
 #define MRVDRV_ETH_TX_PACKET_BUFFER_SIZE \
@@ -515,7 +515,7 @@ typedef enum _WLAN_802_11_WEP_STATUS {
 
 /** Test if 11n is enabled by checking the HTCap IE */
 #define IS_11N_ENABLED(priv) ((priv->config_bands & BAND_GN || priv->config_bands & BAND_AN) \
-	&& priv->curr_bss_params.bss_descriptor.pht_cap)
+	 && priv->curr_bss_params.bss_descriptor.pht_cap && !priv->curr_bss_params.bss_descriptor.disable_11n)
 /** Find out if we are the initiator or not */
 #define INITIATOR_BIT(DelBAParamSet) (((DelBAParamSet) & \
 			MBIT(DELBA_INITIATOR_POS)) >> DELBA_INITIATOR_POS)

@@ -487,6 +487,7 @@ typedef t_u8 WLAN_802_11_RATES[WLAN_SUPPORTED_RATES];
 #define RSN_AKM_PSK         2
 /** AKM: PSK SHA256 */
 #define RSN_AKM_PSK_SHA256	6
+
 #if defined(STA_SUPPORT)
 /** Pairwise Cipher Suite length */
 #define PAIRWISE_CIPHER_SUITE_LEN    4

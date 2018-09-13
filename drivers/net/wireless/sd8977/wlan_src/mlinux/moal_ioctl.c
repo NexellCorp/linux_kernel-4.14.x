@@ -2878,7 +2878,7 @@ woal_get_wakeup_reason(moal_private *priv,
 	req->action = MLAN_ACT_GET;
 
 	/* Send IOCTL request to MLAN */
-	ret = woal_request_ioctl(priv, req, MOAL_IOCTL_WAIT);
+	ret = woal_request_ioctl(priv, req, MOAL_IOCTL_WAIT_TIMEOUT);
 	if (ret == MLAN_STATUS_SUCCESS) {
 		wakeup_reason->hs_wakeup_reason =
 			pmcfg->param.wakeup_reason.hs_wakeup_reason;

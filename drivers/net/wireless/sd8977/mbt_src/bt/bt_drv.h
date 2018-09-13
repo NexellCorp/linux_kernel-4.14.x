@@ -601,6 +601,8 @@ typedef struct _bt_private {
 	bt_histogram_data hist_data[MAX_ANTENNA_NUM];
     /** hist proc data */
 	bt_hist_proc_data hist_proc[MAX_ANTENNA_NUM];
+    /** fw dump state */
+	u8 fw_dump;
 } bt_private, *pbt_private;
 
 int bt_get_histogram(bt_private *priv);
@@ -830,6 +832,15 @@ void bt_request_fw_reload(bt_private *priv, int mode);
 /** This function downloads firmware image to the card */
 int sd_download_firmware_w_helper(bt_private *priv);
 void bt_dump_sdio_regs(bt_private *priv);
+#define FW_DUMP_TYPE_ENDED                    0x002
+#define FW_DUMP_TYPE_MEM_ITCM                 0x004
+#define FW_DUMP_TYPE_MEM_DTCM                 0x005
+#define FW_DUMP_TYPE_MEM_SQRAM                0x006
+#define FW_DUMP_TYPE_MEM_IRAM                 0x007
+#define FW_DUMP_TYPE_REG_MAC                  0x009
+#define FW_DUMP_TYPE_REG_CIU                  0x00E
+#define FW_DUMP_TYPE_REG_APU                  0x00F
+#define FW_DUMP_TYPE_REG_ICU                  0x014
 /* dumps the firmware to /var/ or /data/ */
 void bt_dump_firmware_info_v2(bt_private *priv);
 

@@ -109,7 +109,7 @@ extern int beacon_hints;
 extern int cfg80211_drcs;
 #endif
 #if defined(STA_CFG80211) || defined(UAP_CFG80211)
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 extern int host_mlme;
 #endif
 #endif
@@ -261,6 +261,8 @@ static mlan_callbacks woal_callbacks = {
 	.moal_memcmp = moal_memcmp,
 	.moal_udelay = moal_udelay,
 	.moal_get_system_time = moal_get_system_time,
+	.moal_get_boot_ktime = moal_get_boot_ktime,
+	.moal_usleep = moal_usleep,
 	.moal_init_timer = moal_init_timer,
 	.moal_free_timer = moal_free_timer,
 	.moal_start_timer = moal_start_timer,
@@ -1349,7 +1351,7 @@ woal_init_from_dev_tree(void)
 			}
 		}
 #if defined(STA_CFG80211) || defined(UAP_CFG80211)
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 		else if (!strncmp(prop->name, "host_mlme", strlen("host_mlme"))) {
 			if (!of_property_read_u32(dt_node, prop->name, &data)) {
 				PRINTM(MIOCTL, "host_mlme=0x%x\n", data);
@@ -2535,7 +2537,6 @@ woal_init_fw_dpc(moal_handle *handle)
 {
 	mlan_status ret = MLAN_STATUS_SUCCESS;
 	mlan_fw_image fw;
-	t_u8 retry = 0;
 
 	mlan_init_param param;
 
@@ -2737,11 +2738,9 @@ woal_init_fw_dpc(moal_handle *handle)
 		goto done;
 	}
 	/* Wait for mlan_init to complete */
-	while (wait_event_interruptible(handle->init_wait_q,
-					handle->init_wait_q_woken) ==
-	       -ERESTARTSYS && retry < MAX_RETRY_CNT) {
-		retry++;
-	}
+	wait_event_timeout(handle->init_wait_q, handle->init_wait_q_woken,
+			   5 * HZ);
+
 	if (handle->hardware_status != HardwareStatusReady) {
 		woal_moal_debug_info(woal_get_priv(handle, MLAN_BSS_ROLE_ANY),
 				     handle, MTRUE);
@@ -3437,7 +3436,7 @@ woal_init_sta_dev(struct net_device *dev, moal_private *priv)
 		init_waitqueue_head(&priv->ft_wait_q);
 #endif
 #ifdef STA_CFG80211
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 	if (IS_STA_CFG80211(cfg80211_wext)) {
 		if (host_mlme)
 			init_waitqueue_head(&priv->host_mlme_wait_q);
@@ -5172,6 +5171,7 @@ woal_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	t_u32 index = 0;
 #endif
 	int ret = 0;
+
 	ENTER();
 	PRINTM(MDATA, "%lu : %s (bss=%d): Data <= kernel\n",
 	       jiffies, dev->name, priv->bss_index);
@@ -6471,7 +6471,7 @@ woal_send_disconnect_to_system(moal_private *priv, t_u16 disconnect_reason)
 			/* This function must be called only when disconnect issued by
 			   the FW, i.e. disconnected by AP. For IBSS mode this call is
 			   not valid */
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 			if (priv->host_mlme)
 				woal_host_mlme_disconnect(priv, reason_code);
 			else
@@ -6507,14 +6507,13 @@ woal_send_disconnect_to_system(moal_private *priv, t_u16 disconnect_reason)
 
 #define OFFSET_SEQNUM 4
 /**
- *  @brief  This function stores the FW dumps received from events in a file
+ *  @brief  This function stores the FW dumps received from events
  *
  *  @param phandle     A pointer to moal_handle
  *  @param pmevent  A pointer to mlan_event structure
  *
  *  @return         N/A
  */
-
 t_void
 woal_store_firmware_dump(moal_handle *phandle, mlan_event *pmevent)
 {
@@ -6586,7 +6585,7 @@ woal_store_firmware_dump(moal_handle *phandle, mlan_event *pmevent)
 	return;
 }
 
-#define DRV_INFO_SIZE 0x40000
+#define DRV_INFO_SIZE 0x60000
 #define ROW_SIZE_16      16
 #define ROW_SIZE_32      32
 /**
@@ -7030,21 +7029,17 @@ woal_dump_moal_hex(moal_handle *phandle, t_u8 *buf)
  *
  *  @param priv   A pointer to moal_private structure
  *  @param buf       A pointer to buffer
- *  @param pfile  A pointer to file structure
  *
  *  @return          The length of this log
  */
 static int
-woal_dump_mlan_hex(moal_private *priv, t_u8 *buf, struct file *pfile)
+woal_dump_mlan_hex(moal_private *priv, t_u8 *buf)
 {
 	char *ptr = (char *)buf;
 	int i;
-	int len = 0;
-
 	ENTER();
 
-	if (!buf || !priv || !pfile ||
-	    woal_get_debug_info(priv, MOAL_IOCTL_WAIT, &info)) {
+	if (!buf || !priv || woal_get_debug_info(priv, MOAL_IOCTL_WAIT, &info)) {
 		PRINTM(MMSG, "%s: can't retreive info\n", __func__);
 		LEAVE();
 		return 0;
@@ -7057,15 +7052,8 @@ woal_dump_mlan_hex(moal_private *priv, t_u8 *buf, struct file *pfile)
 	ptr += woal_save_hex_dump(ROW_SIZE_16, info.mlan_adapter,
 				  info.mlan_adapter_size, MTRUE, ptr);
 	ptr += sprintf(ptr, "<--mlan_adapter End-->\n");
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
-	vfs_write(pfile, buf, ptr - (char *)buf, &pfile->f_pos);
-#else
-	kernel_write(pfile, buf, ptr - (char *)buf, &pfile->f_pos);
-#endif
-	len += ptr - (char *)buf;
 #ifdef SDIO_MULTI_PORT_TX_AGGR
 	if (info.mpa_buf && info.mpa_buf_size) {
-		ptr = (char *)buf;
 		ptr += sprintf(ptr, "<--mlan_mpa_buf-->\n");
 		ptr += sprintf(ptr, "mlan_mpa_buf=%p, size=%d(0x%x)\n",
 			       info.mpa_buf, info.mpa_buf_size,
@@ -7073,16 +7061,9 @@ woal_dump_mlan_hex(moal_private *priv, t_u8 *buf, struct file *pfile)
 		ptr += woal_save_hex_dump(ROW_SIZE_16, info.mpa_buf,
 					  info.mpa_buf_size, MTRUE, ptr);
 		ptr += sprintf(ptr, "<--mlan_mpa_buf End-->\n");
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
-		vfs_write(pfile, buf, ptr - (char *)buf, &pfile->f_pos);
-#else
-		kernel_write(pfile, buf, ptr - (char *)buf, &pfile->f_pos);
-#endif
-		len += ptr - (char *)buf;
 	}
 #endif
 	for (i = 0; i < info.mlan_priv_num; i++) {
-		ptr = (char *)buf;
 		ptr += sprintf(ptr, "<--mlan_private(%d)-->\n", i);
 		ptr += sprintf(ptr, "mlan_private=%p, size=%d(0x%x)\n",
 			       info.mlan_priv[i], info.mlan_priv_size[i],
@@ -7090,16 +7071,10 @@ woal_dump_mlan_hex(moal_private *priv, t_u8 *buf, struct file *pfile)
 		ptr += woal_save_hex_dump(ROW_SIZE_16, info.mlan_priv[i],
 					  info.mlan_priv_size[i], MTRUE, ptr);
 		ptr += sprintf(ptr, "<--mlan_private(%d) End-->\n", i);
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
-		vfs_write(pfile, buf, ptr - (char *)buf, &pfile->f_pos);
-#else
-		kernel_write(pfile, buf, ptr - (char *)buf, &pfile->f_pos);
-#endif
-		len += ptr - (char *)buf;
 	}
 
 	LEAVE();
-	return len;
+	return ptr - (char *)buf;
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 1, 0)
@@ -7290,33 +7265,19 @@ woal_dump_drv_info(moal_handle *phandle, t_u8 *dir_name)
 
 	len = woal_dump_moal_drv_info(phandle, drv_buf);
 	total_len += len;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
-	vfs_write(pfile, drv_buf, len, &pfile->f_pos);
-#else
-	kernel_write(pfile, drv_buf, len, &pfile->f_pos);
-#endif
-
 	len = woal_dump_mlan_drv_info(woal_get_priv(phandle, MLAN_BSS_ROLE_ANY),
-				      drv_buf);
+				      drv_buf + total_len);
 	total_len += len;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
-	vfs_write(pfile, drv_buf, len, &pfile->f_pos);
-#else
-	kernel_write(pfile, drv_buf, len, &pfile->f_pos);
-#endif
-
-	len = woal_dump_moal_hex(phandle, drv_buf);
+	len = woal_dump_moal_hex(phandle, drv_buf + total_len);
 	total_len += len;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
-	vfs_write(pfile, drv_buf, len, &pfile->f_pos);
-#else
-	kernel_write(pfile, drv_buf, len, &pfile->f_pos);
-#endif
-
 	len = woal_dump_mlan_hex(woal_get_priv(phandle, MLAN_BSS_ROLE_ANY),
-				 drv_buf, pfile);
+				 drv_buf + total_len);
 	total_len += len;
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
+	vfs_write(pfile, drv_buf, total_len, &pfile->f_pos);
+#else
+	kernel_write(pfile, drv_buf, total_len, &pfile->f_pos);
+#endif
 	PRINTM(MERROR, "Drv info total bytes = %ld (0x%lx)\n",
 	       (long int)total_len, (long unsigned int)total_len);
 
@@ -7367,6 +7328,7 @@ typedef struct {
 	t_u8 *mem_Ptr;
 	struct file *pfile_mem;
 	t_u8 done_flag;
+	t_u8 type;
 } memory_type_mapping;
 
 memory_type_mapping mem_type_mapping_tbl = { "DUMP", NULL, NULL, 0xDD };
@@ -7477,7 +7439,6 @@ woal_dump_firmware_info_v3(moal_handle *phandle)
 	PRINTM(MERROR, "Directory name is %s\n", path_name);
 
 	woal_dump_drv_info(phandle, path_name);
-
 	dbg_dump_start_reg = DEBUG_DUMP_START_REG;
 	dbg_dump_end_reg = DEBUG_DUMP_END_REG;
 	dbg_dump_ctrl_reg = DEBUG_DUMP_CTRL_REG;
@@ -7572,7 +7533,6 @@ woal_dump_firmware_info_v3(moal_handle *phandle)
 					pmem_type_mapping_tbl->mem_Ptr +
 					memory_size;
 			}
-
 		}
 		if (RDWR_STATUS_DONE == stat) {
 			PRINTM(MMSG, "%s done:"
@@ -7921,11 +7881,13 @@ woal_rx_work_queue(struct work_struct *work)
 #endif
 #endif
 #endif
+
 	ENTER();
 	if (handle->surprise_removed == MTRUE) {
 		LEAVE();
 		return;
 	}
+
 #ifdef STA_CFG80211
 #if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 2, 0)
 #if CFG80211_VERSION_CODE < KERNEL_VERSION(3, 14, 6)
@@ -7943,6 +7905,7 @@ woal_rx_work_queue(struct work_struct *work)
 #endif
 #endif
 	mlan_rx_process(handle->pmlan_adapter, NULL);
+
 	LEAVE();
 }
 

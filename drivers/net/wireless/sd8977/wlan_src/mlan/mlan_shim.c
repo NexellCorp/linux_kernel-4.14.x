@@ -296,6 +296,7 @@ mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
 	MASSERT(pcb->moal_get_system_time);
 	MASSERT(pcb->moal_init_timer);
 	MASSERT(pcb->moal_free_timer);
+	MASSERT(pcb->moal_get_boot_ktime);
 	MASSERT(pcb->moal_start_timer);
 	MASSERT(pcb->moal_stop_timer);
 	MASSERT(pcb->moal_init_lock);
@@ -947,6 +948,7 @@ mlan_rx_process(IN t_void *pmlan_adapter, IN t_u8 *rx_pkts)
 		pcb->moal_spin_unlock(pmadapter->pmoal_handle,
 				      pmadapter->prx_proc_lock);
 	}
+
 	if (rx_pkts)
 		limit = *rx_pkts;
 

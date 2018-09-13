@@ -5072,18 +5072,21 @@ wlan_radio_ioctl_band_cfg(IN pmlan_adapter pmadapter,
 			LEAVE();
 			return MLAN_STATUS_FAILURE;
 		}
-
+#ifdef STA_SUPPORT
 		if (wlan_11d_set_universaltable
 		    (pmpriv, global_band | adhoc_band)) {
 			pioctl_req->status_code = MLAN_ERROR_IOCTL_FAIL;
 			LEAVE();
 			return MLAN_STATUS_FAILURE;
 		}
+#endif
 		pmpriv->config_bands = infra_band;
 		pmadapter->config_bands = global_band;
 
 		pmadapter->adhoc_start_band = adhoc_band;
 		pmpriv->intf_state_11h.adhoc_auto_sel_chan = MFALSE;
+
+#ifdef STA_SUPPORT
 		/*
 		 * If no adhoc_channel is supplied verify if the existing
 		 * adhoc channel compiles with new adhoc_band
@@ -5116,6 +5119,7 @@ wlan_radio_ioctl_band_cfg(IN pmlan_adapter pmadapter,
 			}
 			pmpriv->adhoc_channel = (t_u8)adhoc_channel;
 		}
+#endif
 
 	} else {
 		/* Infra Bands   */
@@ -5129,6 +5133,8 @@ wlan_radio_ioctl_band_cfg(IN pmlan_adapter pmadapter,
 		radio_cfg->param.band_cfg.fw_bands = pmadapter->fw_bands;
 		PRINTM(MINFO, "Global config band = %d\n",
 		       pmadapter->config_bands);
+#ifdef STA_SUPPORT
+#endif
 	}
 
 	LEAVE();

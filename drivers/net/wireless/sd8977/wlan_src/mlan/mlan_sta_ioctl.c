@@ -5469,7 +5469,8 @@ wlan_set_get_scan_cfg(IN pmlan_adapter pmadapter,
 		if (scan->param.scan_cfg.passive_to_active_scan)
 			pmadapter->passive_to_active_scan =
 				scan->param.scan_cfg.passive_to_active_scan;
-		pmadapter->ext_scan = scan->param.scan_cfg.ext_scan;
+		if (scan->param.scan_cfg.ext_scan)
+			pmadapter->ext_scan = scan->param.scan_cfg.ext_scan - 1;
 	}
 	scan->param.scan_cfg.scan_type = (t_u32)pmadapter->scan_type;
 	scan->param.scan_cfg.scan_mode = pmadapter->scan_mode;
@@ -5482,7 +5483,7 @@ wlan_set_get_scan_cfg(IN pmlan_adapter pmadapter,
 		(t_u32)pmadapter->passive_scan_time;
 	scan->param.scan_cfg.passive_to_active_scan =
 		pmadapter->passive_to_active_scan;
-	scan->param.scan_cfg.ext_scan = pmadapter->ext_scan;
+	scan->param.scan_cfg.ext_scan = pmadapter->ext_scan + 1;
 	pioctl_req->data_read_written = sizeof(t_u32) + MLAN_SUB_COMMAND_SIZE;
 
 	LEAVE();

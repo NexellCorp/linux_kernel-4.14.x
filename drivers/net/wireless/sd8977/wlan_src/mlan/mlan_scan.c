@@ -483,7 +483,8 @@ wlan_scan_create_channel_list(IN mlan_private *pmpriv,
 				/* Passive scan on DFS channels */
 				if (wlan_11h_radar_detect_required
 				    (pmpriv, (t_u8)cfp->channel))
-					scan_type = MLAN_SCAN_TYPE_PASSIVE;
+					scan_type =
+						MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE;
 				break;
 			case BAND_B:
 			case BAND_G:
@@ -505,14 +506,16 @@ wlan_scan_create_channel_list(IN mlan_private *pmpriv,
 				scan_dur =
 					(t_u16)puser_scan_in->chan_list[0].
 					scan_time;
-			} else if (scan_type == MLAN_SCAN_TYPE_PASSIVE) {
+			} else if (scan_type == MLAN_SCAN_TYPE_PASSIVE ||
+				   scan_type ==
+				   MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE) {
 				scan_dur = pmadapter->passive_scan_time;
 			} else if (filtered_scan) {
 				scan_dur = pmadapter->specific_scan_time;
 			} else {
 				scan_dur = pmadapter->active_scan_time;
 			}
-			if (scan_type == MLAN_SCAN_TYPE_PASSIVE &&
+			if (scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE &&
 			    pmadapter->passive_to_active_scan ==
 			    MLAN_PASS_TO_ACT_SCAN_EN) {
 				scan_dur =
@@ -524,7 +527,8 @@ wlan_scan_create_channel_list(IN mlan_private *pmpriv,
 			pscan_chan_list[chan_idx].max_scan_time =
 				wlan_cpu_to_le16(scan_dur);
 
-			if (scan_type == MLAN_SCAN_TYPE_PASSIVE) {
+			if (scan_type == MLAN_SCAN_TYPE_PASSIVE ||
+			    scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE) {
 				pscan_chan_list[chan_idx].chan_scan_mode.
 					passive_scan = MTRUE;
 				pscan_chan_list[chan_idx].chan_scan_mode.
@@ -536,11 +540,14 @@ wlan_scan_create_channel_list(IN mlan_private *pmpriv,
 
 			pscan_chan_list[chan_idx].chan_number =
 				(t_u8)cfp->channel;
+			PRINTM(MINFO,
+			       "chan=%d, mode=%d, passive_to_active=%d\n",
+			       pscan_chan_list[chan_idx].chan_number,
+			       pscan_chan_list[chan_idx].chan_scan_mode.
+			       passive_scan,
+			       pscan_chan_list[chan_idx].chan_scan_mode.
+			       passive_to_active_scan);
 
-			if (filtered_scan) {
-				pscan_chan_list[chan_idx].chan_scan_mode.
-					disable_chan_filt = MTRUE;
-			}
 		}
 	}
 
@@ -1589,7 +1596,7 @@ wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
 					if (wlan_11h_radar_detect_required
 					    (pmpriv, channel)) {
 						scan_type =
-							MLAN_SCAN_TYPE_PASSIVE;
+							MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE;
 					}
 			}
 			if (radio_type == BAND_2GHZ) {
@@ -1600,7 +1607,8 @@ wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
 							MLAN_SCAN_TYPE_PASSIVE;
 					}
 			}
-			if (scan_type == MLAN_SCAN_TYPE_PASSIVE) {
+			if (scan_type == MLAN_SCAN_TYPE_PASSIVE ||
+			    scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE) {
 				(pscan_chan_list +
 				 chan_list_idx)->chan_scan_mode.passive_scan =
 		      MTRUE;
@@ -1618,7 +1626,9 @@ wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
 					(t_u16)puser_scan_in->
 					chan_list[chan_idx].scan_time;
 			} else {
-				if (scan_type == MLAN_SCAN_TYPE_PASSIVE) {
+				if (scan_type == MLAN_SCAN_TYPE_PASSIVE ||
+				    scan_type ==
+				    MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE) {
 					scan_dur = pmadapter->passive_scan_time;
 				} else if (*pfiltered_scan) {
 					scan_dur =
@@ -1632,7 +1642,7 @@ wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
 			    pmadapter->coex_min_scan_time &&
 			    (pmadapter->coex_min_scan_time > scan_dur))
 				scan_dur = pmadapter->coex_min_scan_time;
-			if (scan_type == MLAN_SCAN_TYPE_PASSIVE &&
+			if (scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE &&
 			    pmadapter->passive_to_active_scan ==
 			    MLAN_PASS_TO_ACT_SCAN_EN) {
 				(pscan_chan_list +
@@ -1642,15 +1652,19 @@ wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
 					MAX(MIN_PASSIVE_TO_ACTIVE_SCAN_TIME,
 					    scan_dur);
 			}
+			PRINTM(MINFO,
+			       "chan=%d, mode=%d, passive_to_active=%d\n",
+			       (pscan_chan_list + chan_list_idx)->chan_number,
+			       (pscan_chan_list +
+				chan_list_idx)->chan_scan_mode.passive_scan,
+			       (pscan_chan_list +
+				chan_list_idx)->chan_scan_mode.
+			       passive_to_active_scan);
+
 			(pscan_chan_list + chan_list_idx)->min_scan_time =
 				wlan_cpu_to_le16(scan_dur);
 			(pscan_chan_list + chan_list_idx)->max_scan_time =
 				wlan_cpu_to_le16(scan_dur);
-			if (*pfiltered_scan) {
-				(pscan_chan_list +
-				 chan_list_idx)->chan_scan_mode.
-		      disable_chan_filt = MTRUE;
-			}
 			chan_list_idx++;
 		}
 
@@ -4813,6 +4827,7 @@ wlan_handle_event_ext_scan_report(IN mlan_private *pmpriv,
 			}
 		}
 	}
+
 	LEAVE();
 	return ret;
 }
@@ -5099,8 +5114,6 @@ wlan_bgscan_create_channel_list(IN mlan_private *pmpriv,
 
 			tlv_chan_list->chan_scan_param[chan_idx].chan_number =
 				(t_u8)cfp->channel;
-			tlv_chan_list->chan_scan_param[chan_idx].chan_scan_mode.
-				disable_chan_filt = MTRUE;
 		}
 	}
 

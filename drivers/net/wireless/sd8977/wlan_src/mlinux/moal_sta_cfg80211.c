@@ -202,14 +202,6 @@ int woal_cfg80211_tdls_mgmt(struct wiphy *wiphy, struct net_device *dev,
 			    bool initiator,
 #endif
 			    const u8 *extra_ies, size_t extra_ies_len);
-static int
- woal_cfg80211_change_station(struct wiphy *wiphy, struct net_device *dev,
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 16, 0)
-			      const u8 *mac,
-#else
-			      u8 *mac,
-#endif
-			      struct station_parameters *params);
 #if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
 static int
 
@@ -223,11 +215,21 @@ void woal_cfg80211_tdls_cancel_channel_switch(struct wiphy *wiphy,
 					      const u8 *addr);
 #endif
 #endif
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3,2,0)
+static int
+ woal_cfg80211_change_station(struct wiphy *wiphy, struct net_device *dev,
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 16, 0)
+			      const u8 *mac,
+#else
+			      u8 *mac,
+#endif
+			      struct station_parameters *params);
+#endif
 #if CFG80211_VERSION_CODE >= KERNEL_VERSION(3,10,0)
 int woal_cfg80211_update_ft_ies(struct wiphy *wiphy, struct net_device *dev,
 				struct cfg80211_update_ft_ies_params *ftie);
 #endif
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 static int woal_cfg80211_authenticate(struct wiphy *wiphy,
 				      struct net_device *dev,
 				      struct cfg80211_auth_request *req);
@@ -315,12 +317,14 @@ static struct cfg80211_ops woal_cfg80211_ops = {
 #if CFG80211_VERSION_CODE >= KERNEL_VERSION(3,2,0)
 	.tdls_oper = woal_cfg80211_tdls_oper,
 	.tdls_mgmt = woal_cfg80211_tdls_mgmt,
-	.change_station = woal_cfg80211_change_station,
 #if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
 	.tdls_channel_switch =
 		woal_cfg80211_tdls_channel_switch,.tdls_cancel_channel_switch =
 		woal_cfg80211_tdls_cancel_channel_switch,
 #endif
+#endif
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3,2,0)
+		.change_station = woal_cfg80211_change_station,
 #endif
 #if CFG80211_VERSION_CODE >= KERNEL_VERSION(3,10,0)
 		.update_ft_ies = woal_cfg80211_update_ft_ies,
@@ -508,7 +512,7 @@ extern int p2p_enh;
 #endif
 
 int cfg80211_drcs = 0;
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 int host_mlme = 0;
 #endif
 
@@ -941,7 +945,7 @@ woal_cfg80211_assoc_ies_cfg(moal_private *priv, t_u8 *ie, int ie_len,
 			}
 			PRINTM(MIOCTL, "Set Extended Capabilities IE\n");
 			break;
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 		case EXTENSION:
 			if (MLAN_STATUS_SUCCESS !=
 			    woal_set_get_gen_ie(priv, MLAN_ACT_SET,
@@ -1655,11 +1659,12 @@ woal_cfg80211_connect_scan(moal_private *priv,
 		scan_req.chan_list[0].chan_number =
 			conn_param->channel->hw_value;
 		scan_req.chan_list[0].radio_type = conn_param->channel->band;
-		if (conn_param->channel->
-		    flags & (IEEE80211_CHAN_PASSIVE_SCAN |
-			     IEEE80211_CHAN_RADAR))
+		if (conn_param->channel->flags & IEEE80211_CHAN_PASSIVE_SCAN)
 			scan_req.chan_list[0].scan_type =
 				MLAN_SCAN_TYPE_PASSIVE;
+		else if (conn_param->channel->flags & IEEE80211_CHAN_RADAR)
+			scan_req.chan_list[0].scan_type =
+				MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE;
 		else
 			scan_req.chan_list[0].scan_type = MLAN_SCAN_TYPE_ACTIVE;
 		scan_req.chan_list[0].scan_time = 0;
@@ -1673,11 +1678,12 @@ woal_cfg80211_connect_scan(moal_private *priv,
 				if (ch->flags & IEEE80211_CHAN_DISABLED)
 					continue;
 				scan_req.chan_list[chan_idx].radio_type = band;
-				if (ch->
-				    flags & (IEEE80211_CHAN_PASSIVE_SCAN |
-					     IEEE80211_CHAN_RADAR))
+				if (ch->flags & IEEE80211_CHAN_PASSIVE_SCAN)
 					scan_req.chan_list[chan_idx].scan_type =
 						MLAN_SCAN_TYPE_PASSIVE;
+				else if (ch->flags & IEEE80211_CHAN_RADAR)
+					scan_req.chan_list[chan_idx].scan_type =
+						MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE;
 				else
 					scan_req.chan_list[chan_idx].scan_type =
 						MLAN_SCAN_TYPE_ACTIVE;
@@ -1696,7 +1702,7 @@ woal_cfg80211_connect_scan(moal_private *priv,
 
 }
 
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 
 /**
  * @brief Save assoc parameters for roaming
@@ -2260,11 +2266,19 @@ done:
 					       ssid_bssid.assoc_rsp.
 					       assoc_resp_len, -1);
 #else
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
 			cfg80211_rx_assoc_resp(priv->netdev, req->bss,
 					       ssid_bssid.assoc_rsp.
 					       assoc_resp_buf,
 					       ssid_bssid.assoc_rsp.
 					       assoc_resp_len);
+#else
+			cfg80211_send_rx_assoc(priv->netdev, req->bss,
+					       ssid_bssid.assoc_rsp.
+					       assoc_resp_buf,
+					       ssid_bssid.assoc_rsp.
+					       assoc_resp_len);
+#endif
 #endif
 	}
 	LEAVE();
@@ -3312,6 +3326,7 @@ woal_cfg80211_scan(struct wiphy *wiphy, struct net_device *dev,
 	spin_lock_irqsave(&priv->phandle->scan_req_lock, flags);
 	priv->phandle->scan_request = request;
 	spin_unlock_irqrestore(&priv->phandle->scan_req_lock, flags);
+
 	memset(&scan_req, 0x00, sizeof(scan_req));
 #if CFG80211_VERSION_CODE >= KERNEL_VERSION(4, 7, 0)
 	if (!is_broadcast_ether_addr(request->bssid)) {
@@ -3356,12 +3371,13 @@ woal_cfg80211_scan(struct wiphy *wiphy, struct net_device *dev,
 		chan = priv->phandle->scan_request->channels[i];
 		scan_req.chan_list[i].chan_number = chan->hw_value;
 		scan_req.chan_list[i].radio_type = chan->band;
-		if ((chan->
-		     flags & (IEEE80211_CHAN_PASSIVE_SCAN |
-			      IEEE80211_CHAN_RADAR))
+		if ((chan->flags & IEEE80211_CHAN_PASSIVE_SCAN)
 		    || !priv->phandle->scan_request->n_ssids)
 			scan_req.chan_list[i].scan_type =
 				MLAN_SCAN_TYPE_PASSIVE;
+		else if (chan->flags & IEEE80211_CHAN_RADAR)
+			scan_req.chan_list[i].scan_type =
+				MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE;
 		else
 			scan_req.chan_list[i].scan_type = MLAN_SCAN_TYPE_ACTIVE;
 #if CFG80211_VERSION_CODE >= KERNEL_VERSION(4, 8, 0)
@@ -5227,6 +5243,14 @@ woal_cfg80211_resume(struct wiphy *wiphy)
 								    , 0
 #endif
 						);
+					cfg80211_sched_scan_stopped(priv->wdev->
+								    wiphy
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+								    , 0
+#endif
+						);
+					handle->priv[i]->sched_scanning =
+						MFALSE;
 					handle->priv[i]->last_event = 0;
 					PRINTM(MIOCTL,
 					       "Report sched scan result in cfg80211 resume\n");
@@ -6597,35 +6621,6 @@ woal_cfg80211_tdls_oper(struct wiphy *wiphy, struct net_device *dev,
 	return ret;
 }
 
-/**
- * @brief change station info
- *
- * @param wiphy                 A pointer to wiphy structure
- * @param dev                   A pointer to net_device structure
- * @param mac                   A pointer to peer mac
- * @param params                station parameters
- *
- * @return                      0 -- success, otherwise fail
- */
-static int
-woal_cfg80211_change_station(struct wiphy *wiphy, struct net_device *dev,
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 16, 0)
-			     const u8 *mac,
-#else
-			     u8 *mac,
-#endif
-			     struct station_parameters *params)
-{
-	int ret = 0;
-
-	ENTER();
-
-    /**do nothing*/
-
-	LEAVE();
-	return ret;
-}
-
 #if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
 /**
  * @brief tdls channel switch
@@ -6756,6 +6751,36 @@ done:
 }
 #endif
 
+#endif
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3,2,0)
+/**
+ * @brief change station info
+ *
+ * @param wiphy                 A pointer to wiphy structure
+ * @param dev                   A pointer to net_device structure
+ * @param mac                   A pointer to peer mac
+ * @param params                station parameters
+ *
+ * @return                      0 -- success, otherwise fail
+ */
+static int
+woal_cfg80211_change_station(struct wiphy *wiphy, struct net_device *dev,
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 16, 0)
+			     const u8 *mac,
+#else
+			     u8 *mac,
+#endif
+			     struct station_parameters *params)
+{
+	int ret = 0;
+
+	ENTER();
+
+    /**do nothing*/
+
+	LEAVE();
+	return ret;
+}
 #endif
 
 #if CFG80211_VERSION_CODE >= KERNEL_VERSION(3,2,0)
@@ -7491,7 +7516,7 @@ done:
 }
 #endif
 
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 
 /**
  *  @brief Sends deauth packet to kernel
@@ -7514,7 +7539,11 @@ woal_host_mlme_disconnect(moal_private *priv, t_u16 reason_code)
 	memcpy(mgmt->da, broadcast_addr, ETH_ALEN);
 	memcpy(mgmt->sa, priv->sme_current.ssid, ETH_ALEN);
 	memcpy(mgmt->bssid, priv->cfg_bssid, ETH_ALEN);
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
 	cfg80211_rx_mlme_mgmt(priv->netdev, frame_buf, 26);
+#else
+	cfg80211_send_deauth(priv->netdev, frame_buf, 26);
+#endif
 	priv->host_mlme = MFALSE;
 	priv->auth_flag = 0;
 	LEAVE();
@@ -7771,7 +7800,7 @@ woal_register_cfg80211(moal_private *priv)
 		ret = MLAN_STATUS_FAILURE;
 		goto err_wiphy;
 	}
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 	if (host_mlme) {
 		woal_cfg80211_ops.auth = woal_cfg80211_authenticate;
 		woal_cfg80211_ops.assoc = woal_cfg80211_associate;
@@ -7917,7 +7946,7 @@ woal_register_cfg80211(moal_private *priv)
 #if CFG80211_VERSION_CODE >= KERNEL_VERSION(3,19,0)
 	wiphy->features |= NL80211_FEATURE_TDLS_CHANNEL_SWITCH;
 #endif
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3,11,0)
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3,8,0)
 	if (host_mlme)
 		wiphy->features |= NL80211_FEATURE_SAE;
 #endif
@@ -8067,7 +8096,7 @@ module_param(beacon_hints, int, 0);
 MODULE_PARM_DESC(beacon_hints,
 		 "0: enable beacon hints(default); 1: disable beacon hints");
 #endif
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 module_param(host_mlme, int, 0);
 MODULE_PARM_DESC(host_mlme,
 		 "1: Enable Host MLME Support; 0: Disable Host MLME support");

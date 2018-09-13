@@ -667,6 +667,7 @@ bt_proc_init(bt_private *priv, struct m_dev *m_dev, int seq)
 	struct proc_dir_entry *entry;
 	int i, j;
 	char hist_entry[50];
+
 	ENTER();
 
 	memset(cmd52_string, 0, CMD52_STR_LEN);
@@ -712,6 +713,7 @@ bt_proc_init(bt_private *priv, struct m_dev *m_dev, int seq)
 				goto done;
 			}
 		}
+
 		priv->dev_proc[seq].pfiles =
 			kmalloc(sizeof(proc_files), GFP_ATOMIC);
 		if (!priv->dev_proc[seq].pfiles) {
@@ -819,6 +821,7 @@ bt_proc_remove(bt_private *priv)
 {
 	int j, i;
 	char hist_entry[50];
+
 	ENTER();
 	PRINTM(INFO, "BT: Remove Proc Interface\n");
 	if (proc_mbt) {

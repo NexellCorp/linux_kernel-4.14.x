@@ -304,6 +304,43 @@ moal_get_system_time(IN t_void *pmoal_handle, OUT t_u32 *psec, OUT t_u32 *pusec)
 }
 
 /**
+ *  @brief usleep function
+ *
+ *  @param pmoal_handle Pointer to the MOAL context
+ *  @param usmin        Minimum value for sleep in usecs
+ *  @param usmax        Maximum value for sleep in usecs
+ *
+ *  @return         MLAN_STATUS_SUCCESS
+ */
+mlan_status
+moal_usleep(IN t_void *pmoal_handle, IN t_u64 min, IN t_u64 max)
+{
+	usleep_range(min, max);
+
+	return MLAN_STATUS_SUCCESS;
+}
+
+/**
+ *  @brief Retrieves the current boot time
+ *
+ *  @param pmoal_handle Pointer to the MOAL context
+ *  @param pnsec     Pointer to buf for the Nanoseconds of boot time
+ *
+ *  @return         MLAN_STATUS_SUCCESS
+ */
+mlan_status
+moal_get_boot_ktime(IN t_void *pmoal_handle, OUT t_u64 *pnsec)
+{
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)
+	ktime_t time;
+
+	time = ktime_get_with_offset(TK_OFFS_BOOT);
+	*pnsec = *(t_u64 *)&(time);
+#endif
+	return MLAN_STATUS_SUCCESS;
+}
+
+/**
  *  @brief Initializes the timer
  *
  *  @param pmoal_handle Pointer to the MOAL context
@@ -552,7 +589,7 @@ moal_init_fw_complete(IN t_void *pmoal_handle, IN mlan_status status)
 	if (status == MLAN_STATUS_SUCCESS)
 		handle->hardware_status = HardwareStatusReady;
 	handle->init_wait_q_woken = MTRUE;
-	wake_up_interruptible(&handle->init_wait_q);
+	wake_up(&handle->init_wait_q);
 	LEAVE();
 	return MLAN_STATUS_SUCCESS;
 }
@@ -711,8 +748,7 @@ moal_send_packet_complete(IN t_void *pmoal_handle,
 	if (pmbuf && pmbuf->buf_type == MLAN_BUF_TYPE_RAW_DATA) {
 		woal_free_mlan_buffer(handle, pmbuf);
 		atomic_dec(&handle->tx_pending);
-		LEAVE();
-		return MLAN_STATUS_SUCCESS;
+		goto done;
 	}
 	if (pmbuf) {
 		priv = woal_bss_index_to_priv(pmoal_handle, pmbuf->bss_index);
@@ -782,6 +818,8 @@ moal_send_packet_complete(IN t_void *pmoal_handle,
 		if (skb)
 			dev_kfree_skb_any(skb);
 	}
+
+done:
 	LEAVE();
 	return MLAN_STATUS_SUCCESS;
 }
@@ -1101,8 +1139,9 @@ moal_recv_packet(IN t_void *pmoal_handle, IN pmlan_buffer pmbuf)
 				status = MLAN_STATUS_PENDING;
 				atomic_dec(&handle->mbufalloc_count);
 			} else {
-				PRINTM(MERROR, "%s without skb attach!!!\n",
-				       __func__);
+				PRINTM(MERROR,
+				       "%s without skb attach!!! pkt_len=%d flags=0x%x\n",
+				       __func__, pmbuf->data_len, pmbuf->flags);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 		/** drop the packet without skb in monitor mode */
 				if (pmbuf->flags & MLAN_BUF_FLAG_NET_MONITOR) {
@@ -1383,6 +1422,7 @@ moal_recv_event(IN t_void *pmoal_handle, IN pmlan_event pmevent)
 					     sizeof(mlan_event_id));
 
 		}
+
 		if (priv->phandle->scan_pending_on_block == MTRUE) {
 			priv->phandle->scan_pending_on_block = MFALSE;
 			priv->phandle->scan_priv = NULL;
@@ -1440,7 +1480,7 @@ moal_recv_event(IN t_void *pmoal_handle, IN pmlan_event pmevent)
 		woal_send_disconnect_to_system(priv,
 					       (t_u16)*pmevent->event_buf);
 #ifdef STA_CFG80211
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 		priv->auth_flag = 0;
 		priv->host_mlme = MFALSE;
 #endif
@@ -1844,6 +1884,30 @@ moal_recv_event(IN t_void *pmoal_handle, IN pmlan_event pmevent)
 				priv->last_event = 0;
 				PRINTM(MEVENT,
 				       "Reporting Sched_Scan results\n");
+#if CFG80211_VERSION_CODE < KERNEL_VERSION(3, 14, 6)
+				priv->phandle->rx_bgscan_stop = MTRUE;
+				priv->phandle->bg_scan_priv = priv;
+				queue_work(priv->phandle->rx_workqueue,
+					   &priv->phandle->rx_work);
+#else
+				if (rtnl_is_locked())
+					cfg80211_sched_scan_stopped_rtnl(priv->
+									 wdev->
+									 wiphy
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+									 , 0
+#endif
+						);
+				else
+					cfg80211_sched_scan_stopped(priv->wdev->
+								    wiphy
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+								    , 0
+#endif
+						);
+				priv->sched_scanning = MFALSE;
+#endif
+				PRINTM(MEVENT, "Sched_Scan stopped\n");
 			}
 		}
 #endif
@@ -2400,7 +2464,7 @@ moal_recv_event(IN t_void *pmoal_handle, IN pmlan_event pmevent)
 									    freq),
 									   MFALSE);
 #endif
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 		    /**Forward Deauth, Auth and disassoc frame to Host*/
 				if (priv->host_mlme &&
 				    (ieee80211_is_deauth
@@ -2446,7 +2510,7 @@ moal_recv_event(IN t_void *pmoal_handle, IN pmlan_event pmevent)
 						priv->host_mlme = MFALSE;
 						priv->auth_flag = 0;
 					}
-
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
 					cfg80211_rx_mlme_mgmt(priv->netdev,
 							      pkt,
 							      pmevent->
@@ -2455,6 +2519,50 @@ moal_recv_event(IN t_void *pmoal_handle, IN pmlan_event pmevent)
 								     event_id)
 							      -
 							      MLAN_MAC_ADDR_LENGTH);
+#else
+					if (ieee80211_is_deauth
+					    (((struct ieee80211_mgmt *)pkt)->
+					     frame_control))
+						cfg80211_send_deauth(priv->
+								     netdev,
+								     pkt,
+								     pmevent->
+								     event_len -
+								     sizeof
+								     (pmevent->
+								      event_id)
+								     -
+								     MLAN_MAC_ADDR_LENGTH);
+					else if (ieee80211_is_auth
+						 (((struct ieee80211_mgmt *)
+						   pkt)->frame_control))
+						cfg80211_send_rx_auth(priv->
+								      netdev,
+								      pkt,
+								      pmevent->
+								      event_len
+								      -
+								      sizeof
+								      (pmevent->
+								       event_id)
+								      -
+								      MLAN_MAC_ADDR_LENGTH);
+					else if (ieee80211_is_disassoc
+						 (((struct ieee80211_mgmt *)
+						   pkt)->frame_control))
+						cfg80211_send_disassoc(priv->
+								       netdev,
+								       pkt,
+								       pmevent->
+								       event_len
+								       -
+								       sizeof
+								       (pmevent->
+									event_id)
+								       -
+								       MLAN_MAC_ADDR_LENGTH);
+
+#endif
 
 				} else
 #endif

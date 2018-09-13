@@ -339,7 +339,7 @@ exit:
 }
 
 /**
-*  @brief This function stores the FW dumps received from events in a file
+*  @brief This function stores the FW dumps received from events
 *
 *  @param priv    A pointer to bt_private structure
 *  @param skb     A pointer to rx skb
@@ -675,16 +675,18 @@ typedef struct {
 	struct file *pfile_mem;
 	/** donbe flag */
 	u8 done_flag;
+	/** dump type */
+	u8 type;
 } memory_type_mapping;
 
 memory_type_mapping bt_mem_type_mapping_tbl[] = {
-	{"ITCM", NULL, NULL, 0xF0},
-	{"DTCM", NULL, NULL, 0xF1},
-	{"SQRAM", NULL, NULL, 0xF2},
-	{"APU", NULL, NULL, 0xF3},
-	{"CIU", NULL, NULL, 0xF4},
-	{"ICU", NULL, NULL, 0xF5},
-	{"MAC", NULL, NULL, 0xF6},
+	{"ITCM", NULL, NULL, 0xF0, FW_DUMP_TYPE_MEM_ITCM},
+	{"DTCM", NULL, NULL, 0xF1, FW_DUMP_TYPE_MEM_DTCM},
+	{"SQRAM", NULL, NULL, 0xF2, FW_DUMP_TYPE_MEM_SQRAM},
+	{"APU", NULL, NULL, 0xF3, FW_DUMP_TYPE_REG_APU},
+	{"CIU", NULL, NULL, 0xF4, FW_DUMP_TYPE_REG_CIU},
+	{"ICU", NULL, NULL, 0xF5, FW_DUMP_TYPE_REG_ICU},
+	{"MAC", NULL, NULL, 0xF6, FW_DUMP_TYPE_REG_MAC},
 	{"EXT7", NULL, NULL, 0xF7},
 	{"EXT8", NULL, NULL, 0xF8},
 	{"EXT9", NULL, NULL, 0xF9},
@@ -796,6 +798,7 @@ bt_dump_firmware_info_v2(bt_private *priv)
 
 	sbi_wakeup_firmware(priv);
 	sdio_claim_host(((struct sdio_mmc_card *)priv->bt_dev.card)->func);
+	priv->fw_dump = TRUE;
 	/* start dump fw memory */
 	PRINTM(MSG, "==== DEBUG MODE OUTPUT START ====\n");
 	/* read the number of the memories which will dump */
@@ -901,6 +904,7 @@ bt_dump_firmware_info_v2(bt_private *priv)
 	PRINTM(MSG, "==== DEBUG MODE OUTPUT END ====\n");
 	/* end dump fw memory */
 done:
+	priv->fw_dump = FALSE;
 	sdio_release_host(((struct sdio_mmc_card *)priv->bt_dev.card)->func);
 	for (idx = 0; idx < dump_num; idx++) {
 		if (bt_mem_type_mapping_tbl[idx].mem_Ptr) {

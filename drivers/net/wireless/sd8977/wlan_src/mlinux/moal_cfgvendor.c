@@ -562,11 +562,11 @@ woal_cfg80211_subcmd_get_supp_feature_set(struct wiphy *wiphy,
 					  const void *data, int data_len)
 {
 	struct sk_buff *skb = NULL;
-	struct net_device *dev = wdev->netdev;
-	moal_private *priv = (moal_private *)woal_get_netdev_priv(dev);
 	t_u32 reply_len = 0;
 	int ret = 0;
 	t_u32 supp_feature_set = 0;
+	struct net_device *dev = wdev->netdev;
+	moal_private *priv = (moal_private *)woal_get_netdev_priv(dev);
 	mlan_fw_info fw_info;
 	ENTER();
 

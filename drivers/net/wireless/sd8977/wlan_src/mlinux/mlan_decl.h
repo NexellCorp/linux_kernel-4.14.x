@@ -27,7 +27,7 @@ Change log:
 #define _MLAN_DECL_H_
 
 /** MLAN release version */
-#define MLAN_RELEASE_VERSION		 "C603"
+#define MLAN_RELEASE_VERSION		 "C610"
 
 /** Re-define generic data types for MLAN/MOAL */
 /** Signed char (1-byte) */
@@ -1262,9 +1262,16 @@ typedef struct _mlan_callbacks {
 			      IN const t_void *pmem2, IN t_u32 num);
     /** moal_udelay */
 	t_void (*moal_udelay) (IN t_void *pmoal_handle, IN t_u32 udelay);
+    /** moal_get_boot_ktime */
+	mlan_status (*moal_get_boot_ktime) (IN t_void *pmoal_handle,
+					    OUT t_u64 *pnsec);
     /** moal_get_system_time */
 	mlan_status (*moal_get_system_time) (IN t_void *pmoal_handle,
 					     OUT t_u32 *psec, OUT t_u32 *pusec);
+    /** moal_usleep */
+	mlan_status (*moal_usleep) (IN t_void *pmoal_handle,
+				    IN t_u64 min, IN t_u64 max);
+
     /** moal_init_timer*/
 	mlan_status (*moal_init_timer) (IN t_void *pmoal_handle,
 					OUT t_void **pptimer,
