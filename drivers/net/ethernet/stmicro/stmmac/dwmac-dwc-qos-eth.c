@@ -58,6 +58,7 @@ struct nxp3220_eqos {
 	struct clk *clk_tx;
 	struct clk *ptp_ref;
 	int wolopts;
+	int phy_wol_irq;
 
 	struct gpio_desc *phy_reset;
 	struct gpio_desc *phy_intr;
@@ -74,6 +75,7 @@ static void nxp3220_get_wol(struct net_device *ndev, struct ethtool_wolinfo *wol
 static int nxp3220_set_wol(struct net_device *ndev, struct ethtool_wolinfo *wol)
 {
 	struct stmmac_priv *stpriv = netdev_priv(ndev);
+	struct nxp3220_eqos *eqos = stpriv->plat->bsp_priv;
 	u32 support = WAKE_MAGIC;
 	int err;
 
@@ -85,6 +87,11 @@ static int nxp3220_set_wol(struct net_device *ndev, struct ethtool_wolinfo *wol)
 		dev_err(stpriv->device, "The PHY does not support set_wol\n");
 		return -EOPNOTSUPP;
 	}
+
+	if (wol->wolopts)
+		enable_irq_wake(eqos->phy_wol_irq);
+	else
+		disable_irq_wake(eqos->phy_wol_irq);
 
 	mutex_lock(&stpriv->lock);
 	stpriv->wolopts |= wol->wolopts;
@@ -488,6 +495,11 @@ static void nxp3220_qos_fix_speed(void *priv, unsigned int speed)
 
 }
 
+static irqreturn_t wol_isr(int irq, void *dev_id)
+{
+	return IRQ_HANDLED;
+}
+
 static int __nxp3220_clk_enable(struct nxp3220_eqos *eqos)
 {
 	int err;
@@ -613,6 +625,7 @@ static void *nxp3220_qos_probe(struct platform_device *pdev,
 	struct device *dev = &pdev->dev;
 	int interface;
 	int err = 0;
+	int phy_wolirq;
 
 	eqos = devm_kzalloc(dev, sizeof(*eqos), GFP_KERNEL);
 	if (!eqos) {
@@ -674,10 +687,24 @@ static void *nxp3220_qos_probe(struct platform_device *pdev,
 
 	eqos->phy_intr = devm_gpiod_get(dev, "phy-intr", GPIOD_IN);
 	eqos->phy_pme = devm_gpiod_get(dev, "phy-pme", GPIOD_IN);
+	if (!IS_ERR(eqos->phy_pme)) {
+		phy_wolirq = gpiod_to_irq(eqos->phy_pme);
+		err = devm_request_irq(dev, phy_wolirq, wol_isr, 0,
+				dev_name(dev), dev);
+		if (err) {
+			dev_err(&pdev->dev, "IRQ request returned %d\n", err);
+			goto error;
+		}
+		eqos->phy_wol_irq = phy_wolirq;
+	}
 
 	eqos->rst = devm_reset_control_get(dev, "eqos");
 	if (IS_ERR(eqos->rst))
 		dev_dbg(dev, "no eqos reset provided\n");
+
+	eqos->wolopts = 0;
+	if (!IS_ERR_OR_NULL(eqos->phy_pme))
+		data->phy_wol = true;
 
 	nxp3220_qos_init(pdev, eqos);
 	data->clk_csr = get_csr_rate(eqos);
