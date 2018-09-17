@@ -10,12 +10,11 @@
 #include <linux/mfd/syscon.h>
 #include <linux/regmap.h>
 #include <linux/syscore_ops.h>
+#include <linux/clk.h>
 
 #define REF_CLK 24000000UL
 
 #define PLLCTRL			0x0
-#define PLLCTRL_LOCK		(1 << 6)
-#define PLLCTRL_CURST(x)	((x >> 8) & 0x1f)
 #define PLLCTRL_MUXSEL_SHIFT	3
 #define PLLCTRL_MUXSEL_MASK	BIT_MASK(PLLCTRL_MUXSEL_SHIFT)
 #define MUXSEL_OSCCLK		0
@@ -48,8 +47,6 @@
 #define PLLCFG2_S_SHIFT		0
 #define PLLCFG2_S_MASK		GENMASK(15, PLLCFG2_S_SHIFT)
 
-#define PLL_LOCK_COUNT          0x200
-
 struct pll_pms {
 	unsigned long rate;
 	unsigned int p;
@@ -63,13 +60,22 @@ enum pll_type {
 	PLL2651,
 };
 
+struct clk_pll_data {
+	enum pll_type type;
+	struct pll_pms *pms_table;
+	unsigned int pms_count;
+	unsigned long lock_cycle;
+};
+
 struct clk_pll {
 	struct clk_hw hw;
 	struct regmap *regmap;
 	struct pll_pms pms;
-	enum pll_type type;
+	struct clk_pll_data *pll_data;
 	spinlock_t lock;
 	struct list_head node;
+
+	unsigned long refclk_rate;
 };
 
 static LIST_HEAD(pll_list);
@@ -111,6 +117,20 @@ static struct pll_pms pll2651_pms_table[] = {
 	{ .rate =  200000000U, .p = 3, .m = 200, .s = 3, .k = 0 },
 };
 
+static struct clk_pll_data pll_data_table[] = {
+	[PLL2555] = {
+		.type = PLL2555,
+		.pms_table = pll2555_pms_table,
+		.pms_count = ARRAY_SIZE(pll2555_pms_table),
+		.lock_cycle = 200,
+	}, [PLL2651] = {
+		.type = PLL2651,
+		.pms_table = pll2651_pms_table,
+		.pms_count = ARRAY_SIZE(pll2651_pms_table),
+		.lock_cycle = 3000,
+	},
+};
+
 static inline bool is_match_pms(struct pll_pms p1, struct pll_pms p2)
 {
 	if (p1.p == p2.p && p1.m == p2.m && p1.s == p2.s && p1.k == p2.k)
@@ -127,63 +147,30 @@ static void clk_pll_set_oscmux(struct clk_pll *pll, unsigned int muxsel)
 			   PLLCTRL_MUXSEL(muxsel));
 }
 
-static int clk_pll_ready(struct clk_pll *pll)
+static inline void clk_pll_wait_lock(struct clk_pll *pll, unsigned long cycle)
 {
+	u32 st_count, cnt;
 	struct regmap *regmap = pll->regmap;
-	u32 ctrl, st_count;
-	bool st_check;
-	int ret;
 
-	ret = regmap_read(regmap, PLLCTRL, &ctrl);
-	if (ret)
-		return ret;
+	regmap_read(regmap, PLLDBG0, &st_count);
 
-	ret = regmap_read(regmap, PLLDBG0, &st_count);
-	if (ret)
-		return ret;
+	st_count += cycle;
 
-	if (ctrl & PLLCTRL_MUXSEL(MUXSEL_PLLFOUT))
-		st_check = true;
-	else
-		st_check = (st_count > PLL_LOCK_COUNT) ? true : false;
-
-	if ((PLLCTRL_CURST(ctrl) == 1) && (ctrl & PLLCTRL_LOCK) && st_check)
-		return 0;
-	else
-		return -EBUSY;
-}
-
-static inline void clk_pll_wait_ready(struct clk_pll *pll)
-{
-	int count = 1000;
-	while (clk_pll_ready(pll) && count >= 0) {
-		udelay(1);
-		count--;
-	}
-
-	if (count < 0)
-		pr_warn("failed to wait a pll can be stable\n");
+	do {
+		regmap_read(regmap, PLLDBG0, &cnt);
+	} while (cnt < st_count);
 }
 
 static long pll_round_rate(struct clk_pll *pll, unsigned long rate,
 			   unsigned long parent_rate, struct pll_pms *pms)
 {
-	struct pll_pms *pms_table;
-	int count = 0, i;
+	struct clk_pll_data *pll_data = pll->pll_data;
+	int i;
 
-	if (pll->type == PLL2555) {
-		pms_table = pll2555_pms_table;
-		count = ARRAY_SIZE(pll2555_pms_table);
-	} else if (pll->type == PLL2651) {
-		pms_table = pll2651_pms_table;
-		count = ARRAY_SIZE(pll2651_pms_table);
-	} else
-		return -ENODEV;
-
-	for (i = 0; i < count; i++) {
-		if (rate >= pms_table[i].rate) {
+	for (i = 0; i < pll_data->pms_count; i++) {
+		if (rate >= pll_data->pms_table[i].rate) {
 			if (pms)
-				*pms = pms_table[i];
+				*pms = pll_data->pms_table[i];
 			return rate;
 		}
 	}
@@ -220,6 +207,7 @@ static unsigned long nexell_clk_pll_recalc_rate(struct clk_hw *hw,
 						unsigned long parent_rate)
 {
 	struct clk_pll *pll = to_clk_pll(hw);
+	struct clk_pll_data *pll_data = pll->pll_data;
 	struct pll_pms pms;
 	u64 fout = parent_rate;
 	int ret;
@@ -231,9 +219,9 @@ static unsigned long nexell_clk_pll_recalc_rate(struct clk_hw *hw,
 	if (ret)
 		return 0;
 
-	if (pll->type == PLL2555)
+	if (pll_data->type == PLL2555)
 		fout *= pms.m;
-	else if (pll->type == PLL2651)
+	else if (pll_data->type == PLL2651)
 		fout *= (pms.m << 16) + pms.k;
 	else {
 		fout = 0;
@@ -242,7 +230,7 @@ static unsigned long nexell_clk_pll_recalc_rate(struct clk_hw *hw,
 
 	do_div(fout, (pms.p << pms.s));
 
-	if (pll->type == PLL2651)
+	if (pll_data->type == PLL2651)
 		fout >>= 16;
 
 	pll->pms = pms;
@@ -263,11 +251,6 @@ static void __pll_set_rate_locked(struct clk_pll *pll, struct pll_pms *pms)
 {
 	struct regmap *regmap = pll->regmap;
 
-	/* TODO: do we really need to check the clock is stable before changing
-	 * pms values?
-	 */
-	clk_pll_wait_ready(pll);
-
 	clk_pll_set_oscmux(pll, MUXSEL_OSCCLK);
 
 	regmap_update_bits(regmap, PLLCFG1, (PLLCFG1_P_MASK | PLLCFG1_M_MASK),
@@ -283,8 +266,6 @@ static void __pll_set_rate_locked(struct clk_pll *pll, struct pll_pms *pms)
 	regmap_update_bits(regmap, PLLCTRL, PLLCTRL_RUN_PLL_UPDATE_MASK,
 			   BIT(PLLCTRL_RUN_PLL_UPDATE));
 
-	udelay(2);
-
 	regmap_update_bits(regmap, PLLCFG0, PLLCFG0_RESET_MASK,
 			   BIT(PLLCFG0_RESET_SHIFT));
 
@@ -293,9 +274,8 @@ static void __pll_set_rate_locked(struct clk_pll *pll, struct pll_pms *pms)
 	regmap_update_bits(regmap, PLLCTRL, PLLCTRL_RUN_PLL_UPDATE_MASK,
 			   BIT(PLLCTRL_RUN_PLL_UPDATE));
 
-	udelay(150);
-
-	clk_pll_wait_ready(pll);
+	/* Wait (p + 1) * lock_cycle */
+	clk_pll_wait_lock(pll, (pms->p + 1) * pll->pll_data->lock_cycle);
 
 	clk_pll_set_oscmux(pll, MUXSEL_PLLFOUT);
 }
@@ -354,7 +334,7 @@ static struct syscore_ops nexell_clk_pll_syscore_ops = {
 };
 
 static void __init nexell_clk_register_pll(struct device_node *np,
-				    enum pll_type type)
+				    struct clk_pll_data *pll_data)
 {
 	struct regmap *regmap;
 	struct clk_init_data init;
@@ -373,7 +353,8 @@ static void __init nexell_clk_register_pll(struct device_node *np,
 	if (!pll)
 		return;
 
-	pll->type = type;
+	pll->refclk_rate = clk_get_rate(__clk_lookup(parent_name));
+	pll->pll_data = pll_data;
 	pll->regmap = regmap;
 
 	init.name = name;
@@ -408,12 +389,12 @@ out_free:
 
 static void __init nexell_clk_pll2651_setup(struct device_node *np)
 {
-	nexell_clk_register_pll(np, PLL2651);
+	nexell_clk_register_pll(np, &pll_data_table[PLL2651]);
 }
 CLK_OF_DECLARE(nexell_pll2651, "nexell,pll2651", nexell_clk_pll2651_setup);
 
 static void __init nexell_clk_pll2555_setup(struct device_node *np)
 {
-	nexell_clk_register_pll(np, PLL2555);
+	nexell_clk_register_pll(np, &pll_data_table[PLL2555]);
 }
 CLK_OF_DECLARE(nexell_pll2555, "nexell,pll2555", nexell_clk_pll2555_setup);
