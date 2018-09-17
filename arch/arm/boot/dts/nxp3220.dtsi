@@ -510,7 +510,7 @@
 			snps,no-pbl-x8;
 		};
 
-		gmac1: ethernet@126110000 {
+		gmac1: ethernet@26110000 {
 			compatible = "nexell,nxp3220-dwmac";
 			reg = <0x26110000 0x8000>;
 			interrupts = <GIC_SPI 42 IRQ_TYPE_NONE>;
