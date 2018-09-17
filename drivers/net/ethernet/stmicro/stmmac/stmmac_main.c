@@ -799,6 +799,7 @@ static void stmmac_adjust_link(struct net_device *dev)
 	struct stmmac_priv *priv = netdev_priv(dev);
 	struct phy_device *phydev = dev->phydev;
 	bool new_state = false;
+	struct device_node *np = priv->device->of_node;
 
 	if (!phydev)
 		return;
@@ -873,7 +874,7 @@ static void stmmac_adjust_link(struct net_device *dev)
 		/* At this stage, init the EEE if supported.
 		 * Never called in case of fixed_link.
 		 */
-		if (of_machine_is_compatible("nexell,nxp3220-dwmac"))
+		if (of_device_is_compatible(np, "nexell,nxp3220-dwmac"))
 			priv->eee_enabled = false;
 		else
 			priv->eee_enabled = stmmac_eee_init(priv);
