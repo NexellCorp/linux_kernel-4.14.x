@@ -4337,6 +4337,8 @@ int stmmac_suspend(struct device *dev)
 
 	mutex_lock(&priv->lock);
 
+	del_timer_sync(&priv->txtimer);
+
 	netif_device_detach(ndev);
 	stmmac_stop_all_queues(priv);
 
@@ -4425,8 +4427,6 @@ int stmmac_resume(struct device *dev)
 			stmmac_mdio_reset(priv->mii);
 	}
 
-	netif_device_attach(ndev);
-
 	mutex_lock(&priv->lock);
 
 	stmmac_reset_queues_param(priv);
@@ -4439,17 +4439,20 @@ int stmmac_resume(struct device *dev)
 	stmmac_clear_descriptors(priv);
 
 	stmmac_hw_setup(ndev, false);
-	stmmac_init_tx_coalesce(priv);
 	stmmac_set_rx_mode(ndev);
 
 	stmmac_enable_all_queues(priv);
 
 	stmmac_start_all_queues(priv);
 
+	netif_device_attach(ndev);
+
 	mutex_unlock(&priv->lock);
 
 	if (ndev->phydev)
 		phy_start(ndev->phydev);
+
+	stmmac_init_tx_coalesce(priv);
 
 	return 0;
 }
