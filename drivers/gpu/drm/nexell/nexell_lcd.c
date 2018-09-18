@@ -665,11 +665,12 @@ static int panel_lcd_parse_dt(struct platform_device *pdev,
 		}
 	}
 
-	np = of_find_node_by_name(node, "max-resolution");
+	np = of_get_child_by_name(node, "max-resolution");
 	if (np) {
 		of_property_read_u32(np, "width", &ctx->max_mode.width);
 		of_property_read_u32(np, "height", &ctx->max_mode.height);
 		of_property_read_u32(np, "refresh", &ctx->max_mode.refresh);
+		of_node_put(np);
 	}
 
 	DRM_INFO("Panel: %s, Bridge: %s\n",
@@ -686,10 +687,12 @@ static int panel_lcd_parse_dt(struct platform_device *pdev,
 	INIT_WORK(&ctx->lcd_power_work, panel_lcd_work);
 
 	/* parse display control config */
-	np = of_find_node_by_name(node, "display-config");
+	np = of_get_child_by_name(node, "display-config");
 	if (np) {
+		err = nx_drm_display_setup(display, np, display->panel_type);
 		of_node_put(np);
-		return nx_drm_display_setup(display, np, display->panel_type);
+
+		return err;
 	}
 
 	return 0;

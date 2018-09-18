@@ -311,25 +311,19 @@ static int nx_drm_probe(struct platform_device *pdev)
 	for (i = 0; i < ARRAY_SIZE(nx_drm_panel_drvs); i++) {
 		struct nx_drm_display_driver *drv = &nx_drm_panel_drvs[i];
 		const char *name = drv->match;
-		struct device *d;
+		struct device *p = NULL, *d;
 
 		if (!drv->driver)
 			continue;
 
-		d = bus_find_device(&platform_bus_type,
-				NULL, (void *)name, compare_component);
-		if (!d)
-			continue;
-
-		if (!driver_find_device(d->driver, NULL,
-					(void *)name, compare_drv)) {
-			DRM_INFO("not found driver for %s\n", name);
-			continue;
+		while ((d = bus_find_device(&platform_bus_type, p,
+					    (void *)name, compare_component))) {
+			put_device(p);
+			component_match_add(dev, &match, compare_dev, d);
+			p = d;
+			found++;
 		}
-		put_device(d);
-
-		component_match_add(dev, &match, compare_dev, d);
-		found++;
+		put_device(p);
 	}
 
 	if (!found)
