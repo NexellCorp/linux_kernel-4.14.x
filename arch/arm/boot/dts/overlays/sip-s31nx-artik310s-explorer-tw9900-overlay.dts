@@ -56,10 +56,33 @@
 	};
 
 	fragment@6 {
+		target = <&soc>;
+		__overlay__ {
+			panel: panel {
+				compatible = "samsung,lms700kf23";
+				status = "okay";
+
+				port {
+					rgb_panel: endpoint {
+						remote-endpoint = <&rgb_out>;
+					};
+				};
+			};
+		};
+	};
+
+
+	fragment@7 {
 		target = <&drm_rgb>;
 		__overlay__ {
 			status = "okay";
 			pinctrl-0 = <>;
+
+			port {
+				rgb_out: endpoint {
+					remote-endpoint = <&rgb_panel>;
+				};
+			};
 
 			display-config {
 				out-format = <3>;
@@ -67,21 +90,21 @@
 		};
 	};
 
-	fragment@7 {
+	fragment@8 {
 		target = <&drm>;
 		__overlay__ {
 			status = "ok";
 		};
 	};
 
-	fragment@8 {
+	fragment@9 {
 		target = <&nx_v4l2>;
 		__overlay__ {
 			status = "ok";
 		};
 	};
 
-	fragment@9 {
+	fragment@10 {
 		target = <&vip>;
 		__overlay__ {
 			assigned-clocks = <&cmu_mm CLK_MM_VIP_AXI>,
@@ -92,7 +115,7 @@
 		};
 	};
 
-	fragment@10 {
+	fragment@11 {
 		target = <&clipper>;
 
 		__overlay__ {
