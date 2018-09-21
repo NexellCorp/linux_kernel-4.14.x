@@ -9,6 +9,7 @@
 
 #include <linux/clk-provider.h>
 #include <linux/reset-controller.h>
+#include <linux/syscore_ops.h>
 
 struct nexell_clk_reset;
 struct nexell_clk_data {
