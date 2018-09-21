@@ -267,11 +267,6 @@ static int compare_dev(struct device *dev, void *data)
 	return dev == (struct device *)data;
 }
 
-static int compare_drv(struct device *dev, void *data)
-{
-	return 1;
-}
-
 static int compare_component(struct device *dev, void *data)
 {
 	const char *t = data;
