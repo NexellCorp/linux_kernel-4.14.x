@@ -52,16 +52,15 @@
 			samsung,i2c-sda-delay = <100>;
 			samsung,i2c-max-bus-freq = <50000>;
 
+			#address-cells = <1>;
+			#size-cells = <0>;
+
 			hdmi_bridge {
 				compatible = "sil,sii9022";
-				#address-cells = <1>;
-				#size-cells = <0>;
 				reg = <0x3b>;
 				reset-gpio = <&alive_0 7 GPIO_ACTIVE_LOW>;
 
 				ports {
-					#address-cells = <1>;
-					#size-cells = <0>;
 					port@0 {
 						bridge_out: endpoint {
 							remote-endpoint = <&rgb_out>;
