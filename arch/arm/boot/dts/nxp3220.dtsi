@@ -1032,8 +1032,8 @@
 			#phy-cells = <1>;
 			assigned-clocks = <&cmu_usb CLK_USB_AHB>;
 			assigned-clock-rates = <250000000>;
-			clocks = <&cmu_usb CLK_USB_AHB>, <&cmu_usb CLK_USB_SYSREG_APB>;
-			clock-names = "ahb", "apb";
+			clocks = <&cmu_usb CLK_USB_SYSREG_APB>;
+			clock-names = "apb";
 			status = "disabled";
 		};
 
