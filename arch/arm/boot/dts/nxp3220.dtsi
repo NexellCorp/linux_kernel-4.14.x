@@ -3,6 +3,7 @@
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 #include <dt-bindings/clock/nxp3220-clk.h>
 #include <dt-bindings/media/nxp3220-vip.h>
+#include <dt-bindings/soc/nexell,boot-mode.h>
 
 / {
 	compatible = "nexell,nxp3220";
@@ -764,6 +765,21 @@
 			pinctrl-0 = <&pdm_strobe>, <&pdm_lr0>, <&pdm_lr1>;
 			syscon = <&sys_reg_sys>;
 			status = "disabled";
+		};
+
+		reboot_alive: alive@2008d000 {
+			compatible = "syscon", "simple-mfd";
+			reg = <0x2008d000 0x110>;
+
+			reboot_mode: reboot-mode {
+				compatible = "syscon-reboot-mode";
+				offset = <0xd8>;	/* ALIVE_SCRATCHRSTREG4 */
+
+				mode-normal	= <BOOT_NORMAL>;
+				mode-bootloader	= <BOOT_FASTBOOT>;
+				mode-recovery	= <BOOT_RECOVERY>;
+				mode-dfu	= <BOOT_DFU>;
+			};
 		};
 
 		sys_reg_sys: syscon@20030000 {
