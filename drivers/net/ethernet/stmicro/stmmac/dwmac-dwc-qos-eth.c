@@ -458,6 +458,122 @@ static void nxp3220_qos_fix_speed(void *priv, unsigned int speed)
 
 }
 
+static int __nxp3220_clk_enable(struct nxp3220_eqos *eqos)
+{
+	int err;
+
+	err = clk_prepare_enable(eqos->clk_master);
+	if (err < 0) {
+		dev_err(eqos->dev, "master clock enable failed\n");
+		goto out;
+	}
+
+	err = clk_prepare_enable(eqos->clk_slave);
+	if (err < 0) {
+		dev_err(eqos->dev, "slave clock enable failed\n");
+		goto disable_master;
+	}
+
+	err = clk_prepare_enable(eqos->ptp_ref);
+	if (err < 0) {
+		dev_err(eqos->dev, "ptp_ref clock error\n");
+		goto disable_slave;
+	}
+
+	if (!IS_ERR_OR_NULL(eqos->clk_tx)) {
+		err = clk_prepare_enable(eqos->clk_tx);
+		if (err < 0) {
+			dev_err(eqos->dev, "tx clock enable failed");
+			goto disable_ptp_ref;
+		}
+	}
+
+	/* eqos reset */
+	if (!IS_ERR_OR_NULL(eqos->rst)) {
+		err = reset_control_assert(eqos->rst);
+		if (err < 0)
+			goto disable_tx;
+
+		usleep_range(2000, 4000);
+
+		err = reset_control_deassert(eqos->rst);
+		if (err < 0)
+			goto disable_tx;
+
+		usleep_range(2000, 4000);
+	}
+
+out:
+	return err;
+
+disable_tx:
+	clk_disable_unprepare(eqos->clk_tx);
+disable_ptp_ref:
+	clk_disable_unprepare(eqos->ptp_ref);
+disable_slave:
+	clk_disable_unprepare(eqos->clk_slave);
+disable_master:
+	clk_disable_unprepare(eqos->clk_master);
+
+	goto out;
+}
+
+static int nxp3220_qos_init(struct platform_device *pdev, void *priv)
+{
+	struct device *dev = &pdev->dev;
+	struct nxp3220_eqos *eqos = priv;
+
+	if (__nxp3220_clk_enable(eqos) < 0) {
+		dev_err(dev, "clk failed\n");
+		return -EINVAL;
+	}
+
+	dev_dbg(dev, " eqos slave : %lu\n", clk_get_rate(eqos->clk_slave));
+	dev_dbg(dev, " eqos master : %lu\n", clk_get_rate(eqos->clk_master));
+	dev_dbg(dev, " eqos ptp_ref : %lu\n", clk_get_rate(eqos->ptp_ref));
+
+	/* FIFO wake */
+	writel(1, eqos->regs + 0x4000);
+
+	return 0;
+}
+
+static void nxp3220_qos_exit(struct platform_device *pdev, void *priv)
+{
+	struct nxp3220_eqos *eqos = priv;
+
+	if (!IS_ERR(eqos->rst))
+		reset_control_assert(eqos->rst);
+	if (!IS_ERR_OR_NULL(eqos->clk_tx))
+		clk_disable_unprepare(eqos->clk_tx);
+	clk_disable_unprepare(eqos->ptp_ref);
+	clk_disable_unprepare(eqos->clk_slave);
+	clk_disable_unprepare(eqos->clk_master);
+}
+
+static int get_csr_rate(struct nxp3220_eqos *eqos)
+{
+	u32 clk_rate = clk_get_rate(eqos->clk_slave);
+	int clk_csr;
+
+	if (clk_rate < CSR_F_35M)
+		clk_csr = STMMAC_CSR_20_35M;
+	else if ((clk_rate >= CSR_F_35M) && (clk_rate < CSR_F_60M))
+		clk_csr = STMMAC_CSR_35_60M;
+	else if ((clk_rate >= CSR_F_60M) && (clk_rate < CSR_F_100M))
+		clk_csr = STMMAC_CSR_60_100M;
+	else if ((clk_rate >= CSR_F_100M) && (clk_rate < CSR_F_150M))
+		clk_csr = STMMAC_CSR_100_150M;
+	else if ((clk_rate >= CSR_F_150M) && (clk_rate < CSR_F_250M))
+		clk_csr = STMMAC_CSR_150_250M;
+	else if ((clk_rate >= CSR_F_250M) && (clk_rate < CSR_F_300M))
+		clk_csr = STMMAC_CSR_250_300M;
+	else
+		clk_csr = 0;
+
+	return clk_csr;
+}
+
 static void *nxp3220_qos_probe(struct platform_device *pdev,
 			      struct plat_stmmacenet_data *data,
 			      struct stmmac_resources *res)
@@ -466,7 +582,7 @@ static void *nxp3220_qos_probe(struct platform_device *pdev,
 	struct device_node *np = pdev->dev.of_node;
 	struct device *dev = &pdev->dev;
 	int interface;
-	int err;
+	int err = 0;
 
 	eqos = devm_kzalloc(dev, sizeof(*eqos), GFP_KERNEL);
 	if (!eqos) {
@@ -486,23 +602,11 @@ static void *nxp3220_qos_probe(struct platform_device *pdev,
 		goto error;
 	}
 
-	err = clk_prepare_enable(eqos->clk_master);
-	if (err < 0)
-		goto error;
-
 	/* Slave(CSR) Clock */
 	eqos->clk_slave = devm_clk_get(dev, "slave_bus");
 	if (IS_ERR(eqos->clk_slave)) {
 		dev_err(dev, "slave clock get failed\n");
 		err = PTR_ERR(eqos->clk_slave);
-		goto disable_master;
-	}
-
-	data->stmmac_clk = eqos->clk_slave;
-
-	err = clk_prepare_enable(eqos->clk_slave);
-	if (err < 0) {
-		dev_err(dev, "slave clock enable failed\n");
 		goto disable_master;
 	}
 
@@ -514,19 +618,6 @@ static void *nxp3220_qos_probe(struct platform_device *pdev,
 		goto disable_slave;
 	}
 
-	err = clk_prepare_enable(eqos->ptp_ref);
-	if (err < 0) {
-		dev_err(dev, "ptp_ref clock error\n");
-		goto disable_slave;
-	}
-
-	/* FIFO wake */
-	writel(1, eqos->regs + 0x4000);
-
-	dev_dbg(dev, " eqos slave : %lu\n", clk_get_rate(eqos->clk_slave));
-	dev_dbg(dev, " eqos master : %lu\n", clk_get_rate(eqos->clk_master));
-	dev_dbg(dev, " eqos ptp_ref : %lu\n", clk_get_rate(eqos->ptp_ref));
-
 	/* tx clk for rgmii only */
 	interface = of_get_phy_mode(np);
 	if (interface == PHY_INTERFACE_MODE_RGMII) {
@@ -534,16 +625,11 @@ static void *nxp3220_qos_probe(struct platform_device *pdev,
 		if (IS_ERR(eqos->clk_tx)) {
 			dev_err(dev, "tx clock get failed\n");
 			err = PTR_ERR(eqos->clk_tx);
-			goto disable_slave;
-		}
-
-		err = clk_prepare_enable(eqos->clk_tx);
-		if (err < 0) {
-			dev_err(dev, "tx clock enable failed");
-			goto disable_slave;
+			goto disable_ptp_ref;
 		}
 	}
 
+	/* phy reset */
 	eqos->phy_reset =
 		devm_gpiod_get(dev, "phy-reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(eqos->phy_reset)) {
@@ -560,32 +646,25 @@ static void *nxp3220_qos_probe(struct platform_device *pdev,
 	eqos->phy_pme = devm_gpiod_get(dev, "phy-pme", GPIOD_IN);
 
 	eqos->rst = devm_reset_control_get(dev, "eqos");
-	if (IS_ERR(eqos->rst)) {
+	if (IS_ERR(eqos->rst))
 		dev_dbg(dev, "no eqos reset provided\n");
-	} else {
-		err = reset_control_assert(eqos->rst);
-		if (err < 0)
-			goto reset_phy;
 
-		usleep_range(2000, 4000);
-
-		err = reset_control_deassert(eqos->rst);
-		if (err < 0)
-			goto reset_phy;
-
-		usleep_range(2000, 4000);
-	}
+	nxp3220_qos_init(pdev, eqos);
+	data->clk_csr = get_csr_rate(eqos);
 
 	data->fix_mac_speed = nxp3220_qos_fix_speed;
+	data->init = nxp3220_qos_init;
+	data->exit = nxp3220_qos_exit;
 	data->bsp_priv = eqos;
 
 out:
 	return eqos;
 
-reset_phy:
-	gpiod_set_value(eqos->phy_reset, 1);
 disable_tx:
-	clk_disable_unprepare(eqos->clk_tx);
+	if (interface == PHY_INTERFACE_MODE_RGMII)
+		clk_disable_unprepare(eqos->clk_tx);
+disable_ptp_ref:
+	clk_disable_unprepare(eqos->ptp_ref);
 disable_slave:
 	clk_disable_unprepare(eqos->clk_slave);
 disable_master:
