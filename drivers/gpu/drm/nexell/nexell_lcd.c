@@ -249,16 +249,10 @@ static void panel_lcd_work(struct work_struct *work)
 
 static void panel_lcd_on(struct lcd_context *ctx)
 {
-	struct nx_drm_connector *nx_connector = &ctx->connector;
 	struct nx_drm_display *display = ctx_to_display(ctx);
 	struct nx_drm_display_ops *ops = display->ops;
 
 	DRM_DEBUG_KMS("enter\n");
-
-	if (nx_connector->suspended) {
-		if (ops->resume)
-			ops->resume(display);
-	}
 
 	if (ops->prepare)
 		ops->prepare(display);
@@ -276,16 +270,10 @@ static void panel_lcd_on(struct lcd_context *ctx)
 
 static void panel_lcd_off(struct lcd_context *ctx)
 {
-	struct nx_drm_connector *nx_connector = &ctx->connector;
 	struct nx_drm_display *display = ctx_to_display(ctx);
 	struct nx_drm_display_ops *ops = display->ops;
 
 	DRM_DEBUG_KMS("enter\n");
-
-	if (nx_connector->suspended) {
-		if (ops->suspend)
-			ops->suspend(display);
-	}
 
 	if (display->panel)
 		drm_panel_unprepare(display->panel);
