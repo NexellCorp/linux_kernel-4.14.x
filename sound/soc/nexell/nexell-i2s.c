@@ -713,7 +713,8 @@ static int nx_i2s_dai_driver_setup(struct platform_device *pdev,
 			dev_err(i2s->dev,
 				"%s: Not support i2s.0x%x fix sample rate:%d\n",
 				__func__, i2s->addr, i2s->sample_rate);
-		rate = ratio->sample_rate;
+		else
+			rate = ratio->sample_rate;
 	}
 
 	if (format) {
