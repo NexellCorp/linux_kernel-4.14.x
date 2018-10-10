@@ -467,13 +467,13 @@ static int nx_display_crtc_parse_dt(struct drm_device *drm,
 
 	DRM_DEBUG_KMS("crtc.%d for %s\n", pipe, dev_name(dev));
 
-	sprintf(name, "mlc.%d", pipe);
+	snprintf(name, sizeof(name), "mlc.%d", pipe);
 	id = of_property_match_string(node, "reg-names", name);
 	dp->mlc_base = of_iomap(node, id);
 	if (!dp->mlc_base)
 		return -ENOMEM;
 
-	sprintf(name, "dpc.%d", pipe);
+	snprintf(name, sizeof(name), "dpc.%d", pipe);
 	id = of_property_match_string(node, "reg-names", name);
 	dp->dpc_base = of_iomap(node, id);
 	if (!dp->dpc_base)
@@ -835,7 +835,7 @@ static struct nx_overlay *nx_display_plane_create(
 	ovl->type |= yuv ? NX_PLANE_TYPE_VIDEO : 0;
 	ovl->color.alpha = yuv ? 15 : 0;
 
-	sprintf(ovl->name, "%d-%s.%d", dp->module, yuv ? "vid" : "rgb", id);
+	snprintf(ovl->name, sizeof(ovl->name), "%d-%s.%d", dp->module, yuv ? "vid" : "rgb", id);
 
 	return ovl;
 }
