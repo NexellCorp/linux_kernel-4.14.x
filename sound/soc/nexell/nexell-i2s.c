@@ -209,10 +209,7 @@ static void nx_i2s_clk_dir(struct nx_i2s_data *i2s)
 		else
 			mod |= MOD_MLCK_NOUT;
 	} else {
-		if (dir)
-			mod &= ~MOD_MLCK_NOUT;
-		else
-			mod |= MOD_MLCK_NOUT;
+		mod &= ~MOD_MLCK_NOUT;
 	}
 
 	writel(mod, &reg->mod);
