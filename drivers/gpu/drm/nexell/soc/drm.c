@@ -855,7 +855,7 @@ int nx_drm_planes_init(struct drm_device *drm, struct drm_crtc *crtc,
 
 		drm_types[i] = dp->overlay_types[i];
 
-		if ((drm_types[i] & 0xff) == NX_PLANE_TYPE_UNKNOWN)
+		if ((drm_types[i] & 0xfffffff) == NX_PLANE_TYPE_UNKNOWN)
 			continue;
 
 		yuv = is_video_plane(drm_types[i]);
