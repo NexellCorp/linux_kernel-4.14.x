@@ -470,7 +470,7 @@ static int nx_vip_probe(struct platform_device *pdev)
 	spin_lock_init(&me->lock);
 
 	nx_vip_clock_enable(me->module, true);
-	sprintf(me->irq_name, "nx-vip%d", me->module);
+	snprintf(me->irq_name, sizeof(me->irq_name), "nx-vip%d", me->module);
 	ret = devm_request_irq(&pdev->dev, me->irq, &vip_irq_handler,
 			       IRQF_SHARED, me->irq_name, me);
 	if (ret) {
