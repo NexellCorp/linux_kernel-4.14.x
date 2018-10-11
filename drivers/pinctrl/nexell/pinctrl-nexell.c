@@ -384,9 +384,6 @@ static const struct pinmux_ops nexell_pinmux_ops = {
 static int nexell_soc_write_pin(unsigned int io,
 				enum pincfg_type cfg_type, u32 data)
 {
-	if (cfg_type >= PINCFG_TYPE_NUM)
-		return -EINVAL;
-
 	switch (cfg_type) {
 	case PINCFG_TYPE_DAT:
 		nx_soc_gpio_set_out_value(io, data);
@@ -414,9 +411,6 @@ static int nexell_soc_write_pin(unsigned int io,
 static int nexell_soc_read_pin(unsigned int io,
 			       enum pincfg_type cfg_type, u32 *data)
 {
-	if (cfg_type >= PINCFG_TYPE_NUM)
-		return -EINVAL;
-
 	switch (cfg_type) {
 	case PINCFG_TYPE_DAT:
 		*data = nx_soc_gpio_get_value(io);
