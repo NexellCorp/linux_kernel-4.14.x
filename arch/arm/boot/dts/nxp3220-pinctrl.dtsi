@@ -624,4 +624,84 @@
 		nexell,pin-pull = <NX_PIN_PULL_NONE>;
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
+
+	peri0_pwr_pin: peri0-pwr-pin {
+		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_PERI0>;
+		nexell,pins = "gpioa-0", "gpioa-1", "gpioa-2", "gpioa-3",
+			      "gpioa-4", "gpioa-5", "gpioa-6", "gpioa-7",
+			      "gpioa-8", "gpioa-9", "gpioa-10", "gpioa-11",
+			      "gpioa-12", "gpioa-13", "gpioa-14", "gpioa-15",
+			      "gpioa-16", "gpioa-17", "gpioa-18", "gpioa-19",
+			      "gpioa-20", "gpioa-21", "gpioa-22", "gpioa-23",
+			      "gpioa-24", "gpioa-25", "gpioa-26", "gpioa-27",
+			      "gpioa-28";
+		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
+		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+	};
+
+	sdmmc_pwr_pin: sdmmc-pwr-pin {
+		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_SDMMC>;
+		nexell,pins = "gpioa-29", "gpioa-30", "gpioa-31", "gpiob-0",
+			      "gpiob-1", "gpiob-2", "gpiob-3", "gpiob-4",
+			      "gpiob-5", "gpiob-6", "gpiob-7", "gpiob-8";
+		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
+		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+	};
+
+	nand_pwr_pin: nand-pwr-pin {
+		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_NAND>;
+		nexell,pins = "gpiob-9", "gpiob-10", "gpiob-11", "gpiob-12",
+			      "gpiob-13", "gpiob-14", "gpiob-15", "gpiob-16",
+			      "gpiob-17", "gpiob-18", "gpiob-19", "gpiob-20",
+			      "gpiob-21", "gpiob-22", "gpiob-23", "gpiob-24";
+		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
+		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+	};
+
+	peri1_pwr_pin: peri1-pwr-pin {
+		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_PERI1>;
+		nexell,pins = "gpiob-24", "gpiob-25", "gpiob-26", "gpiob-27",
+			      "gpiob-28", "gpiob-29", "gpiob-30", "gpiob-31",
+			      "gpioc-0", "gpioc-1", "gpioc-2", "gpioc-3",
+			      "gpioc-4", "gpioc-5", "gpioc-6", "gpioc-7",
+			      "gpioc-8", "gpioc-9", "gpioc-10", "gpioc-11",
+			      "gpioc-12", "gpioc-13", "gpioc-14", "gpioc-15",
+			      "gpioc-16", "gpioc-17";
+		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
+		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+	};
+
+	gmac_pwr_pin: gmac-pwr-pin {
+		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_GMAC>;
+		nexell,pins = "gpioc-18", "gpioc-19", "gpioc-20", "gpioc-21",
+			      "gpioc-22", "gpioc-23", "gpioc-24", "gpioc-25",
+			      "gpioc-26", "gpioc-27", "gpioc-28", "gpioc-29",
+			      "gpioc-30", "gpioc-31", "gpiod-0", "gpiod-1",
+			      "gpiod-2", "gpiod-3", "gpiod-4", "gpiod-5",
+			      "gpiod-6", "gpiod-7", "gpiod-8", "gpiod-9";
+		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
+		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+	};
+
+	peri2_pwr_pin: peri2-pwr-pin {
+		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_PERI2>;
+		nexell,pins = "gpiod-10", "gpiod-11", "gpiod-12", "gpiod-13",
+			      "gpiod-14", "gpiod-15", "gpiod-16", "gpiod-17",
+			      "gpiod-18", "gpiod-19", "gpiod-20", "gpiod-21",
+			      "gpiod-22", "gpiod-23", "gpiod-24", "gpiod-25",
+			      "gpiod-26", "gpiod-27", "gpiod-28", "gpiod-29",
+			      "gpiod-30", "gpiod-31", "gpioe-0", "gpioe-1";
+		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
+		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+	};
+
+	vip_pwr_pin: vip-pwr-pin {
+		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_VIP>;
+		nexell,pins = "gpioe-2", "gpioe-3", "gpioe-4", "gpioe-5",
+			      "gpioe-6", "gpioe-7", "gpioe-8", "gpioe-9",
+			      "gpioe-10", "gpioe-11", "gpioe-12", "gpioe-13",
+			      "gpioe-14", "gpioe-15", "gpioe-16";
+		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
+		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+	};
 };
