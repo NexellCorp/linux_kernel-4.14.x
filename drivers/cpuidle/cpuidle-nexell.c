@@ -79,18 +79,6 @@ static int __init nexell_idle_init(void)
 			goto out_kfree_drv;
 		}
 
-		/*
-		 * Skip the cpuidle device initialization if the reported
-		 * failure is a HW misconfiguration/breakage (-ENXIO).
-		 */
-		if (ret == -ENXIO)
-			continue;
-
-		if (ret) {
-			pr_err("CPU %d failed to init idle CPU ops\n", cpu);
-			goto out_unregister_drv;
-		}
-
 		dev = kzalloc(sizeof(*dev), GFP_KERNEL);
 		if (!dev) {
 			pr_err("Failed to allocate cpuidle device\n");
