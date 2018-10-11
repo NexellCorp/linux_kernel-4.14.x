@@ -726,7 +726,7 @@ static int apply_gpio_action(struct device *dev, int gpio_num,
 	np = dev->of_node;
 	gpio = of_get_named_gpio(np, "gpios", gpio_num);
 
-	sprintf(label, "v4l2-cam #pwr gpio %d", gpio);
+	snprintf(label, sizeof(label), "v4l2-cam #pwr gpio %d", gpio);
 	if (!gpio_is_valid(gpio)) {
 		dev_err(dev, "invalid gpio %d set to %d\n", gpio, unit->value);
 		return -EINVAL;
@@ -1638,7 +1638,7 @@ static int create_sysfs_for_camera_sensor(struct nx_clipper *me,
 
 	memset(sensor_name, 0, V4L2_SUBDEV_NAME_SIZE);
 
-	sprintf(sensor_name, "%s %d-%04x",
+	snprintf(sensor_name, sizeof(sensor_name), "%s %d-%04x",
 		info->board_info.type,
 		i2c_adapter_id(me->sensor_info.i2c_adapter),
 		info->board_info.addr);
@@ -1646,7 +1646,8 @@ static int create_sysfs_for_camera_sensor(struct nx_clipper *me,
 	strlcpy(camera_sensor_info[me->module].name, sensor_name,
 		V4L2_SUBDEV_NAME_SIZE);
 
-	sprintf(kobject_name, "camerasensor%d", me->module);
+	snprintf(kobject_name, sizeof(kobject_name), "camerasensor%d",
+		me->module);
 	kobj = kobject_create_and_add(kobject_name, &platform_bus.kobj);
 	if (!kobj) {
 		dev_err(&me->pdev->dev, "failed to kobject_create for module %d\n",
