@@ -34,4 +34,23 @@
 #define NX_GPIO_LOW			0
 #define NX_GPIO_HIGH			1
 
+/* Pin powerdown mode */
+#define NX_PIN_PWR_NONE			0
+#define NX_PIN_PWR_INPUT		1
+#define NX_PIN_PWR_OUTPUT		2
+#define NX_PIN_PWR_PREV			3 /* output with previous state */
+
+/* Pin powerdown domain */
+#define NX_PIN_PWR_DOMAIN_PERI0		0
+#define NX_PIN_PWR_DOMAIN_SDMMC		1
+#define NX_PIN_PWR_DOMAIN_NAND		2
+#define NX_PIN_PWR_DOMAIN_PERI1		3
+#define NX_PIN_PWR_DOMAIN_GMAC		4
+#define NX_PIN_PWR_DOMAIN_PERI2		5
+#define NX_PIN_PWR_DOMAIN_VIP		6
+
+/* Pin powerdown output value */
+#define NX_PIN_PWR_RETEN_LOW		0
+#define NX_PIN_PWR_RETEN_HIGH		1
+
 #endif /* __DT_BINDINGS_PINCTRL_NEXELL_H__ */

@@ -12,8 +12,8 @@
 #include <linux/pinctrl/pinconf.h>
 #include <linux/pinctrl/consumer.h>
 #include <linux/pinctrl/machine.h>
-
 #include <linux/gpio.h>
+#include <dt-bindings/pinctrl/nexell.h>
 
 /**
  * enum pincfg_type - possible pin configuration types supported.
@@ -132,6 +132,8 @@ struct nexell_pin_ctrl {
  * @nr_groups: number of such pin groups.
  * @pmx_functions: list of pin functions available to the driver.
  * @nr_functions: number of such pin functions.
+ * @pwr: list of powerdown pin available to the driver.
+ * @nr_pwrs: number of such powerdown pin.
  */
 struct nexell_pinctrl_drv_data {
 	struct list_head		node;
@@ -146,6 +148,8 @@ struct nexell_pinctrl_drv_data {
 	unsigned int			nr_groups;
 	const struct nexell_pmx_func	*pmx_functions;
 	unsigned int			nr_functions;
+	const struct nexell_pwr_func	*pwr_functions;
+	unsigned int			nr_pwr_groups;
 };
 
 /**
@@ -173,6 +177,31 @@ struct nexell_pmx_func {
 	const char		**groups;
 	u8			num_groups;
 	u32			val;
+};
+
+/**
+ * struct nexell_pin_pwr: represent powerdown state of pins.
+ * @name: name of the powerdown pin, used to lookup the powerdown pin.
+ * @drive: powerdown pin drive state.
+ * @val: powerdown pin value state.
+ */
+struct nexell_pin_pwr {
+	const char		*name;
+	unsigned int		pin;
+	u32			drive;
+	u32			val;
+};
+
+/**
+ * struct nexell_pwr_func: represent a powerdown pin.
+ * @domain: number of the powerdown domain.
+ * @groups: one or more names of powerdown pin groups
+ * @num_groups: number of groups included in @groups.
+ */
+struct nexell_pwr_func {
+	unsigned int		domain;
+	struct nexell_pin_pwr	*groups;
+	u8			num_groups;
 };
 
 /* list of all exported SoC specific data */

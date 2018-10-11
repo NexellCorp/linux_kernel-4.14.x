@@ -69,6 +69,16 @@ static u32 nx_alive_getbit(void __iomem *addr, u32 bit)
 	return (readl(addr) >> bit) & 1UL;
 }
 
+static void nx_alive_setbit(void __iomem *addr, u32 bit, bool enable)
+{
+	u32 value = readl(addr);
+
+	value &= ~(1ul << bit);
+	value |= (u32)enable << bit;
+
+	writel(value, addr);
+}
+
 static void nx_alive_setbit2(void __iomem *addr, u32 bit, u32 bit_value)
 {
 	u32 value = readl(addr);
@@ -806,6 +816,85 @@ static int nxp3220_alive_resume(void)
 	return 0;
 }
 
+static void nxp3220_retention_suspend(struct nexell_pinctrl_drv_data *drvdata)
+{
+	const struct nexell_pwr_func *pwr_func;
+	void __iomem *base = alive_regs;
+	int i, n, ret;
+
+	for (i = 0; i < drvdata->nr_pwr_groups; i++) {
+		pwr_func = &drvdata->pwr_functions[i];
+
+		for (n = 0; n < pwr_func->num_groups; n++) {
+			struct nexell_pin_pwr *pwr_pin = &pwr_func->groups[n];
+			void __iomem *addr = base;
+			const unsigned *pin;
+			unsigned npin;
+			int domain, bit, val, dir;
+
+			ret = pinctrl_get_group_pins(drvdata->pctl_dev,
+						pwr_pin->name, &pin, &npin);
+			if (ret < 0)
+				continue;
+
+			if (pwr_pin->drive == NX_PIN_PWR_NONE)
+				continue;
+
+			addr += ((*pin / 32) * ALIVE_PWRDN_OFFSET);
+			bit = *pin % 32;
+			val = pwr_pin->val;
+			dir = pwr_pin->drive == NX_PIN_PWR_INPUT ? 0 : 1;
+			domain = pwr_func->domain;
+
+			if (pwr_pin->drive == NX_PIN_PWR_PREV)
+				val = nx_gpio_get_input_value((*pin / 32), bit)
+					? 1 : 0;
+
+			nx_alive_setbit(addr + ALIVE_GPIO_OUT, bit, val);
+			nx_alive_setbit(addr + ALIVE_GPIO_OUTENB, bit, dir);
+			nx_alive_setbit(addr + ALIVE_GPIO_PWRDN, bit, 1);
+
+			nx_alive_setbit(base + ALIVE_NPADHOLDENB, domain, 0);
+			nx_alive_setbit(base + ALIVE_NPADHOLD, domain, 0);
+		}
+	}
+}
+
+static void nxp3220_retention_resume(struct nexell_pinctrl_drv_data *drvdata)
+{
+	const struct nexell_pwr_func *pwr_func;
+	void __iomem *base = alive_regs;
+	int i, n, ret;
+
+	for (i = 0; i < drvdata->nr_pwr_groups; i++) {
+		pwr_func = &drvdata->pwr_functions[i];
+
+		for (n = 0; n < pwr_func->num_groups; n++) {
+			struct nexell_pin_pwr *pwr_pin = &pwr_func->groups[n];
+			void __iomem *addr = base;
+			const unsigned *pin;
+			unsigned npin;
+			int domain, bit;
+
+			ret = pinctrl_get_group_pins(drvdata->pctl_dev,
+						pwr_pin->name, &pin, &npin);
+			if (ret < 0)
+				continue;
+
+			if (pwr_pin->drive == NX_PIN_PWR_NONE)
+				continue;
+
+			addr += ((*pin / 32) * ALIVE_PWRDN_OFFSET);
+			bit = *pin % 32;
+			domain = pwr_func->domain;
+
+			nx_alive_setbit(base + ALIVE_NPADHOLDENB, domain, 1);
+			nx_alive_setbit(base + ALIVE_NPADHOLD, domain, 1);
+			nx_alive_setbit(addr + ALIVE_GPIO_PWRDN, bit, 0);
+		}
+	}
+}
+
 static int nxp3220_gpio_device_init(struct list_head *banks, int nr_banks)
 {
 	struct module_init_data *init_data;
@@ -1167,7 +1256,7 @@ static int irq_alive_set_type(struct irq_data *irqd, unsigned int type)
 	/*
 	 * set risingedge mode for both edge
 	 */
-	if (IRQ_TYPE_EDGE_BOTH == type)
+	if (type == IRQ_TYPE_EDGE_BOTH)
 		writel(1 << bit, base + ALIVE_MOD_EDGE_SET);
 
 	writel(1 << bit, base + ALIVE_DET_SET);
@@ -1351,6 +1440,8 @@ static void nxp3220_suspend(struct nexell_pinctrl_drv_data *drvdata)
 			dev_err(drvdata->dev, "failed to suspend bank %d\n", i);
 	}
 
+	nxp3220_retention_suspend(drvdata);
+
 	nx_alive_clear_wakeup_status(alive_regs);
 }
 
@@ -1402,6 +1493,8 @@ static void nxp3220_resume(struct nexell_pinctrl_drv_data *drvdata)
 		if (nxp3220_gpio_resume(i) < 0)
 			dev_err(drvdata->dev, "failed to resume bank %d\n", i);
 	}
+
+	nxp3220_retention_resume(drvdata);
 
 	print_wake_event();
 }

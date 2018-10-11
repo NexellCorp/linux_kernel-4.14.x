@@ -50,6 +50,11 @@ parameters.
   - nexell,pin-pull = Pull up/down configuration.
   - nexell,pin-strength = Drive strength configuration.
 
+  Child nodes must be set for the powerdown retention:
+  - nexell,pin-pwr-domain = Select powerdown retention pin's power domain.
+  - nexell,pin-pwr-drv = Select the powerdown retention direction.
+  - nexell,pin-pwr-val = Set powerdown retention output value.
+
   Valid values for nexell,pins are:
      "gpioX-N"		: X in {A,B,C,D,E}, N in {0-31}
   Valid values for nexell,pin-function are:
@@ -61,6 +66,23 @@ parameters.
   Valid values for nexell,pin-strength are:
      "NX_PIN_STR0", "NX_PIN_STR1", "NX_PIN_STR2", "NX_PIN_STR3"
 
+  Valid values for nexell,pin-pwr-domain are:
+     - for the nxp3220
+     "NX_PIN_PWR_DOMAIN_PERI0" : power domain 'peri0'
+     "NX_PIN_PWR_DOMAIN_SDMMC" : power domain 'sdmmc'
+     "NX_PIN_PWR_DOMAIN_NAND" : power domain 'nand'
+     "NX_PIN_PWR_DOMAIN_PERI1" : power domain 'peri1'
+     "NX_PIN_PWR_DOMAIN_GMAC" : power domain 'gmac'
+     "NX_PIN_PWR_DOMAIN_PERI2" : power domain 'peri2'
+     "NX_PIN_PWR_DOMAIN_VIP" : power domain 'vip'
+  Valid values for nexell,pin-pwr-drv are:
+     "NX_PIN_PWR_NONE" : No powerdown retention
+     "NX_PIN_PWR_INPUT": Set input powerdown retention
+     "NX_PIN_PWR_OUTPUT" : Set output powerdown retention
+     "NX_PIN_PWR_PREV" : Set output powerdown retention with previous state
+  Valid values for nexell,pin-pwr-val are:
+     "NX_PIN_PWR_RETEN_LOW" : Set output powerdown retention with low
+     "NX_PIN_PWR_RETEN_HIGH" : Set output powerdown retention with high
 
 Example:
   - pin settings
@@ -85,10 +107,27 @@ Example:
 		nexell,pin-strength = <NX_PIN_STR3>;
 	};
 
+  - pin settings for the powerdown retention
+	sdmmc_pwr_pin: sdmmc-pwr-pin {
+		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_SDMMC>;
+		nexell,pins = "gpioa-29", "gpioa-30", "gpioa-31", "gpiob-0",
+			      "gpiob-1", "gpiob-2", "gpiob-3", "gpiob-4",
+			      "gpiob-5", "gpiob-6", "gpiob-7", "gpiob-8";
+		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>, ....;
+		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>, ...;
+	};
+
   - used by client devices
 	gmac0:ethernet@... {
 		pinctrl-names = "default";
 		pinctrl-0 = <&gmac_txd &gmac_rxd &gmac_txen &gmac_mdc
 		             &gmac_mdio &gmac_rxclk &gmac_txclk>;
 		...
+	};
+
+  - used by client devices for the powerdown retention
+	&sdmmc_pwr_pin {
+		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>, <NX_PIN_PWR_OUTPUT>;
+		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>,
+				<NX_PIN_PWR_RETEN_HIGH>;
 	};

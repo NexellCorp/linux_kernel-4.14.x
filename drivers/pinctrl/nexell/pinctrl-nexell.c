@@ -175,7 +175,7 @@ static int nexell_dt_subnode_to_map(struct nexell_pinctrl_drv_data *drvdata,
 	unsigned long config;
 	unsigned long *configs = NULL;
 	unsigned int num_configs = 0;
-	unsigned int reserve;
+	unsigned int reserve = 0;
 	struct property *prop;
 	const char *group;
 	bool has_func = false;
@@ -198,11 +198,12 @@ static int nexell_dt_subnode_to_map(struct nexell_pinctrl_drv_data *drvdata,
 		}
 	}
 
-	reserve = 0;
 	if (has_func)
 		reserve++;
+
 	if (num_configs)
 		reserve++;
+
 	ret = of_property_count_strings(np, "nexell,pins");
 	if (ret < 0) {
 		dev_err(dev, "could not parse property nexell,pins\n");
@@ -767,6 +768,178 @@ nexell_pinctrl_create_functions(struct device *dev,
 	return functions;
 }
 
+static int nexell_pinctrl_create_retention(struct device *dev,
+				struct nexell_pinctrl_drv_data *drvdata,
+				struct device_node *func_np,
+				struct nexell_pwr_func *func)
+{
+	int domain;
+	int npins, ndrvs, nvals;
+	u32 drive, value;
+	int i, ret;
+
+	ret = of_property_read_u32(func_np,
+				"nexell,pin-pwr-domain", &domain);
+	if (ret < 0)
+		return -EINVAL;
+
+	npins = of_property_count_strings(func_np, "nexell,pins");
+	if (npins < 1) {
+		dev_err(dev, "invalid powerdown pins list in %s node",
+			func_np->name);
+		return -EINVAL;
+	}
+
+	ndrvs = of_property_count_u32_elems(func_np, "nexell,pin-pwr-drv");
+	if (ndrvs < 1) {
+		dev_err(dev, "invalid powerdown drive list in %s node",
+			func_np->name);
+		return -EINVAL;
+	}
+
+	nvals = of_property_count_u32_elems(func_np, "nexell,pin-pwr-val");
+	if (nvals < 1) {
+		dev_err(dev, "invalid powerdown val list in %s node",
+			func_np->name);
+			return -EINVAL;
+	}
+
+	if (ndrvs > npins)
+		ndrvs = npins;
+
+	if (nvals > npins)
+		nvals = npins;
+
+	func->domain = domain;
+	func->groups = devm_kzalloc(dev,
+				    npins * sizeof(struct nexell_pin_pwr),
+				    GFP_KERNEL);
+	if (!func->groups)
+		return -ENOMEM;
+
+	for (i = 0; i < npins; ++i) {
+		const char *gname;
+
+		ret = of_property_read_string_index(func_np,
+						"nexell,pins", i, &gname);
+		if (ret) {
+			dev_err(dev,
+				"failed to powerdown pins %d in %s (%d:%s)\n",
+				i, func_np->name, ret, gname);
+			return ret;
+		}
+
+		if (i < ndrvs) {
+			ret = of_property_read_u32_index(func_np,
+					"nexell,pin-pwr-drv", i, &drive);
+			if (ret < 0) {
+				dev_err(dev,
+					"failed to powerdown drive %d in %s\n",
+					i, func_np->name);
+				return ret;
+			}
+		}
+
+		if (i < nvals) {
+			ret = of_property_read_u32_index(func_np,
+					"nexell,pin-pwr-val", i, &value);
+			if (ret < 0) {
+				dev_err(dev,
+					"failed to powerdown value %d in %s\n",
+					i, func_np->name);
+				return ret;
+			}
+		}
+
+		func->groups[i].name = gname;
+		func->groups[i].drive = drive;
+		func->groups[i].val = value;
+
+		drive = func->groups[i].drive;
+		value = func->groups[i].val;
+	}
+
+	func->num_groups = npins;
+	return 0;
+}
+
+static struct nexell_pwr_func *
+nexell_pinctrl_create_retentions(struct device *dev,
+				struct nexell_pinctrl_drv_data *drvdata,
+				unsigned int *cnt)
+{
+	struct nexell_pwr_func *functions, *func;
+	struct device_node *dev_np = dev->of_node;
+	struct device_node *cfg_np;
+	unsigned int func_cnt = 0;
+	int ret;
+
+	for_each_child_of_node(dev_np, cfg_np) {
+		struct device_node *func_np;
+
+		if (!of_get_child_count(cfg_np)) {
+			if (!of_find_property(cfg_np, "nexell,pin-pwr-domain",
+					      NULL))
+				continue;
+			++func_cnt;
+			continue;
+		}
+
+		for_each_child_of_node(cfg_np, func_np) {
+			if (!of_find_property(func_np, "nexell,pin-pwr-domain",
+					      NULL))
+				continue;
+			++func_cnt;
+		}
+	}
+
+	if (!func_cnt)
+		return NULL;
+
+	functions =
+	    devm_kzalloc(dev, func_cnt * sizeof(*functions), GFP_KERNEL);
+	if (!functions) {
+		dev_err(dev,
+			"failed to allocate memory for pwr function list\n");
+		return ERR_PTR(-EINVAL);
+	}
+
+	func = functions;
+	func_cnt = 0;
+
+	for_each_child_of_node(dev_np, cfg_np) {
+		struct device_node *func_np;
+
+		if (!of_get_child_count(cfg_np)) {
+			ret = nexell_pinctrl_create_retention(dev,
+						drvdata, cfg_np, func);
+			if (ret < 0)
+				return ERR_PTR(ret);
+
+			if (ret == 0) {
+				++func;
+				++func_cnt;
+			}
+			continue;
+		}
+
+		for_each_child_of_node(cfg_np, func_np) {
+			ret = nexell_pinctrl_create_retention(dev,
+						drvdata, func_np, func);
+			if (ret < 0)
+				return ERR_PTR(ret);
+
+			if (ret == 0) {
+				++func;
+				++func_cnt;
+			}
+		}
+	}
+
+	*cnt = func_cnt;
+	return functions;
+}
+
 /*
  * Parse the information about all the available pin groups and pin functions
  * from device node of the pin-controller. A pin group is formed with all
@@ -778,7 +951,8 @@ static int nexell_pinctrl_parse_dt(struct platform_device *pdev,
 	struct device *dev = &pdev->dev;
 	struct nexell_pin_group *groups;
 	struct nexell_pmx_func *functions;
-	unsigned int grp_cnt = 0, func_cnt = 0;
+	struct nexell_pwr_func *pwr_funcs;
+	unsigned int grp_cnt = 0, func_cnt = 0, nr_pwrs = 0;
 
 	groups = nexell_pinctrl_create_groups(dev, drvdata, &grp_cnt);
 	if (IS_ERR(groups)) {
@@ -789,13 +963,17 @@ static int nexell_pinctrl_parse_dt(struct platform_device *pdev,
 	functions = nexell_pinctrl_create_functions(dev, drvdata, &func_cnt);
 	if (IS_ERR(functions)) {
 		dev_err(dev, "failed to parse pin functions\n");
-		return PTR_ERR(groups);
+		return PTR_ERR(functions);
 	}
+
+	pwr_funcs = nexell_pinctrl_create_retentions(dev, drvdata, &nr_pwrs);
 
 	drvdata->pin_groups = groups;
 	drvdata->nr_groups = grp_cnt;
 	drvdata->pmx_functions = functions;
 	drvdata->nr_functions = func_cnt;
+	drvdata->pwr_functions = pwr_funcs;
+	drvdata->nr_pwr_groups = nr_pwrs;
 
 	return 0;
 }
