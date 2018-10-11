@@ -235,7 +235,7 @@ static int parse_sensor_i2c_board_info_dt(struct device_node *np,
 		goto error;
 	}
 
-	strcpy(info->board_info.type, name);
+	strlcpy(info->board_info.type, name, sizeof(info->board_info.type));
 	info->board_info.addr = addr;
 	info->i2c_adapter = i2c_adapter;
 
@@ -1643,7 +1643,8 @@ static int create_sysfs_for_camera_sensor(struct nx_clipper *me,
 		i2c_adapter_id(me->sensor_info.i2c_adapter),
 		info->board_info.addr);
 
-	strcpy(camera_sensor_info[me->module].name, sensor_name);
+	strlcpy(camera_sensor_info[me->module].name, sensor_name,
+		V4L2_SUBDEV_NAME_SIZE);
 
 	sprintf(kobject_name, "camerasensor%d", me->module);
 	kobj = kobject_create_and_add(kobject_name, &platform_bus.kobj);
