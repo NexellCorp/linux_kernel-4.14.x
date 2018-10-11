@@ -507,6 +507,18 @@
 	pinctrl-0 = <&mmc1_clk &mmc1_cmd &mmc1_bus4 &cfg_wlanhostwake>;
 };
 
+&gmac_pwr_pin {
+	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>;
+};
+
+&peri0_pwr_pin {
+	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>;
+};
+
+&sdmmc_pwr_pin {
+	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>;
+};
+
 &sys_bus {
 	status = "okay";
 	vdd-supply = <&buck5_reg>; /* "VDD_CORE_1P0" */
