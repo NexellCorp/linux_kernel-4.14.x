@@ -911,6 +911,10 @@ nexell_pinctrl_create_retentions(struct device *dev,
 		struct device_node *func_np;
 
 		if (!of_get_child_count(cfg_np)) {
+			if (!of_find_property(cfg_np, "nexell,pin-pwr-domain",
+					      NULL))
+				continue;
+
 			ret = nexell_pinctrl_create_retention(dev,
 						drvdata, cfg_np, func);
 			if (ret < 0)
@@ -924,6 +928,10 @@ nexell_pinctrl_create_retentions(struct device *dev,
 		}
 
 		for_each_child_of_node(cfg_np, func_np) {
+			if (!of_find_property(cfg_np, "nexell,pin-pwr-domain",
+					      NULL))
+				continue;
+
 			ret = nexell_pinctrl_create_retention(dev,
 						drvdata, func_np, func);
 			if (ret < 0)
