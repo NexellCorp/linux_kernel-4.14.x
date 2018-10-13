@@ -507,15 +507,51 @@
 	pinctrl-0 = <&mmc1_clk &mmc1_cmd &mmc1_bus4 &cfg_wlanhostwake>;
 };
 
-&gmac_pwr_pin {
-	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>;
+&peri0_pwr_pin {
+    /* Retention configuration all INPUT except gpioa-24(BOOT10) */
+	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_NONE>,<NX_PIN_PWR_INPUT>;
 };
 
-&peri0_pwr_pin {
-	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>;
+&peri1_pwr_pin {
+	/* Retention configuration all INPUT except below gpios
+	   gpiob-27(I2C0_SDA), gpiob-28(I2C0_SCL), gpioc-8(BOOT3),
+	   gpioc-13(BOOT0) */
+	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_NONE>,<NX_PIN_PWR_NONE>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_NONE>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_NONE>,<NX_PIN_PWR_INPUT>;
+};
+
+&peri2_pwr_pin {
+	/* Retention configuration all INPUT except below gpios
+	   gpiod-10(BOOT9), gpiod-12(BOOT8), gpiod-14(BOOT7), gpiod-16(BOOT6),
+	   gpiod-22(BOOT5), gpiod-25(BOOT2), gpiod-26(BOOT4) */
+	nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>, <NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_NONE>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_NONE>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_NONE>,<NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_NONE>,<NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_NONE>,<NX_PIN_PWR_NONE>,
+		<NX_PIN_PWR_INPUT>;
 };
 
 &sdmmc_pwr_pin {
+	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>;
+};
+
+&vip_pwr_pin {
 	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>;
 };
 
