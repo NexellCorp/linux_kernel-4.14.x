@@ -524,7 +524,7 @@
 	/* Retention configuration all INPUT except below gpios
 	   gpiob-27(I2C0_SDA), gpiob-28(I2C0_SCL), gpioc-8(BOOT3),
 	   gpioc-13(BOOT0) */
-	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>,
 		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_NONE>,<NX_PIN_PWR_NONE>,
 		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
 		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
