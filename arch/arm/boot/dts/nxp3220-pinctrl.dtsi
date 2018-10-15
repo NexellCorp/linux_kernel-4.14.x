@@ -660,13 +660,13 @@
 
 	peri1_pwr_pin: peri1-pwr-pin {
 		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_PERI1>;
-		nexell,pins = "gpiob-24", "gpiob-25", "gpiob-26", "gpiob-27",
-			      "gpiob-28", "gpiob-29", "gpiob-30", "gpiob-31",
-			      "gpioc-0", "gpioc-1", "gpioc-2", "gpioc-3",
-			      "gpioc-4", "gpioc-5", "gpioc-6", "gpioc-7",
-			      "gpioc-8", "gpioc-9", "gpioc-10", "gpioc-11",
-			      "gpioc-12", "gpioc-13", "gpioc-14", "gpioc-15",
-			      "gpioc-16", "gpioc-17";
+		nexell,pins = "gpiob-25", "gpiob-26", "gpiob-27", "gpiob-28",
+			      "gpiob-29", "gpiob-30", "gpiob-31", "gpioc-0",
+			      "gpioc-1", "gpioc-2", "gpioc-3", "gpioc-4",
+			      "gpioc-5", "gpioc-6", "gpioc-7", "gpioc-8",
+			      "gpioc-9", "gpioc-10", "gpioc-11", "gpioc-12",
+			      "gpioc-13", "gpioc-14", "gpioc-15", "gpioc-16",
+			      "gpioc-17";
 		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
 		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
 	};
@@ -700,7 +700,7 @@
 		nexell,pins = "gpioe-2", "gpioe-3", "gpioe-4", "gpioe-5",
 			      "gpioe-6", "gpioe-7", "gpioe-8", "gpioe-9",
 			      "gpioe-10", "gpioe-11", "gpioe-12", "gpioe-13",
-			      "gpioe-14", "gpioe-15", "gpioe-16";
+			      "gpioe-14", "gpioe-15";
 		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
 		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
 	};
