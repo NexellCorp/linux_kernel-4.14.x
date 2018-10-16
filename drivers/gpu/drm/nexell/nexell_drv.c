@@ -230,7 +230,6 @@ err_unbind_all:
 	component_unbind_all(drm->dev, drm);
 err_mode_config_cleanup:
 	drm_mode_config_cleanup(drm);
-	kfree(private);
 err_free_drm:
 	drm_dev_unref(drm);
 
@@ -252,7 +251,6 @@ static void nx_drm_unbind(struct device *dev)
 	drm_mode_config_cleanup(drm);
 
 	dev_set_drvdata(dev, NULL);
-	kfree(drm->dev_private);
 
 	drm_dev_unref(drm);
 }

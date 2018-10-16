@@ -779,7 +779,6 @@ err_probe:
 	if (ctx && ctx->backlight)
 		put_device(&ctx->backlight->dev);
 
-	devm_kfree(dev, ctx);
 	return err;
 }
 
@@ -811,8 +810,6 @@ static int panel_lcd_remove(struct platform_device *pdev)
 
 	if (ctx->backlight)
 		put_device(&ctx->backlight->dev);
-
-	devm_kfree(dev, ctx);
 
 	return 0;
 }
