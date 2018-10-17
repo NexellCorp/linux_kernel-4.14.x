@@ -577,6 +577,15 @@ config REGULATOR_MT6397
 	  This driver supports the control of different power rails of device
 	  through regulator interface.
 
+config REGULATOR_NXE2000
+	tristate "Nexell NXE2000 Power regulator"
+	select MFD_NXE2000
+	help
+	  This driver supports regulator driver for the Nexell NXE2000
+	  Power Management device.
+	  It delivers digitally programmable output,
+	  the voltage is programmed via I2C interface.
+
 config REGULATOR_PALMAS
 	tristate "TI Palmas PMIC Regulators"
 	depends on MFD_PALMAS
