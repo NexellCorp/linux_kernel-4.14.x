@@ -487,7 +487,7 @@ err_bind:
 	if (drv->remove)
 		drv->remove(to_platform_device(dev));
 
-	return 0;
+	return err;
 }
 
 static void panel_lcd_unbind(struct device *dev,
@@ -718,13 +718,11 @@ static int panel_lcd_probe(struct platform_device *pdev)
 	struct lcd_context *ctx;
 	struct nx_drm_display_ops *ops;
 	enum nx_panel_type type;
-	size_t size;
 	int err;
 
 	DRM_DEBUG_KMS("enter (%s)\n", dev_name(dev));
 
-	size = sizeof(*ctx);
-	ctx = devm_kzalloc(dev, size, GFP_KERNEL);
+	ctx = devm_kzalloc(dev, sizeof(*ctx), GFP_KERNEL);
 	if (!ctx)
 		return -ENOMEM;
 

@@ -233,7 +233,7 @@ static inline void plane_yuv_rect(struct nx_plane_rect *rect,
 static int nx_display_crtc_begin(struct drm_crtc *crtc)
 {
 	struct nx_display *dp = to_nx_crtc(crtc)->context;
-	struct nx_overlay *plane_dev = to_nx_plane(crtc->primary)->context;
+	struct nx_overlay *ovl = to_nx_plane(crtc->primary)->context;
 	int crtc_w, crtc_h;
 
 	crtc_w = crtc->state->mode.hdisplay;
@@ -245,8 +245,7 @@ static int nx_display_crtc_begin(struct drm_crtc *crtc)
 	nx_display_set_format(dp, crtc_w, crtc_h);
 
 	/* color key */
-	nx_overlay_set_color(plane_dev,
-		NX_COLOR_TRANS, dp->color_key, true, false);
+	nx_overlay_set_color(ovl, NX_COLOR_TRANS, dp->color_key, true, false);
 
 	return 0;
 }

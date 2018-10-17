@@ -28,7 +28,6 @@ static void nx_drm_plane_destroy(struct drm_plane *plane)
 	if (ops && ops->destroy)
 		ops->destroy(plane);
 
-	drm_plane_helper_disable(plane);
 	drm_plane_cleanup(plane);
 	kfree(nx_plane);
 }
