@@ -637,6 +637,7 @@
 			      "gpioa-28";
 		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
 		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+		nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_PREV>;
 	};
 
 	sdmmc_pwr_pin: sdmmc-pwr-pin {
@@ -646,6 +647,7 @@
 			      "gpiob-5", "gpiob-6", "gpiob-7", "gpiob-8";
 		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
 		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+		nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_PREV>;
 	};
 
 	nand_pwr_pin: nand-pwr-pin {
@@ -656,6 +658,7 @@
 			      "gpiob-21", "gpiob-22", "gpiob-23", "gpiob-24";
 		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
 		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+		nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_PREV>;
 	};
 
 	peri1_pwr_pin: peri1-pwr-pin {
@@ -669,6 +672,7 @@
 			      "gpioc-17";
 		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
 		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+		nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_PREV>;
 	};
 
 	gmac_pwr_pin: gmac-pwr-pin {
@@ -681,6 +685,7 @@
 			      "gpiod-6", "gpiod-7", "gpiod-8", "gpiod-9";
 		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
 		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+		nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_PREV>;
 	};
 
 	peri2_pwr_pin: peri2-pwr-pin {
@@ -693,6 +698,7 @@
 			      "gpiod-30", "gpiod-31", "gpioe-0", "gpioe-1";
 		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
 		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+		nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_PREV>;
 	};
 
 	vip_pwr_pin: vip-pwr-pin {
@@ -703,5 +709,6 @@
 			      "gpioe-14", "gpioe-15";
 		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
 		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+		nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_PREV>;
 	};
 };
