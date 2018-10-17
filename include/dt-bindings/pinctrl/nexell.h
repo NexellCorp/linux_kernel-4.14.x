@@ -54,4 +54,10 @@
 #define NX_PIN_PWR_RETEN_LOW		0
 #define NX_PIN_PWR_RETEN_HIGH		1
 
+/* Pin pull Up/Down */
+#define NX_PIN_PWR_PULL_DOWN		0
+#define NX_PIN_PWR_PULL_UP		1
+#define NX_PIN_PWR_PULL_NONE		2
+#define NX_PIN_PWR_PULL_PREV		3 /* keep previous state */
+
 #endif /* __DT_BINDINGS_PINCTRL_NEXELL_H__ */

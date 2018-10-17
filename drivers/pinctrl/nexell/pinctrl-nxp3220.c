@@ -831,7 +831,8 @@ static void nxp3220_retention_suspend(struct nexell_pinctrl_drv_data *drvdata)
 			void __iomem *addr = base;
 			const unsigned *pin;
 			unsigned npin;
-			int bit, val, dir;
+			int grp, bit;
+			int val, dir, pullsel;
 
 			if (pwr_pin->drive == NX_PIN_PWR_NONE)
 				continue;
@@ -841,15 +842,19 @@ static void nxp3220_retention_suspend(struct nexell_pinctrl_drv_data *drvdata)
 			if (ret < 0)
 				continue;
 
-			addr += ((*pin / 32) * ALIVE_PWRDN_OFFSET);
+			grp = *pin / 32;
 			bit = *pin % 32;
 			val = pwr_pin->val;
 			dir = pwr_pin->drive == NX_PIN_PWR_INPUT ? 0 : 1;
+			pullsel = pwr_pin->pullsel;
 			domain_mask |= 1 << pwr_func->domain;
+			addr += (grp * ALIVE_PWRDN_OFFSET);
 
 			if (pwr_pin->drive == NX_PIN_PWR_PREV)
-				val = nx_gpio_get_input_value((*pin / 32), bit)
-					? 1 : 0;
+				val = nx_gpio_get_input_value(grp, bit) ? 1 : 0;
+
+			if (pwr_pin->pullsel != NX_PIN_PWR_PULL_PREV)
+				nx_gpio_set_pull_enable(grp, bit, pullsel);
 
 			nx_alive_setbit(addr + ALIVE_GPIO_OUT, bit, val);
 			nx_alive_setbit(addr + ALIVE_GPIO_OUTENB, bit, dir);
@@ -880,7 +885,7 @@ static void nxp3220_retention_resume(struct nexell_pinctrl_drv_data *drvdata)
 			void __iomem *addr = base;
 			const unsigned *pin;
 			unsigned npin;
-			int bit;
+			int grp, bit;
 
 			if (pwr_pin->drive == NX_PIN_PWR_NONE)
 				continue;
@@ -890,8 +895,10 @@ static void nxp3220_retention_resume(struct nexell_pinctrl_drv_data *drvdata)
 			if (ret < 0)
 				continue;
 
-			addr += ((*pin / 32) * ALIVE_PWRDN_OFFSET);
+			grp = *pin / 32;
 			bit = *pin % 32;
+
+			addr += (grp * ALIVE_PWRDN_OFFSET);
 
 			nx_alive_setbit(addr + ALIVE_GPIO_PWRDN, bit, 0);
 		}
