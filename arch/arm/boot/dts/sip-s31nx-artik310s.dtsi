@@ -275,11 +275,9 @@
 				regulator-max-microvolt = <3300000>;
 				regulator-always-on;
 				regulator-boot-on;
-				pwrstm-enter-slot = <0>;
-				pwrstm-exit-slot = <0>;
 
 				regulator-state-mem {
-					regulator-off-in-suspend;
+					regulator-on-in-suspend;
 				};
 			};
 
@@ -373,11 +371,9 @@
 				regulator-max-microvolt = <1800000>;
 				regulator-always-on;
 				regulator-boot-on;
-				pwrstm-enter-slot = <1>;
-				pwrstm-exit-slot = <2>;
 
 				regulator-state-mem {
-					regulator-off-in-suspend;
+					regulator-on-in-suspend;
 				};
 			};
 
