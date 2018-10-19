@@ -48,6 +48,7 @@
 #define NX_PIN_PWR_DOMAIN_GMAC		4
 #define NX_PIN_PWR_DOMAIN_PERI2		5
 #define NX_PIN_PWR_DOMAIN_VIP		6
+#define NX_PIN_PWR_DOMAIN_NUM		7
 
 /* Pin powerdown output value */
 #define NX_PIN_PWR_RETEN_LOW		0

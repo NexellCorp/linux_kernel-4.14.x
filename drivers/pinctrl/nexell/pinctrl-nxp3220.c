@@ -820,6 +820,7 @@ static void nxp3220_retention_suspend(struct nexell_pinctrl_drv_data *drvdata)
 {
 	const struct nexell_pwr_func *pwr_func;
 	void __iomem *base = alive_regs;
+	unsigned int domain_mask = 0;
 	int i, n, ret;
 
 	for (i = 0; i < drvdata->nr_pwr_groups; i++) {
@@ -830,21 +831,21 @@ static void nxp3220_retention_suspend(struct nexell_pinctrl_drv_data *drvdata)
 			void __iomem *addr = base;
 			const unsigned *pin;
 			unsigned npin;
-			int domain, bit, val, dir;
+			int bit, val, dir;
+
+			if (pwr_pin->drive == NX_PIN_PWR_NONE)
+				continue;
 
 			ret = pinctrl_get_group_pins(drvdata->pctl_dev,
 						pwr_pin->name, &pin, &npin);
 			if (ret < 0)
 				continue;
 
-			if (pwr_pin->drive == NX_PIN_PWR_NONE)
-				continue;
-
 			addr += ((*pin / 32) * ALIVE_PWRDN_OFFSET);
 			bit = *pin % 32;
 			val = pwr_pin->val;
 			dir = pwr_pin->drive == NX_PIN_PWR_INPUT ? 0 : 1;
-			domain = pwr_func->domain;
+			domain_mask |= 1 << pwr_func->domain;
 
 			if (pwr_pin->drive == NX_PIN_PWR_PREV)
 				val = nx_gpio_get_input_value((*pin / 32), bit)
@@ -853,10 +854,12 @@ static void nxp3220_retention_suspend(struct nexell_pinctrl_drv_data *drvdata)
 			nx_alive_setbit(addr + ALIVE_GPIO_OUT, bit, val);
 			nx_alive_setbit(addr + ALIVE_GPIO_OUTENB, bit, dir);
 			nx_alive_setbit(addr + ALIVE_GPIO_PWRDN, bit, 1);
-
-			nx_alive_setbit(base + ALIVE_NPADHOLDENB, domain, 0);
-			nx_alive_setbit(base + ALIVE_NPADHOLD, domain, 0);
 		}
+	}
+
+	for (i = 0; i < NX_PIN_PWR_DOMAIN_NUM; i++) {
+		if (domain_mask & 1<<i)
+			nx_alive_setbit(base + ALIVE_NPADHOLDENB, i, 0);
 	}
 }
 
@@ -866,6 +869,9 @@ static void nxp3220_retention_resume(struct nexell_pinctrl_drv_data *drvdata)
 	void __iomem *base = alive_regs;
 	int i, n, ret;
 
+	for (i = 0; i < NX_PIN_PWR_DOMAIN_NUM; i++)
+		nx_alive_setbit(base + ALIVE_NPADHOLDENB, i, 1);
+
 	for (i = 0; i < drvdata->nr_pwr_groups; i++) {
 		pwr_func = &drvdata->pwr_functions[i];
 
@@ -874,22 +880,19 @@ static void nxp3220_retention_resume(struct nexell_pinctrl_drv_data *drvdata)
 			void __iomem *addr = base;
 			const unsigned *pin;
 			unsigned npin;
-			int domain, bit;
+			int bit;
+
+			if (pwr_pin->drive == NX_PIN_PWR_NONE)
+				continue;
 
 			ret = pinctrl_get_group_pins(drvdata->pctl_dev,
 						pwr_pin->name, &pin, &npin);
 			if (ret < 0)
 				continue;
 
-			if (pwr_pin->drive == NX_PIN_PWR_NONE)
-				continue;
-
 			addr += ((*pin / 32) * ALIVE_PWRDN_OFFSET);
 			bit = *pin % 32;
-			domain = pwr_func->domain;
 
-			nx_alive_setbit(base + ALIVE_NPADHOLDENB, domain, 1);
-			nx_alive_setbit(base + ALIVE_NPADHOLD, domain, 1);
 			nx_alive_setbit(addr + ALIVE_GPIO_PWRDN, bit, 0);
 		}
 	}
