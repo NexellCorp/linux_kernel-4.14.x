@@ -240,6 +240,9 @@ static void sii902x_bridge_disable(struct drm_bridge *bridge)
 	regmap_update_bits(sii902x->regmap, SII902X_SYS_CTRL_DATA,
 			   SII902X_SYS_CTRL_PWR_DWN,
 			   SII902X_SYS_CTRL_PWR_DWN);
+	regmap_update_bits(sii902x->regmap, SII902X_PWR_STATE_CTRL,
+			   SII902X_AVI_POWER_STATE_MSK,
+			   SII902X_AVI_POWER_STATE_D(2));
 }
 
 static void sii902x_bridge_enable(struct drm_bridge *bridge)
