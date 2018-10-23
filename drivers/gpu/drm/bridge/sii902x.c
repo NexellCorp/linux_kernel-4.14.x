@@ -132,6 +132,10 @@ static const struct drm_connector_funcs sii902x_connector_funcs = {
 	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
 };
 
+/* Forward declaration */
+static void sii902x_bridge_disable(struct drm_bridge *bridge);
+static void sii902x_bridge_enable(struct drm_bridge *bridge);
+
 static int sii902x_get_modes(struct drm_connector *connector)
 {
 	struct sii902x *sii902x = connector_to_sii902x(connector);
@@ -198,8 +202,16 @@ static int sii902x_get_modes(struct drm_connector *connector)
 	ret = regmap_update_bits(regmap, SII902X_SYS_CTRL_DATA,
 				 SII902X_SYS_CTRL_DDC_BUS_REQ |
 				 SII902X_SYS_CTRL_DDC_BUS_GRTD, 0);
-	if (ret)
-		return ret;
+	if (ret) {
+		sii902x_reset(sii902x);
+		sii902x_bridge_disable(&sii902x->bridge);
+		sii902x_bridge_enable(&sii902x->bridge);
+		ret = regmap_update_bits(regmap, SII902X_SYS_CTRL_DATA,
+					 SII902X_SYS_CTRL_DDC_BUS_REQ |
+					 SII902X_SYS_CTRL_DDC_BUS_GRTD, 0);
+		if (ret)
+			return ret;
+	}
 
 	timeout = jiffies +
 		  msecs_to_jiffies(SII902X_I2C_BUS_ACQUISITION_TIMEOUT_MS);
