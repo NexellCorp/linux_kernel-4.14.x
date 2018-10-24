@@ -316,9 +316,11 @@ static int dw_spi_transfer_one(struct spi_master *master,
 	dws->dma_mapped = 0;
 
 	dws->tx = (void *)transfer->tx_buf;
-	dws->tx_end = dws->tx + transfer->len;
+	if (dws->tx)
+		dws->tx_end = dws->tx + transfer->len;
 	dws->rx = transfer->rx_buf;
-	dws->rx_end = dws->rx + transfer->len;
+	if (dws->rx)
+		dws->rx_end = dws->rx + transfer->len;
 	dws->len = transfer->len;
 
 	spi_enable_chip(dws, 0);
