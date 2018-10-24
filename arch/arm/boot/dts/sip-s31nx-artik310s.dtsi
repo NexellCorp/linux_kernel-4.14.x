@@ -439,12 +439,6 @@
 				regulator-name = "VDD_ZB_3P3";
 				regulator-min-microvolt = <3300000>;
 				regulator-max-microvolt = <3300000>;
-				pwrstm-enter-slot = <0>;
-				pwrstm-exit-slot = <3>;
-
-				regulator-state-mem {
-					regulator-off-in-suspend;
-				};
 			};
 		};
 	};
