@@ -865,6 +865,7 @@ static void nxp3220_retention_suspend(struct nexell_pinctrl_drv_data *drvdata)
 	for (i = 0; i < NX_PIN_PWR_DOMAIN_NUM; i++) {
 		if (domain_mask & 1<<i)
 			nx_alive_setbit(base + ALIVE_NPADHOLDENB, i, 0);
+			nx_alive_setbit(base + ALIVE_NPADHOLD, i, 0);
 	}
 }
 
