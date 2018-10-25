@@ -1,1 +1,2 @@
 obj-$(CONFIG_ARCH_NXP3220_COMMON) += nxp3220/
+obj-$(CONFIG_ARCH_NXP3220_COMMON) += sec_io.o
