@@ -124,6 +124,7 @@ struct nx_pdm_data {
 	int i_pads[MAX_PDM_PADS];
 	struct pdm_cic_cfg cic;
 	struct pdm_fir_cfg fir;
+	bool running;
 };
 
 static struct strobe_filter {
@@ -260,7 +261,7 @@ static irqreturn_t nx_pdm_pcm_irq_handler(int irq, void *arg)
 	msec = ktime_to_ms(ktime_get());
 	duration = msec - prtd->msec;
 	if (prtd->period_msec + 10 < duration)
-		dev_err(prtd->dev, "Timout %lld:%dms, core clock\n",
+		dev_err(prtd->dev, "Timeout %lld:%dms\n",
 			duration, prtd->period_msec);
 
 	prtd->msec = msec;
@@ -546,32 +547,38 @@ static int nx_pdm_strobe_check(int strobe)
 	return -EINVAL;
 }
 
-static void nx_pdm_start(struct nx_pdm_data *pdm, bool enb)
+static void nx_pdm_start(struct nx_pdm_data *pdm)
 {
 	struct pdm_reg *reg = pdm->base;
 	u32 intr = readl(&reg->intr) & ~IRQ_DMA_MASK;
 	u32 clk = readl(&reg->pdm_clk);
 
-	if (enb) {
-		writel(intr | IRQ_MASK_PEND | IRQ_DMA_ENB, &reg->intr);
-		writel(clk | PDM_CLK_ENB, &reg->pdm_clk);
-		writel(1, &reg->ctrl);
+	writel(intr | IRQ_MASK_PEND | IRQ_DMA_ENB, &reg->intr);
+	writel(clk | PDM_CLK_ENB, &reg->pdm_clk);
+	writel(1, &reg->ctrl);
 
-		nx_pdm_dump_reg(reg);
-	} else {
-		long loops = 100 * 1000;
+	nx_pdm_dump_reg(reg);
+}
 
-		writel(intr & ~IRQ_DMA_ENB, &reg->intr);
-		writel(0, &reg->ctrl);
+static void nx_pdm_stop(struct nx_pdm_data *pdm)
+{
+	struct pdm_reg *reg = pdm->base;
+	long loops = 100 * 1000;
+	u32 intr = readl(&reg->intr) & ~IRQ_DMA_MASK;
+	u32 clk = readl(&reg->pdm_clk);
 
-		while (--loops) {
-			if (!(1 & readl(&reg->ctrl)))
-				break;
-			udelay(1);
-		}
+	writel(intr & ~IRQ_DMA_ENB, &reg->intr);
+	writel(0, &reg->ctrl);
 
-		writel(clk & ~PDM_CLK_ENB, &reg->pdm_clk);
+	while (--loops) {
+		if (!(1 & readl(&reg->ctrl)))
+			break;
+		udelay(1);
 	}
+
+	writel(clk & ~PDM_CLK_ENB, &reg->pdm_clk);
+
+	clk_disable_unprepare(pdm->clk);
 }
 
 static void nx_pdm_sync_clk(struct nx_pdm_data *pdm)
@@ -640,13 +647,12 @@ static int nx_pdm_sync_setup(struct nx_pdm_data *pdm)
 	if (ret)
 		return ret;
 
-	if (sys_clk && !IS_ERR(pdm->clk)) {
+	if (sys_clk) {
 		clk_set_rate(pdm->clk, pdm->sys_freq);
-		if (!__clk_is_enabled(pdm->clk))
-			clk_prepare_enable(pdm->clk);
-
 		sys_freq = clk_get_rate(pdm->clk);
 	}
+
+	clk_prepare_enable(pdm->clk);
 
 	freq = sys_clk ? sys_freq : pdm->ref_freq;
 	strobe = pdm->strobe_hz;
@@ -808,6 +814,8 @@ static int nx_pdm_fir_setup(struct nx_pdm_data *pdm, unsigned int sample_rate)
 			&firs->coef_num);
 	}
 
+	pdm->sample_rate = sample_rate;
+
 	return 0;
 }
 
@@ -829,6 +837,8 @@ static int nx_pdm_startup(struct snd_pcm_substream *substream,
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		return -EINVAL;
 
+	clk_prepare_enable(pdm->clk_axi);
+
 	ret = nx_pdm_sync_setup(pdm);
 	if (ret)
 		return ret;
@@ -839,9 +849,22 @@ static int nx_pdm_startup(struct snd_pcm_substream *substream,
 
 	nx_pdm_pad_setup(pdm);
 
+	pdm->running = true;
+
 	snd_soc_dai_set_dma_data(dai, substream, pdm);
 
 	return 0;
+}
+
+static void nx_pdm_shutdown(struct snd_pcm_substream *substream,
+			  struct snd_soc_dai *dai)
+{
+	struct nx_pdm_data *pdm = snd_soc_dai_get_drvdata(dai);
+
+	if (__clk_is_enabled(pdm->clk_axi))
+		clk_prepare_enable(pdm->clk_axi);
+
+	pdm->running = false;
 }
 
 static int nx_pdm_trigger(struct snd_pcm_substream *substream,
@@ -853,13 +876,13 @@ static int nx_pdm_trigger(struct snd_pcm_substream *substream,
 	case SNDRV_PCM_TRIGGER_RESUME:
 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 	case SNDRV_PCM_TRIGGER_START:
-		nx_pdm_start(pdm, true);
+		nx_pdm_start(pdm);
 		break;
 
 	case SNDRV_PCM_TRIGGER_SUSPEND:
 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 	case SNDRV_PCM_TRIGGER_STOP:
-		nx_pdm_start(pdm, false);
+		nx_pdm_stop(pdm);
 		break;
 	default:
 		return -EINVAL;
@@ -869,6 +892,7 @@ static int nx_pdm_trigger(struct snd_pcm_substream *substream,
 
 static struct snd_soc_dai_ops nx_pdm_dai_ops = {
 	.startup = nx_pdm_startup,
+	.shutdown = nx_pdm_shutdown,
 	.trigger = nx_pdm_trigger,
 	.hw_params = nx_pdm_hw_params,
 };
@@ -876,6 +900,12 @@ static struct snd_soc_dai_ops nx_pdm_dai_ops = {
 static int nx_pdm_suspend(struct snd_soc_dai *dai)
 {
 	struct nx_pdm_data *pdm = snd_soc_dai_get_drvdata(dai);
+
+	if (!pdm->running)
+		return 0;
+
+	if (__clk_is_enabled(pdm->clk))
+		clk_disable_unprepare(pdm->clk);
 
 	clk_disable_unprepare(pdm->clk_axi);
 
@@ -886,7 +916,18 @@ static int nx_pdm_resume(struct snd_soc_dai *dai)
 {
 	struct nx_pdm_data *pdm = snd_soc_dai_get_drvdata(dai);
 
+	if (!pdm->running)
+		return 0;
+
 	clk_prepare_enable(pdm->clk_axi);
+
+	if (!__clk_is_enabled(pdm->clk))
+		clk_prepare_enable(pdm->clk);
+
+	nx_pdm_fir_setup(pdm, pdm->sample_rate);
+	nx_pdm_sync_setup(pdm);
+	nx_pdm_cic_setup(pdm);
+	nx_pdm_pad_setup(pdm);
 
 	return 0;
 }
@@ -1064,8 +1105,6 @@ static int nx_pdm_parse_res(struct platform_device *pdev,
 		dev_err(pdm->dev, "Failed no clock found 'core'\n");
 		return PTR_ERR(pdm->clk);
 	}
-
-	clk_prepare_enable(pdm->clk_axi);
 
 	pdm->syscon = syscon_regmap_lookup_by_phandle(node, "syscon");
 	if (IS_ERR(pdm->syscon)) {

@@ -13,6 +13,7 @@
 #include <linux/of.h>
 #include <linux/of_platform.h>
 #include <linux/component.h>
+#include <linux/console.h>
 
 #include <drm/nexell_drm.h>
 
@@ -323,6 +324,7 @@ static int nx_drm_probe(struct platform_device *pdev)
 		return -EINVAL;
 
 	dev->coherent_dma_mask = DMA_BIT_MASK(32);
+	device_enable_async_suspend(dev);
 
 	/* call master bind */
 	return component_master_add_with_match(dev,
@@ -347,38 +349,43 @@ static const struct of_device_id of_nx_drm_match[] = {
 };
 MODULE_DEVICE_TABLE(of, of_nx_drm_match);
 
+static void nx_drm_suspend(struct drm_device *drm)
+{
+#ifdef CONFIG_DRM_FBDEV_EMULATION
+	struct nx_drm_private *private = drm->dev_private;
+
+	console_lock();
+	drm_fb_helper_set_suspend(&private->fb_helper->fb_helper, 1);
+	console_unlock();
+#endif
+}
+
+static void nx_drm_resume(struct drm_device *drm)
+{
+#ifdef CONFIG_DRM_FBDEV_EMULATION
+	struct nx_drm_private *private = drm->dev_private;
+
+	console_lock();
+	drm_fb_helper_set_suspend(&private->fb_helper->fb_helper, 0);
+	console_unlock();
+#endif
+}
+
 static int nx_drm_pm_suspend(struct device *dev)
 {
 	struct drm_device *drm = dev_get_drvdata(dev);
-	struct drm_crtc *crtc;
-	struct drm_connector *connector;
-	struct nx_drm_crtc *nx_crtc;
-	struct nx_drm_connector *nx_connector;
+	struct nx_drm_private *private = drm->dev_private;
 
-	DRM_DEBUG_DRIVER("enter %s\n", dev_name(dev));
+	drm_kms_helper_poll_disable(drm);
+	nx_drm_suspend(drm);
 
-	drm_modeset_lock_all(drm);
+	private->suspend_state = drm_atomic_helper_suspend(drm);
 
-	list_for_each_entry(crtc, &drm->mode_config.crtc_list, head) {
-		nx_crtc = to_nx_crtc(crtc);
-		nx_crtc->suspended = true;
+	if (IS_ERR(private->suspend_state)) {
+		nx_drm_resume(drm);
+		drm_kms_helper_poll_enable(drm);
+		return PTR_ERR(private->suspend_state);
 	}
-
-	list_for_each_entry(connector, &drm->mode_config.connector_list, head) {
-		int old_dpms = connector->dpms;
-
-		nx_connector = to_nx_connector(connector);
-		if (nx_connector)
-			nx_connector->suspended = true;
-
-		if (connector->funcs->dpms)
-			connector->funcs->dpms(connector, DRM_MODE_DPMS_OFF);
-
-		/* Set the old mode back to the connector for resume */
-		connector->dpms = old_dpms;
-	}
-
-	drm_modeset_unlock_all(drm);
 
 	return 0;
 }
@@ -386,47 +393,16 @@ static int nx_drm_pm_suspend(struct device *dev)
 static int nx_drm_pm_resume(struct device *dev)
 {
 	struct drm_device *drm = dev_get_drvdata(dev);
-	struct drm_crtc *crtc;
-	struct drm_connector *connector;
-	struct nx_drm_crtc *nx_crtc;
-	struct nx_drm_connector *nx_connector;
+	struct nx_drm_private *private = drm->dev_private;
 
-	DRM_DEBUG_DRIVER("enter %s\n", dev_name(dev));
-
-	drm_modeset_lock_all(drm);
-
-	list_for_each_entry(crtc, &drm->mode_config.crtc_list, head) {
-		nx_crtc = to_nx_crtc(crtc);
-		if (nx_crtc->ops && nx_crtc->ops->reset)
-			nx_crtc->ops->reset(crtc);
-	}
-
-	list_for_each_entry(connector,
-		&drm->mode_config.connector_list, head) {
-		if (connector->funcs->dpms) {
-			int dpms = connector->dpms;
-
-			connector->dpms = DRM_MODE_DPMS_OFF;
-			connector->funcs->dpms(connector, dpms);
-			nx_connector = to_nx_connector(connector);
-			if (nx_connector)
-				nx_connector->suspended = false;
-		}
-	}
-
-	list_for_each_entry(crtc, &drm->mode_config.crtc_list, head) {
-		nx_crtc = to_nx_crtc(crtc);
-		nx_crtc->suspended = false;
-	}
-
-	drm_modeset_unlock_all(drm);
+	drm_atomic_helper_resume(drm, private->suspend_state);
+	nx_drm_resume(drm);
+	drm_kms_helper_poll_enable(drm);
 
 	return 0;
 }
 
-static const struct dev_pm_ops nx_drm_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(nx_drm_pm_suspend, nx_drm_pm_resume)
-};
+static SIMPLE_DEV_PM_OPS(nx_drm_pm_ops, nx_drm_pm_suspend, nx_drm_pm_resume);
 
 static struct platform_driver nx_drm_drviver = {
 	.probe = nx_drm_probe,

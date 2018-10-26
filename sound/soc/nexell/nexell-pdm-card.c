@@ -68,6 +68,7 @@ static struct platform_driver nx_pdm_driver = {
 	.driver = {
 		.name	= "nexell-pdm-card",
 		.owner	= THIS_MODULE,
+		.pm = &snd_soc_pm_ops,
 		.of_match_table = of_match_ptr(of_pdm_card),
 	},
 };

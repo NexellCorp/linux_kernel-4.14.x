@@ -233,7 +233,7 @@ static inline void plane_yuv_rect(struct nx_plane_rect *rect,
 static int nx_display_crtc_begin(struct drm_crtc *crtc)
 {
 	struct nx_display *dp = to_nx_crtc(crtc)->context;
-	struct nx_overlay *plane_dev = to_nx_plane(crtc->primary)->context;
+	struct nx_overlay *ovl = to_nx_plane(crtc->primary)->context;
 	int crtc_w, crtc_h;
 
 	crtc_w = crtc->state->mode.hdisplay;
@@ -241,31 +241,13 @@ static int nx_display_crtc_begin(struct drm_crtc *crtc)
 
 	DRM_DEBUG_KMS("crtc.%d: [%d,%d]\n", dp->module, crtc_w, crtc_h);
 
-	nx_display_prepare(dp);
 	nx_display_set_backcolor(dp);
 	nx_display_set_format(dp, crtc_w, crtc_h);
 
 	/* color key */
-	nx_overlay_set_color(plane_dev,
-		NX_COLOR_TRANS, dp->color_key, true, false);
+	nx_overlay_set_color(ovl, NX_COLOR_TRANS, dp->color_key, true, false);
 
 	return 0;
-}
-
-static void nx_display_crtc_suspend(struct drm_crtc *crtc)
-{
-	struct nx_display *dp = to_nx_crtc(crtc)->context;
-
-	memcpy(dp->mlc_regs, dp->mlc_base, sizeof(dp->mlc_regs));
-	memcpy(dp->dpc_regs, dp->dpc_base, sizeof(dp->dpc_regs));
-}
-
-static void nx_display_crtc_resume(struct drm_crtc *crtc)
-{
-	struct nx_display *dp = to_nx_crtc(crtc)->context;
-
-	memcpy(dp->mlc_base, dp->mlc_regs, sizeof(dp->mlc_regs));
-	memcpy(dp->dpc_base, dp->dpc_regs, sizeof(dp->dpc_regs));
 }
 
 static void nx_display_crtc_enable(struct drm_crtc *crtc)
@@ -290,9 +272,6 @@ static void nx_display_crtc_enable(struct drm_crtc *crtc)
 	if (!nx_connector)
 		return;
 
-	if (to_nx_crtc(crtc)->suspended)
-		nx_display_crtc_resume(crtc);
-
 	/* set output device */
 	display = nx_connector->display;
 	ctx = display_to_ctx(display);
@@ -309,12 +288,8 @@ static void nx_display_crtc_enable(struct drm_crtc *crtc)
 	dp->panel_type = ctx->panel_type;
 	dp->mpu_lcd = ctx->mpu_lcd;
 
-	nx_display_ovl_enable(dp);
-
-	if (nx_connector && display->disable_output)
-		return;
-
 	nx_display_set_mode(dp);
+	nx_display_ovl_enable(dp);
 	nx_display_enable(dp, true);
 }
 
@@ -339,15 +314,7 @@ static void nx_display_crtc_disable(struct drm_crtc *crtc)
 		return;
 
 	nx_display_ovl_disable(dp);
-
-	if (nx_connector->display->disable_output)
-		goto end_disable;
-
 	nx_display_enable(dp, false);
-
-end_disable:
-	if (to_nx_crtc(crtc)->suspended)
-		nx_display_crtc_suspend(crtc);
 }
 
 static void nx_display_crtc_destory(struct drm_crtc *crtc)
@@ -369,7 +336,6 @@ static struct nx_drm_crtc_ops nx_crtc_ops = {
 static int nx_display_crtc_irq_enable(struct drm_crtc *crtc, int pipe)
 {
 	nx_display_irq_on(to_nx_crtc(crtc)->context, true);
-
 	return 0;
 }
 
@@ -451,8 +417,6 @@ static int nx_display_crtc_parse_clock(struct device *dev,
 		dev_err(dev, "Not found clock 'clk_x2'\n");
 		return PTR_ERR(dp->clk_x1);
 	}
-
-	clk_prepare_enable(dp->clk_axi);
 
 	return 0;
 }

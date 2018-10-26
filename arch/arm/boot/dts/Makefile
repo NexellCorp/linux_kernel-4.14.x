@@ -1066,7 +1066,7 @@ dtb-$(CONFIG_ARCH_MEDIATEK) += \
 	mt8127-moose.dtb \
 	mt8135-evbp1.dtb
 dtb-$(CONFIG_ARCH_NEXELL) += \
-	nxp3220-vtk.dtb \
+	sip-s31nx-vtk.dtb \
 	sip-s31nx-artik310s-trike-rev00.dtb \
 	sip-s31nx-artik310s-explorer.dtb
 dtb-$(CONFIG_ARCH_ZX) += zx296702-ad1.dtb

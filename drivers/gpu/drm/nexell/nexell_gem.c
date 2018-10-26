@@ -844,7 +844,7 @@ static int __gem_map_vm_sync(struct drm_gem_object *obj,
 	list_for_each_entry(vma_list, &nx_obj->vmas, list) {
 		struct vm_area_struct *vma = vma_list->vma;
 
-		zap_page_range(vma, vma->vm_start, vma->vm_end - vma->vm_start);
+		zap_vma_ptes(vma, vma->vm_start, vma->vm_end - vma->vm_start);
 	}
 	mutex_unlock(&nx_obj->lock);
 

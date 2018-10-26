@@ -275,11 +275,9 @@
 				regulator-max-microvolt = <3300000>;
 				regulator-always-on;
 				regulator-boot-on;
-				pwrstm-enter-slot = <0>;
-				pwrstm-exit-slot = <0>;
 
 				regulator-state-mem {
-					regulator-off-in-suspend;
+					regulator-on-in-suspend;
 				};
 			};
 
@@ -373,11 +371,9 @@
 				regulator-max-microvolt = <1800000>;
 				regulator-always-on;
 				regulator-boot-on;
-				pwrstm-enter-slot = <1>;
-				pwrstm-exit-slot = <2>;
 
 				regulator-state-mem {
-					regulator-off-in-suspend;
+					regulator-on-in-suspend;
 				};
 			};
 
@@ -443,12 +439,6 @@
 				regulator-name = "VDD_ZB_3P3";
 				regulator-min-microvolt = <3300000>;
 				regulator-max-microvolt = <3300000>;
-				pwrstm-enter-slot = <0>;
-				pwrstm-exit-slot = <3>;
-
-				regulator-state-mem {
-					regulator-off-in-suspend;
-				};
 			};
 		};
 	};
@@ -508,51 +498,134 @@
 };
 
 &peri0_pwr_pin {
-    /* Retention configuration all INPUT except gpioa-24(BOOT10) */
 	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_NONE>,<NX_PIN_PWR_INPUT>;
-};
-
-&peri1_pwr_pin {
-	/* Retention configuration all INPUT except below gpios
-	   gpiob-27(I2C0_SDA), gpiob-28(I2C0_SCL), gpioc-8(BOOT3),
-	   gpioc-13(BOOT0) */
-	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_NONE>,<NX_PIN_PWR_NONE>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_NONE>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_NONE>,<NX_PIN_PWR_INPUT>;
-};
-
-&peri2_pwr_pin {
-	/* Retention configuration all INPUT except below gpios
-	   gpiod-10(BOOT9), gpiod-12(BOOT8), gpiod-14(BOOT7), gpiod-16(BOOT6),
-	   gpiod-22(BOOT5), gpiod-25(BOOT2), gpiod-26(BOOT4) */
-	nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>, <NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_NONE>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_NONE>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_NONE>,<NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,<NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_NONE>,<NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_NONE>,<NX_PIN_PWR_NONE>,
-		<NX_PIN_PWR_INPUT>;
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_NONE>, <NX_PIN_PWR_INPUT>,
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>;
+	nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_UP>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>;
 };
 
 &sdmmc_pwr_pin {
 	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>;
+	nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_UP>, <NX_PIN_PWR_PULL_UP>,
+		<NX_PIN_PWR_PULL_UP>, <NX_PIN_PWR_PULL_UP>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_UP>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>;
+};
+
+&nand_pwr_pin {
+	nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>, <NX_PIN_PWR_NONE>,
+		<NX_PIN_PWR_NONE>, <NX_PIN_PWR_NONE>,
+		<NX_PIN_PWR_NONE>, <NX_PIN_PWR_NONE>,
+		<NX_PIN_PWR_NONE>, <NX_PIN_PWR_NONE>,
+		<NX_PIN_PWR_NONE>, <NX_PIN_PWR_NONE>,
+		<NX_PIN_PWR_NONE>, <NX_PIN_PWR_NONE>,
+		<NX_PIN_PWR_NONE>, <NX_PIN_PWR_NONE>,
+		<NX_PIN_PWR_NONE>, <NX_PIN_PWR_NONE>;
+	nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+	nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_PREV>, <NX_PIN_PWR_PULL_PREV>,
+		<NX_PIN_PWR_PULL_PREV>, <NX_PIN_PWR_PULL_PREV>,
+		<NX_PIN_PWR_PULL_PREV>, <NX_PIN_PWR_PULL_PREV>,
+		<NX_PIN_PWR_PULL_PREV>, <NX_PIN_PWR_PULL_PREV>,
+		<NX_PIN_PWR_PULL_PREV>, <NX_PIN_PWR_PULL_PREV>,
+		<NX_PIN_PWR_PULL_PREV>, <NX_PIN_PWR_PULL_PREV>,
+		<NX_PIN_PWR_PULL_PREV>, <NX_PIN_PWR_PULL_PREV>,
+		<NX_PIN_PWR_PULL_PREV>, <NX_PIN_PWR_PULL_PREV>;
+};
+
+/* This configuration will be applied after verification is done.
+&nand_pwr_pin {
+	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_OUTPUT>;
+	nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+	nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_UP>, <NX_PIN_PWR_PULL_UP>,
+		<NX_PIN_PWR_PULL_UP>, <NX_PIN_PWR_PULL_UP>,
+		<NX_PIN_PWR_PULL_UP>, <NX_PIN_PWR_PULL_UP>,
+		<NX_PIN_PWR_PULL_UP>, <NX_PIN_PWR_PULL_UP>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_DOWN>, <NX_PIN_PWR_PULL_UP>,
+		<NX_PIN_PWR_PULL_UP>, <NX_PIN_PWR_PULL_DOWN>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>;
+};
+*/
+&peri1_pwr_pin {
+	nexell,pin-pwr-drv = <NX_PIN_PWR_OUTPUT>, <NX_PIN_PWR_OUTPUT>,
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_OUTPUT>,
+	    <NX_PIN_PWR_OUTPUT>,<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>;
+	nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+	nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_UP>, <NX_PIN_PWR_PULL_UP>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_UP>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_UP>,
+		<NX_PIN_PWR_PULL_DOWN>;
+};
+
+&gmac_pwr_pin {
+	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>;
+	nexell,pin-pwr-drv = <NX_PIN_PWR_PULL_NONE>;
+};
+
+&peri2_pwr_pin {
+	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>;
+	nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_UP>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
+		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>;
 };
 
 &vip_pwr_pin {
-	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>;
+	nexell,pin-pwr-drv = <NX_PIN_PWR_OUTPUT>;
+	nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_HIGH>;
 };
 
 &sys_bus {

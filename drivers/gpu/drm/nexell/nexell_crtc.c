@@ -144,13 +144,6 @@ static struct drm_crtc_helper_funcs nx_crtc_helper_funcs = {
 	.atomic_flush = nx_drm_crtc_atomic_flush,
 };
 
-static void nx_drm_crtc_irq_free(struct drm_device *drm, struct drm_crtc *crtc)
-{
-	struct nx_drm_crtc *nx_crtc = to_nx_crtc(crtc);
-
-	devm_free_irq(drm->dev, nx_crtc->irq, crtc);
-}
-
 static void nx_drm_crtc_destroy(struct drm_crtc *crtc)
 {
 	struct nx_drm_crtc *nx_crtc = to_nx_crtc(crtc);
@@ -160,7 +153,6 @@ static void nx_drm_crtc_destroy(struct drm_crtc *crtc)
 	if (nx_crtc->ops && nx_crtc->ops->destroy)
 		nx_crtc->ops->destroy(crtc);
 
-	nx_drm_crtc_irq_free(crtc->dev, crtc);
 	drm_crtc_cleanup(crtc);
 	kfree(nx_crtc);
 }

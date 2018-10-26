@@ -135,8 +135,6 @@ struct nx_display {
 	struct nx_display_par *dpp; /* get from display ctx */
 	enum nx_panel_type panel_type;
 	bool mpu_lcd;
-	void __iomem *mlc_regs[sizeof(struct nx_mlc_reg)/sizeof(void *)];
-	void __iomem *dpc_regs[sizeof(struct nx_mlc_reg)/sizeof(void *)];
 };
 
 /*
@@ -152,10 +150,9 @@ void *nx_drm_display_rgb_get(struct device *dev,
 /*
  * Nexell drm display SoC interfaces.
  */
-void nx_display_prepare(struct nx_display *dp);
+int  nx_display_set_mode(struct nx_display *dp);
 void nx_display_set_format(struct nx_display *dp, int width, int height);
 void nx_display_set_backcolor(struct nx_display *dp);
-int  nx_display_set_mode(struct nx_display *dp);
 void nx_display_enable(struct nx_display *dp, bool on);
 void nx_display_irq_on(struct nx_display *dp, bool on);
 void nx_display_irq_clear(struct nx_display *dp);

@@ -82,14 +82,22 @@ static inline unsigned int rgb332_to_rgb888(u8 rgb)
 	return (r8 << 16) | (g8 << 8) | (b8);
 }
 
-static void nx_display_clock_on(struct nx_display *dp, bool on)
+static void nx_display_clock_enable(struct nx_display *dp, bool on)
 {
+	struct nx_mlc_reg *reg = dp->mlc_base;
+
 	if (on) {
+		clk_prepare_enable(dp->clk_axi);
+
+		nx_mlc_set_clock_pclk_mode(reg, NX_PCLK_MODE_ALWAYS);
+		nx_mlc_set_clock_bclk_mode(reg, NX_BCLK_MODE_ALWAYS);
+
 		clk_prepare_enable(dp->clk_x2);
 		clk_prepare_enable(dp->clk_x1);
 	} else {
 		clk_disable_unprepare(dp->clk_x1);
 		clk_disable_unprepare(dp->clk_x2);
+		clk_disable_unprepare(dp->clk_axi);
 	}
 }
 
@@ -217,18 +225,10 @@ static void nx_display_sync_mode(struct nx_display *dp)
 		__func__, dp->module, efp, ebp, esw);
 }
 
-void nx_display_prepare(struct nx_display *dp)
-{
-	struct nx_mlc_reg *reg = dp->mlc_base;
-
-	clk_prepare_enable(dp->clk_axi);
-
-	nx_mlc_set_clock_pclk_mode(reg, NX_PCLK_MODE_ALWAYS);
-	nx_mlc_set_clock_bclk_mode(reg, NX_BCLK_MODE_ALWAYS);
-}
-
 int nx_display_set_mode(struct nx_display *dp)
 {
+	pr_debug("%s: crtc.%d\n", __func__, dp->module);
+
 #ifdef CONFIG_DRM_CHECK_PRE_INIT
 	if (!dp->boot_on) {
 		bool enb = nx_dpc_get_enable(dp->dpc_base) ? true : false;
@@ -239,9 +239,8 @@ int nx_display_set_mode(struct nx_display *dp)
 			return 0;
 	}
 #endif
-
 	nx_display_clock_rate(dp);
-	nx_display_clock_on(dp, true);
+	nx_display_clock_enable(dp, true);
 	nx_display_sync_format(dp);
 	nx_display_sync_mode(dp);
 	nx_display_sync_delay(dp);
@@ -272,7 +271,7 @@ void nx_display_enable(struct nx_display *dp, bool on)
 		nx_dpc_set_reg_flush(reg);
 
 	nx_dpc_set_enable(reg, on);
-	nx_display_clock_on(dp, on);
+	nx_display_clock_enable(dp, on);
 
 	if (!on)
 		return;
@@ -412,10 +411,6 @@ static int nx_overlay_rgb_set_format(struct nx_overlay *ovl,
 	pr_debug("%s: %s, fmt:0x%x, pixel:%d\n",
 		 __func__, ovl->name, format, pixelbyte);
 
-	if (ovl->format == format &&
-		ovl->pixelbyte == pixelbyte)
-		return 0;
-
 	ovl->format = format;
 	ovl->pixelbyte = pixelbyte;
 
@@ -506,9 +501,6 @@ static int nx_overlay_yuv_set_format(struct nx_overlay *ovl,
 {
 	struct nx_mlc_reg *reg = ovl->base;
 	int lock_size = 16;
-
-	if (ovl->format == format)
-		return 0;
 
 	ovl->format = format;
 	format &= 0xffffff;
@@ -673,7 +665,7 @@ void nx_overlay_enable(struct nx_overlay *ovl, bool on)
 }
 
 void nx_overlay_set_color(struct nx_overlay *ovl,
-			  unsigned int type, unsigned int color,
+			  enum nx_overlay_color type, unsigned int color,
 			  bool on, bool adjust)
 {
 	struct nx_mlc_reg *reg = ovl->base;

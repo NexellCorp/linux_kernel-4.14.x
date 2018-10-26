@@ -35,13 +35,13 @@ struct nx_drm_private {
 	bool force_detect;
 	int num_crtcs;
 	struct nx_drm_of_data *data;
+	struct drm_atomic_state *suspend_state;
 };
 
 /*
  * Nexell drm common crtc structure.
  */
 struct nx_drm_crtc_ops {
-	void (*reset)(struct drm_crtc *crtc);
 	int (*atomic_check)(struct drm_crtc *crtc,
 			struct drm_crtc_state *state);
 	int (*begin)(struct drm_crtc *crtc);
@@ -68,7 +68,6 @@ struct nx_drm_crtc {
 	int irq;
 	struct nx_drm_irq_ops *irq_ops;
 	struct drm_pending_vblank_event *event;
-	bool suspended;
 };
 
 #define to_nx_crtc(x)	container_of(x, struct nx_drm_crtc, crtc)
@@ -170,7 +169,6 @@ struct nx_drm_connector {
 	struct nx_drm_connect_drv_ops *ops;
 	struct nx_drm_display *display;	/* for display control */
 	unsigned int possible_crtcs;
-	bool suspended;
 };
 
 #define to_nx_connector(c) \
@@ -209,9 +207,6 @@ struct nx_drm_display_ops {
 	/* display mode control */
 	int (*set_mode)(struct nx_drm_display *display,
 			struct drm_display_mode *mode, unsigned int flags);
-	/* suspend/resume */
-	int (*suspend)(struct nx_drm_display *display);
-	int (*resume)(struct nx_drm_display *display);
 	/* display device specific operations */
 	struct nx_drm_mipi_ops *mipi;
 	struct nx_drm_hdmi_ops *hdmi;
@@ -233,7 +228,6 @@ struct nx_drm_display {
 	int pipe;
 	int irq;
 	bool is_connected;
-	bool disable_output;
 };
 
 /* HPD events */

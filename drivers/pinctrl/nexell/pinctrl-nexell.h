@@ -190,6 +190,7 @@ struct nexell_pin_pwr {
 	unsigned int		pin;
 	u32			drive;
 	u32			val;
+	u32			pullsel;
 };
 
 /**

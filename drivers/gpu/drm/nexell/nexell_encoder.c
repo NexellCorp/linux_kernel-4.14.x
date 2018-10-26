@@ -159,7 +159,7 @@ struct drm_encoder *nx_drm_encoder_create(struct drm_device *drm,
 	DRM_DEBUG_KMS("pipe.%d crtc mask:0x%x\n", pipe, possible_crtcs);
 
 	if (WARN_ON(possible_crtcs == 0))
-		return NULL;
+		return ERR_PTR(-EINVAL);
 
 	nx_encoder = kzalloc(sizeof(*nx_encoder), GFP_KERNEL);
 	if (!nx_encoder)

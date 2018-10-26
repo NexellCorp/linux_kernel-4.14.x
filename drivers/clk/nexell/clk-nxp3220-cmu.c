@@ -355,7 +355,7 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 		COMP_DIV_SRC(VIP0_PADOUT1)
 		COMP_GATE_SRC(VIP0_PADOUT1)
 	}, {
-		COMP_BASE_SRC_F(CLK_SRC_DPC0_X2, "src_dpc0_x2", 0)
+		COMP_BASE_SRC(CLK_SRC_DPC0_X2, "src_dpc0_x2")
 		COMP_MUX_SRC(DPC0_X2)
 		COMP_DIV_SRC_F(DPC0_X2, CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_GATE_SRC(DPC0_X2)

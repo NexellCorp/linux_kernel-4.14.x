@@ -774,8 +774,8 @@ static int nexell_pinctrl_create_retention(struct device *dev,
 				struct nexell_pwr_func *func)
 {
 	int domain;
-	int npins, ndrvs, nvals;
-	u32 drive, value;
+	int npins, ndrvs, nvals, npulls;
+	u32 drive, value, pull;
 	int i, ret;
 
 	ret = of_property_read_u32(func_np,
@@ -804,11 +804,21 @@ static int nexell_pinctrl_create_retention(struct device *dev,
 			return -EINVAL;
 	}
 
+	npulls = of_property_count_u32_elems(func_np, "nexell,pin-pwr-pull");
+	if (npulls < 1) {
+		dev_err(dev, "invalid powerdown pull list in %s node",
+			func_np->name);
+		return -EINVAL;
+	}
+
 	if (ndrvs > npins)
 		ndrvs = npins;
 
 	if (nvals > npins)
 		nvals = npins;
+
+	if (npulls > npins)
+		npulls = npins;
 
 	func->domain = domain;
 	func->groups = devm_kzalloc(dev,
@@ -851,12 +861,25 @@ static int nexell_pinctrl_create_retention(struct device *dev,
 			}
 		}
 
+		if (i < npulls) {
+			ret = of_property_read_u32_index(func_np,
+					"nexell,pin-pwr-pull", i, &pull);
+			if (ret < 0) {
+				dev_err(dev,
+					"failed to powerdown value %d in %s\n",
+					i, func_np->name);
+				return ret;
+			}
+		}
+
 		func->groups[i].name = gname;
 		func->groups[i].drive = drive;
 		func->groups[i].val = value;
+		func->groups[i].pullsel = pull;
 
 		drive = func->groups[i].drive;
 		value = func->groups[i].val;
+		pull = func->groups[i].pullsel;
 	}
 
 	func->num_groups = npins;

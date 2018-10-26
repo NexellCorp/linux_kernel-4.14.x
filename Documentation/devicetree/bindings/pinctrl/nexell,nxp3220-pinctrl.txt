@@ -54,6 +54,7 @@ parameters.
   - nexell,pin-pwr-domain = Select powerdown retention pin's power domain.
   - nexell,pin-pwr-drv = Select the powerdown retention direction.
   - nexell,pin-pwr-val = Set powerdown retention output value.
+  - nexell,pin-pwr-pull = Set powerdown retention pull up/down configuration.
 
   Valid values for nexell,pins are:
      "gpioX-N"		: X in {A,B,C,D,E}, N in {0-31}
@@ -83,6 +84,11 @@ parameters.
   Valid values for nexell,pin-pwr-val are:
      "NX_PIN_PWR_RETEN_LOW" : Set output powerdown retention with low
      "NX_PIN_PWR_RETEN_HIGH" : Set output powerdown retention with high
+  Valid values for nexell,pin-pwr-pull are:
+     "NX_PIN_PWR_PULL_DOWN" : Set pull down powerdown retention
+     "NX_PIN_PWR_PULL_UP": Set pull up powerdown retention
+     "NX_PIN_PWR_PULL_NONE": Set pull off powerdown retention
+     "NX_PIN_PWR_PULL_PREV": Keep previous pull state powerdown retention
 
 Example:
   - pin settings
