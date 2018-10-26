@@ -222,6 +222,33 @@ static int artik_zb_power_gpio_init(struct device *dev,
 	return 0;
 }
 
+#ifdef CONFIG_PM_SLEEP
+static int artik_zb_suspend(struct device *dev)
+{
+	struct artik_zb_power_platform_data *pdata = dev_get_drvdata(dev);
+	int ret = 0;
+
+	if (pdata->on)
+		ret = artik_zb_power_control(pdata, false);
+
+	return ret;
+}
+
+static int artik_zb_resume(struct device *dev)
+{
+	struct artik_zb_power_platform_data *pdata = dev_get_drvdata(dev);
+	int ret = 0;
+
+	if (pdata->on)
+		ret = artik_zb_power_control(pdata, true);
+
+	return ret;
+}
+
+static SIMPLE_DEV_PM_OPS(artik_zb_pm,
+		artik_zb_suspend, artik_zb_resume);
+#endif /* CONFIG_PM_SLEEP */
+
 static int artik_zb_power_probe(struct platform_device *pdev)
 {
 	struct artik_zb_power_platform_data *pdata;
@@ -329,6 +356,9 @@ static struct platform_driver artik_zb_power_driver = {
 	.driver = {
 		.name	= "artik_zb_power",
 		.owner	= THIS_MODULE,
+#ifdef CONFIG_PM_SLEEP
+		.pm	= &artik_zb_pm,
+#endif
 		.of_match_table = of_match_ptr(artik_zb_power_match),
 	},
 };
