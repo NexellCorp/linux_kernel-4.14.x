@@ -604,7 +604,7 @@
 
 &gmac_pwr_pin {
 	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>;
-	nexell,pin-pwr-drv = <NX_PIN_PWR_PULL_NONE>;
+	nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_NONE>;
 };
 
 &peri2_pwr_pin {
