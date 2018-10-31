@@ -689,7 +689,8 @@ static void *nxp3220_qos_probe(struct platform_device *pdev,
 	eqos->phy_pme = devm_gpiod_get(dev, "phy-pme", GPIOD_IN);
 	if (!IS_ERR(eqos->phy_pme)) {
 		phy_wolirq = gpiod_to_irq(eqos->phy_pme);
-		err = devm_request_irq(dev, phy_wolirq, wol_isr, 0,
+		err = devm_request_irq(dev, phy_wolirq, wol_isr,
+				IRQF_TRIGGER_FALLING,
 				dev_name(dev), dev);
 		if (err) {
 			dev_err(&pdev->dev, "IRQ request returned %d\n", err);
