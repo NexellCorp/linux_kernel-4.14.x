@@ -356,6 +356,24 @@
 		nexell,pin-pull = <NX_PIN_PULL_UP>;
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
+
+	gmac0_pins: gmac0_pins {
+		gmac0_nrst: gmac-nrst {
+			nexell,pins = "alive-5";
+			nexell,pin-function = <NX_PIN_FUNC0>;
+			nexell,pin-pull = <NX_PIN_PULL_UP>;
+			nexell,pin-strength = <NX_PIN_STR1>;
+		};
+	};
+
+	gmac1_pins: gmac1_pins {
+		gmac1_nrst: gmac-nrst {
+			nexell,pins = "alive-9";
+			nexell,pin-function = <NX_PIN_FUNC0>;
+			nexell,pin-pull = <NX_PIN_PULL_UP>;
+			nexell,pin-strength = <NX_PIN_STR1>;
+		};
+	};
 };
 
 &pwm {
