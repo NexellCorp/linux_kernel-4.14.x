@@ -81,7 +81,7 @@ static void lotid_num2string(uint32_t lot_id, char str[6])
 	value[2] = value[1] / 36;
 	mad[2] = value[1]  % 36;
 
-	str[0] = 'N';
+	str[0] = 'S';
 	str[1] = gst36Strtable[value[2]];
 	str[2] = gst36Strtable[mad[2]];
 	str[3] = gst36Strtable[mad[1]];
