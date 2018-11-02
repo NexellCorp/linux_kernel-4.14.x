@@ -61,7 +61,7 @@
 			};
 
 			sndcodec0: codec {
-				sound-dai = <&alc5658>;
+				sound-dai = <&alc5658 0>;
 			};
 		};
 	};
@@ -175,7 +175,7 @@
 	#size-cells = <0>;
 
 	alc5658: alc5658@1a {
-		#sound-dai-cells = <0>;
+		#sound-dai-cells = <1>;
 		compatible = "realtek,rt5659";
 		reg = <0x1a>;
 		realtek,dmic1-data-pin = <2>;

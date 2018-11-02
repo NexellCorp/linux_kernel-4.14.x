@@ -9,7 +9,8 @@ dtbo-$(CONFIG_ARCH_NEXELL) += \
 	sip-s31nx-artik310s-trike-uart5.dtbo \
 	sip-s31nx-artik310s-trike-spi0.dtbo \
 	sip-s31nx-artik310s-trike-rs4851.dtbo \
-	sip-s31nx-artik310s-trike-eth1.dtbo
+	sip-s31nx-artik310s-trike-eth1.dtbo \
+	sip-s31nx-artik310s-trike-i2s2.dtbo
 
 targets	+= dtbs dtbs_install
 targets	+= $(dtb-y)
