@@ -579,14 +579,17 @@
 &peri1_pwr_pin {
 	nexell,pin-pwr-drv = <NX_PIN_PWR_OUTPUT>, <NX_PIN_PWR_OUTPUT>,
 	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
-	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
+	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_OUTPUT>, <NX_PIN_PWR_INPUT>,
 	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
 	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_OUTPUT>,
 	    <NX_PIN_PWR_OUTPUT>,<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
 	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
 	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
 	    <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>;
-	nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
+	nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>, <NX_PIN_PWR_RETEN_LOW>,
+		<NX_PIN_PWR_RETEN_LOW>, <NX_PIN_PWR_RETEN_LOW>,
+		<NX_PIN_PWR_RETEN_LOW>, <NX_PIN_PWR_RETEN_LOW>,
+		<NX_PIN_PWR_RETEN_HIGH>, <NX_PIN_PWR_RETEN_LOW>;
 	nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
 		<NX_PIN_PWR_PULL_UP>, <NX_PIN_PWR_PULL_UP>,
 		<NX_PIN_PWR_PULL_NONE>, <NX_PIN_PWR_PULL_NONE>,
@@ -607,7 +610,7 @@
 		"gpioc-23", "gpioc-24", "gpioc-25", "gpioc-26", "gpioc-27", "gpioc-28",
 		"gpioc-29", "gpioc-30", "gpioc-31", "gpiod-0", "gpiod-1", "gpiod-2",
 		"gpiod-3", "gpiod-4", "gpiod-5", "gpiod-6", "gpiod-7", "gpiod-8",
-		"gpiod-9", "gpiob-31"; /* gpiob-31 is added for XMAC_NRST */
+		"gpiod-9";
 	nexell,pin-pwr-drv = <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
 		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
 		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
@@ -616,8 +619,7 @@
 		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
 		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
 		<NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>, <NX_PIN_PWR_INPUT>,
-		<NX_PIN_PWR_OUTPUT>, /* GPD9 = dp_red(DIS_D19) and XETHPHY_RST */
-		<NX_PIN_PWR_OUTPUT>; /* GPB31 = XMAC_NRST */
+		<NX_PIN_PWR_OUTPUT>; /* GPD9 = dp_red(DIS_D19) and XETHPHY_RST */
 	nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_HIGH>;
 	nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_NONE>;
 };
