@@ -5805,6 +5805,8 @@ woal_priv_per_pkt_cfg(moal_private *priv, t_u8 *respbuf, t_u32 respbuflen)
 			left_len -= (perpkt->len + MRVL_TLV_HEADER_SIZE);
 		}
 	}
+	else
+		goto done;
 	misc->param.txrx_pkt_ctrl = perpkt->tx_rx_control;
 	status = woal_request_ioctl(priv, req, MOAL_IOCTL_WAIT);
 	if (status != MLAN_STATUS_SUCCESS) {

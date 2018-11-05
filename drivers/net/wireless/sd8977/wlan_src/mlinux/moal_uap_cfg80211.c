@@ -702,10 +702,10 @@ woal_cfg80211_beacon_config(moal_private *priv,
 	sys_config->frag_threshold = wiphy->frag_threshold;
 	sys_config->rts_threshold = wiphy->rts_threshold;
 	sys_config->retry_limit = wiphy->retry_long;
-	if (sys_config->frag_threshold == MLAN_FRAG_RTS_DISABLED) {
+	if (sys_config->frag_threshold == (t_u16)MLAN_FRAG_RTS_DISABLED) {
 		sys_config->frag_threshold = MLAN_FRAG_MAX_VALUE;
 	}
-	if (sys_config->rts_threshold == MLAN_FRAG_RTS_DISABLED) {
+	if (sys_config->rts_threshold == (t_u16)MLAN_FRAG_RTS_DISABLED) {
 		sys_config->rts_threshold = MLAN_RTS_MAX_VALUE;
 	}
 

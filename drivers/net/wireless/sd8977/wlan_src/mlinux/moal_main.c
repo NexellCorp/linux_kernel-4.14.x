@@ -2962,9 +2962,8 @@ woal_init_fw(moal_handle *handle)
 	do_gettimeofday(&handle->req_fw_time);
 
 	ret = woal_request_fw(handle);
-	if (ret < 0) {
+	if (ret == MLAN_STATUS_FAILURE) {
 		PRINTM(MFATAL, "woal_request_fw failed\n");
-		ret = MLAN_STATUS_FAILURE;
 		goto done;
 	}
 
@@ -7466,11 +7465,11 @@ woal_dump_firmware_info_v3(moal_handle *phandle)
 	     /** 0 means dump starting*/
 			if (start_flag == 0)
 				break;
-			if (tries == MAX_POLL_TRIES) {
-				PRINTM(MMSG, "FW not ready to dump\n");
-				goto done;
-			}
 			udelay(100);
+		}
+		if (tries == MAX_POLL_TRIES) {
+			PRINTM(MMSG, "FW not ready to dump\n");
+			goto done;
 		}
 	}
 
