@@ -3018,8 +3018,6 @@ woal_set_fw_roaming_params(moal_private *priv)
 		ret = -EFAULT;
 		goto done;
 	}
-	if (ret)
-		goto done;
 done:
 	if (status != MLAN_STATUS_PENDING)
 		kfree(req);

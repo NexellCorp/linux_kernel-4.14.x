@@ -2836,7 +2836,7 @@ moal_recv_event(IN t_void *pmoal_handle, IN pmlan_event pmevent)
 								egress_time);
 							woal_broadcast_event
 								(priv, pevent,
-								 sizeof
+								 strlen
 								 (pevent));
 						}
 					}

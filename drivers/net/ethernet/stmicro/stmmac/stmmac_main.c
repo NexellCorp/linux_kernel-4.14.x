@@ -4089,7 +4089,7 @@ static int stmmac_hw_init(struct stmmac_priv *priv)
 	if (priv->plat->tx_coe)
 		dev_info(priv->device, "TX Checksum insertion supported\n");
 
-	if (priv->plat->pmt) {
+	if (priv->plat->pmt || priv->plat->phy_wol) {
 		dev_info(priv->device, "Wake-Up On Lan supported\n");
 		device_set_wakeup_capable(priv->device, 1);
 	}
@@ -4333,8 +4333,10 @@ int stmmac_suspend(struct device *dev)
 	if (!ndev || !netif_running(ndev))
 		return 0;
 
-	if (ndev->phydev)
+	if (ndev->phydev) {
+		phy_suspend(ndev->phydev);
 		phy_stop(ndev->phydev);
+	}
 
 	mutex_lock(&priv->lock);
 
@@ -4349,7 +4351,7 @@ int stmmac_suspend(struct device *dev)
 	stmmac_stop_all_dma(priv);
 
 	/* Enable Power down mode by programming the PMT regs */
-	if (device_may_wakeup(priv->device)) {
+	if (!priv->plat->phy_wol && device_may_wakeup(priv->device)) {
 		priv->hw->mac->pmt(priv->hw, priv->wolopts);
 		priv->irq_wake = 1;
 	} else {
@@ -4413,7 +4415,7 @@ int stmmac_resume(struct device *dev)
 	 * this bit because it can generate problems while resuming
 	 * from another devices (e.g. serial console).
 	 */
-	if (device_may_wakeup(priv->device)) {
+	if (!priv->plat->phy_wol && device_may_wakeup(priv->device)) {
 		mutex_lock(&priv->lock);
 		priv->hw->mac->pmt(priv->hw, 0);
 		mutex_unlock(&priv->lock);

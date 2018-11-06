@@ -1130,12 +1130,6 @@ sd_interrupt(struct sdio_func *func)
 		goto done;
 	}
 	ireg = priv->adapter->hw_regs[host_intstatus_reg];
-	if (ret) {
-		PRINTM(ERROR,
-		       "BT: sdio_read_ioreg: CMD52 read int status register failed %d\n",
-		       ret);
-		goto done;
-	}
 	if (ireg != 0) {
 		/*
 		 * DN_LD_HOST_INT_STATUS and/or UP_LD_HOST_INT_STATUS
