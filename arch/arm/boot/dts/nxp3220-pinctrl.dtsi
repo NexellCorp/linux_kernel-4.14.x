@@ -6,6 +6,18 @@
 
 #include <dt-bindings/pinctrl/nexell.h>
 
+#define PWR_PIN(_dom, _pin, _drv, _val, _pull)				\
+	_pin {								\
+		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_ ##_dom>;	\
+		nexell,pins = #_pin;					\
+		nexell,pin-pwr-drv = <NX_PIN_PWR_ ##_drv>;		\
+		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_ ##_val>;	\
+		nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_ ##_pull>;	\
+	}
+
+#define PWR_PIN_DEF(_dom, _pin) PWR_PIN(_dom, _pin, NONE, LOW, PREV)
+#define PWR_PIN_INPUT(_dom, _pin) PWR_PIN(_dom, _pin, INPUT, LOW, PREV)
+
 &pinctrl_0 {
 	gpio_a: gpioa {
 		gpio-controller;
@@ -626,89 +638,167 @@
 	};
 
 	peri0_pwr_pin: peri0-pwr-pin {
-		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_PERI0>;
-		nexell,pins = "gpioa-0", "gpioa-1", "gpioa-2", "gpioa-3",
-			      "gpioa-4", "gpioa-5", "gpioa-6", "gpioa-7",
-			      "gpioa-8", "gpioa-9", "gpioa-10", "gpioa-11",
-			      "gpioa-12", "gpioa-13", "gpioa-14", "gpioa-15",
-			      "gpioa-16", "gpioa-17", "gpioa-18", "gpioa-19",
-			      "gpioa-20", "gpioa-21", "gpioa-22", "gpioa-23",
-			      "gpioa-24", "gpioa-25", "gpioa-26", "gpioa-27",
-			      "gpioa-28";
-		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
-		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
-		nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_PREV>;
+		PWR_PIN_INPUT(PERI0, gpioa-0);
+		PWR_PIN_INPUT(PERI0, gpioa-1);
+		PWR_PIN_INPUT(PERI0, gpioa-2);
+		PWR_PIN_INPUT(PERI0, gpioa-3);
+		PWR_PIN_INPUT(PERI0, gpioa-4);
+		PWR_PIN_INPUT(PERI0, gpioa-5);
+		PWR_PIN_INPUT(PERI0, gpioa-6);
+		PWR_PIN_INPUT(PERI0, gpioa-7);
+		PWR_PIN_INPUT(PERI0, gpioa-8);
+		PWR_PIN_INPUT(PERI0, gpioa-9);
+		PWR_PIN_INPUT(PERI0, gpioa-10);
+		PWR_PIN_INPUT(PERI0, gpioa-11);
+		PWR_PIN_INPUT(PERI0, gpioa-12);
+		PWR_PIN_INPUT(PERI0, gpioa-13);
+		PWR_PIN_INPUT(PERI0, gpioa-14);
+		PWR_PIN_INPUT(PERI0, gpioa-15);
+		PWR_PIN_INPUT(PERI0, gpioa-16);
+		PWR_PIN_INPUT(PERI0, gpioa-17);
+		PWR_PIN_INPUT(PERI0, gpioa-18);
+		PWR_PIN_INPUT(PERI0, gpioa-19);
+		PWR_PIN_INPUT(PERI0, gpioa-20);
+		PWR_PIN_INPUT(PERI0, gpioa-21);
+		PWR_PIN_INPUT(PERI0, gpioa-22);
+		PWR_PIN_INPUT(PERI0, gpioa-23);
+		PWR_PIN_INPUT(PERI0, gpioa-24);
+		PWR_PIN_INPUT(PERI0, gpioa-25);
+		PWR_PIN_INPUT(PERI0, gpioa-26);
+		PWR_PIN_INPUT(PERI0, gpioa-27);
+		PWR_PIN_INPUT(PERI0, gpioa-28);
 	};
 
 	sdmmc_pwr_pin: sdmmc-pwr-pin {
-		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_SDMMC>;
-		nexell,pins = "gpioa-29", "gpioa-30", "gpioa-31", "gpiob-0",
-			      "gpiob-1", "gpiob-2", "gpiob-3", "gpiob-4",
-			      "gpiob-5", "gpiob-6", "gpiob-7", "gpiob-8";
-		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
-		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
-		nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_PREV>;
+		PWR_PIN_DEF(SDMMC, gpioa-29);
+		PWR_PIN_DEF(SDMMC, gpioa-30);
+		PWR_PIN_DEF(SDMMC, gpioa-31);
+		PWR_PIN_DEF(SDMMC, gpiob-0);
+		PWR_PIN_DEF(SDMMC, gpiob-1);
+		PWR_PIN_DEF(SDMMC, gpiob-2);
+		PWR_PIN_DEF(SDMMC, gpiob-3);
+		PWR_PIN_DEF(SDMMC, gpiob-4);
+		PWR_PIN_DEF(SDMMC, gpiob-5);
+		PWR_PIN_DEF(SDMMC, gpiob-6);
+		PWR_PIN_DEF(SDMMC, gpiob-7);
+		PWR_PIN_DEF(SDMMC, gpiob-8);
 	};
 
 	nand_pwr_pin: nand-pwr-pin {
-		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_NAND>;
-		nexell,pins = "gpiob-9", "gpiob-10", "gpiob-11", "gpiob-12",
-			      "gpiob-13", "gpiob-14", "gpiob-15", "gpiob-16",
-			      "gpiob-17", "gpiob-18", "gpiob-19", "gpiob-20",
-			      "gpiob-21", "gpiob-22", "gpiob-23", "gpiob-24";
-		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
-		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
-		nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_PREV>;
+		PWR_PIN_DEF(NAND, gpiob-9);
+		PWR_PIN_DEF(NAND, gpiob-10);
+		PWR_PIN_DEF(NAND, gpiob-11);
+		PWR_PIN_DEF(NAND, gpiob-12);
+		PWR_PIN_DEF(NAND, gpiob-13);
+		PWR_PIN_DEF(NAND, gpiob-14);
+		PWR_PIN_DEF(NAND, gpiob-15);
+		PWR_PIN_DEF(NAND, gpiob-16);
+		PWR_PIN_DEF(NAND, gpiob-17);
+		PWR_PIN_DEF(NAND, gpiob-18);
+		PWR_PIN_DEF(NAND, gpiob-19);
+		PWR_PIN_DEF(NAND, gpiob-20);
+		PWR_PIN_DEF(NAND, gpiob-21);
+		PWR_PIN_DEF(NAND, gpiob-22);
+		PWR_PIN_DEF(NAND, gpiob-23);
+		PWR_PIN_DEF(NAND, gpiob-24);
 	};
 
 	peri1_pwr_pin: peri1-pwr-pin {
-		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_PERI1>;
-		nexell,pins = "gpiob-25", "gpiob-26", "gpiob-27", "gpiob-28",
-			      "gpiob-29", "gpiob-30", "gpiob-31", "gpioc-0",
-			      "gpioc-1", "gpioc-2", "gpioc-3", "gpioc-4",
-			      "gpioc-5", "gpioc-6", "gpioc-7", "gpioc-8",
-			      "gpioc-9", "gpioc-10", "gpioc-11", "gpioc-12",
-			      "gpioc-13", "gpioc-14", "gpioc-15", "gpioc-16",
-			      "gpioc-17";
-		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
-		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
-		nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_PREV>;
+		PWR_PIN_INPUT(PERI1, gpiob-25);
+		PWR_PIN_INPUT(PERI1, gpiob-26);
+		PWR_PIN_INPUT(PERI1, gpiob-27);
+		PWR_PIN_INPUT(PERI1, gpiob-28);
+		PWR_PIN_INPUT(PERI1, gpiob-29);
+		PWR_PIN_INPUT(PERI1, gpiob-30);
+		PWR_PIN_INPUT(PERI1, gpiob-31);
+		PWR_PIN_INPUT(PERI1, gpioc-0);
+		PWR_PIN_INPUT(PERI1, gpioc-1);
+		PWR_PIN_INPUT(PERI1, gpioc-2);
+		PWR_PIN_INPUT(PERI1, gpioc-3);
+		PWR_PIN_INPUT(PERI1, gpioc-4);
+		PWR_PIN_INPUT(PERI1, gpioc-5);
+		PWR_PIN_INPUT(PERI1, gpioc-6);
+		PWR_PIN_INPUT(PERI1, gpioc-7);
+		PWR_PIN_INPUT(PERI1, gpioc-8);
+		PWR_PIN_INPUT(PERI1, gpioc-9);
+		PWR_PIN_INPUT(PERI1, gpioc-10);
+		PWR_PIN_INPUT(PERI1, gpioc-11);
+		PWR_PIN_INPUT(PERI1, gpioc-12);
+		PWR_PIN_INPUT(PERI1, gpioc-13);
+		PWR_PIN_INPUT(PERI1, gpioc-14);
+		PWR_PIN_INPUT(PERI1, gpioc-15);
+		PWR_PIN_INPUT(PERI1, gpioc-16);
+		PWR_PIN_INPUT(PERI1, gpioc-17);
 	};
 
 	gmac_pwr_pin: gmac-pwr-pin {
-		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_GMAC>;
-		nexell,pins = "gpioc-18", "gpioc-19", "gpioc-20", "gpioc-21",
-			      "gpioc-22", "gpioc-23", "gpioc-24", "gpioc-25",
-			      "gpioc-26", "gpioc-27", "gpioc-28", "gpioc-29",
-			      "gpioc-30", "gpioc-31", "gpiod-0", "gpiod-1",
-			      "gpiod-2", "gpiod-3", "gpiod-4", "gpiod-5",
-			      "gpiod-6", "gpiod-7", "gpiod-8", "gpiod-9";
-		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
-		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
-		nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_PREV>;
+		PWR_PIN_DEF(GMAC, gpioc-18);
+		PWR_PIN_DEF(GMAC, gpioc-19);
+		PWR_PIN_DEF(GMAC, gpioc-20);
+		PWR_PIN_DEF(GMAC, gpioc-21);
+		PWR_PIN_DEF(GMAC, gpioc-22);
+		PWR_PIN_DEF(GMAC, gpioc-23);
+		PWR_PIN_DEF(GMAC, gpioc-24);
+		PWR_PIN_DEF(GMAC, gpioc-25);
+		PWR_PIN_DEF(GMAC, gpioc-26);
+		PWR_PIN_DEF(GMAC, gpioc-27);
+		PWR_PIN_DEF(GMAC, gpioc-28);
+		PWR_PIN_DEF(GMAC, gpioc-29);
+		PWR_PIN_DEF(GMAC, gpioc-30);
+		PWR_PIN_DEF(GMAC, gpioc-31);
+		PWR_PIN_DEF(GMAC, gpiod-0);
+		PWR_PIN_DEF(GMAC, gpiod-1);
+		PWR_PIN_DEF(GMAC, gpiod-2);
+		PWR_PIN_DEF(GMAC, gpiod-3);
+		PWR_PIN_DEF(GMAC, gpiod-4);
+		PWR_PIN_DEF(GMAC, gpiod-5);
+		PWR_PIN_DEF(GMAC, gpiod-6);
+		PWR_PIN_DEF(GMAC, gpiod-7);
+		PWR_PIN_DEF(GMAC, gpiod-8);
+		PWR_PIN_DEF(GMAC, gpiod-9);
 	};
 
 	peri2_pwr_pin: peri2-pwr-pin {
-		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_PERI2>;
-		nexell,pins = "gpiod-10", "gpiod-11", "gpiod-12", "gpiod-13",
-			      "gpiod-14", "gpiod-15", "gpiod-16", "gpiod-17",
-			      "gpiod-18", "gpiod-19", "gpiod-20", "gpiod-21",
-			      "gpiod-22", "gpiod-23", "gpiod-24", "gpiod-25",
-			      "gpiod-26", "gpiod-27", "gpiod-28", "gpiod-29",
-			      "gpiod-30", "gpiod-31", "gpioe-0", "gpioe-1";
-		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
-		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
-		nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_PREV>;
+		PWR_PIN_INPUT(PERI2, gpiod-10);
+		PWR_PIN_INPUT(PERI2, gpiod-11);
+		PWR_PIN_INPUT(PERI2, gpiod-12);
+		PWR_PIN_INPUT(PERI2, gpiod-13);
+		PWR_PIN_INPUT(PERI2, gpiod-14);
+		PWR_PIN_INPUT(PERI2, gpiod-15);
+		PWR_PIN_INPUT(PERI2, gpiod-16);
+		PWR_PIN_INPUT(PERI2, gpiod-17);
+		PWR_PIN_INPUT(PERI2, gpiod-18);
+		PWR_PIN_INPUT(PERI2, gpiod-19);
+		PWR_PIN_INPUT(PERI2, gpiod-20);
+		PWR_PIN_INPUT(PERI2, gpiod-21);
+		PWR_PIN_INPUT(PERI2, gpiod-22);
+		PWR_PIN_INPUT(PERI2, gpiod-23);
+		PWR_PIN_INPUT(PERI2, gpiod-24);
+		PWR_PIN_INPUT(PERI2, gpiod-25);
+		PWR_PIN_INPUT(PERI2, gpiod-26);
+		PWR_PIN_INPUT(PERI2, gpiod-27);
+		PWR_PIN_INPUT(PERI2, gpiod-28);
+		PWR_PIN_INPUT(PERI2, gpiod-29);
+		PWR_PIN_INPUT(PERI2, gpiod-30);
+		PWR_PIN_INPUT(PERI2, gpiod-31);
+		PWR_PIN_INPUT(PERI2, gpioe-0);
+		PWR_PIN_INPUT(PERI2, gpioe-1);
 	};
 
 	vip_pwr_pin: vip-pwr-pin {
-		nexell,pin-pwr-domain = <NX_PIN_PWR_DOMAIN_VIP>;
-		nexell,pins = "gpioe-2", "gpioe-3", "gpioe-4", "gpioe-5",
-			      "gpioe-6", "gpioe-7", "gpioe-8", "gpioe-9",
-			      "gpioe-10", "gpioe-11", "gpioe-12", "gpioe-13",
-			      "gpioe-14", "gpioe-15";
-		nexell,pin-pwr-drv = <NX_PIN_PWR_NONE>;
-		nexell,pin-pwr-val = <NX_PIN_PWR_RETEN_LOW>;
-		nexell,pin-pwr-pull = <NX_PIN_PWR_PULL_PREV>;
+		PWR_PIN_DEF(VIP, gpioe-2);
+		PWR_PIN_DEF(VIP, gpioe-3);
+		PWR_PIN_DEF(VIP, gpioe-4);
+		PWR_PIN_DEF(VIP, gpioe-5);
+		PWR_PIN_DEF(VIP, gpioe-6);
+		PWR_PIN_DEF(VIP, gpioe-7);
+		PWR_PIN_DEF(VIP, gpioe-8);
+		PWR_PIN_DEF(VIP, gpioe-9);
+		PWR_PIN_DEF(VIP, gpioe-10);
+		PWR_PIN_DEF(VIP, gpioe-11);
+		PWR_PIN_DEF(VIP, gpioe-12);
+		PWR_PIN_DEF(VIP, gpioe-13);
+		PWR_PIN_DEF(VIP, gpioe-14);
+		PWR_PIN_DEF(VIP, gpioe-15);
 	};
 };
