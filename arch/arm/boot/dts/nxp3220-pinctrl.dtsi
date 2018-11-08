@@ -125,7 +125,7 @@
 				      "gpioc-21";
 			nexell,pin-function = <NX_PIN_FUNC1>;
 			nexell,pin-pull = <NX_PIN_PULL_NONE>;
-			nexell,pin-strength = <NX_PIN_STR3>;
+			nexell,pin-strength = <NX_PIN_STR2>;
 		};
 
 		gmac0_rxd: gmac-rxd {
@@ -175,7 +175,7 @@
 			nexell,pins = "gpioc-23";
 			nexell,pin-function = <NX_PIN_FUNC1>;
 			nexell,pin-pull = <NX_PIN_PULL_NONE>;
-			nexell,pin-strength = <NX_PIN_STR1>;
+			nexell,pin-strength = <NX_PIN_STR3>;
 		};
 
 		gmac0_phyint: gmac-phyint {
