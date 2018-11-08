@@ -635,12 +635,9 @@ static int nxe2000_i2c_probe(struct i2c_client *client,
 
 	nxe2000_i2c_client = client;
 
-#if 1
+#ifndef CONFIG_ARM_PSCI_FW
 	pm_power_off = nxe2000_power_off;
-#else
-	nxp_board_shutdown = nxe2000_power_off;
 #endif
-
 	return 0;
 
 err_add_devs:
