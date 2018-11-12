@@ -236,6 +236,12 @@
 		nexell,pin-pull = <NX_PIN_PULL_NONE>;
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
+
+	gmac0_pins: gmac0_pins {
+		gmac0_txclk: gmac-txclk {
+			nexell,pin-strength = <NX_PIN_STR2>;
+		};
+	};
 };
 
 &pwm {
