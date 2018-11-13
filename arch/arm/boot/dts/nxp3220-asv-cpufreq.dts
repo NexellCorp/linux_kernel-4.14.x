@@ -1,0 +1,228 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (C) 2018  Nexell Co., Ltd.
+ * Author: JungHyun, Kim <jhkim@nexell.co.kr>
+ */
+
+/dts-v1/;
+#include <dt-bindings/gpio/gpio.h>
+#include "nxp3220.dtsi"
+
+/ {
+	model = "Nexell nxp3220 validation test board";
+	compatible = "nexell,nxp3220-vtk", "nexell,nxp3220";
+
+	chosen {
+		stdout-path = &uart2;
+	};
+
+	memory@40000000 {
+		device_type = "memory";
+		reg = <0x40000000 0x20000000>;
+	};
+
+	thermal-zones {
+		cpu_thermal: cpu-thermal {
+			thermal-sensors = <&tmuctrl_0>;
+			polling-delay-passive = <1000>;
+			polling-delay = <1000>;
+			trips {
+				cpu-crit-0 {
+					temperature = <85000>;
+					hysteresis = <10000>;
+					type = "critical";
+				};
+			};
+		};
+	};
+};
+
+&dwc2otg {
+	status = "okay";
+	pinctrl-0 = <&otg_vbus_en>;
+	pinctrl-names = "default";
+};
+
+&ehci {
+	status = "okay";
+};
+
+&ohci {
+	status = "okay";
+};
+
+&tmuctrl_0 {
+	status = "okay";
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&uart2 {
+	status = "okay";
+};
+
+&usb2phy {
+	status = "okay";
+};
+
+&rtc {
+	status = "okay";
+};
+
+&pinctrl_0 {
+	pmic_irq: sm5011-irq {
+		nexell,pins = "alive-1";
+		nexell,pin-function = <NX_PIN_FUNC0>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	cfg_wlanhostwake: cfg-wlanhostwake {
+		nexell,pins = "alive-3";
+		nexell,pin-function = <NX_PIN_FUNC0>;
+		nexell,pin-pull = <NX_PIN_PULL_UP>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+};
+
+&i2c_0 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	sm5011: sm5011-pmic@47 {
+		compatible = "sm,sm5011";
+		interrupt-parent = <&alive_0>;
+		interrupts = <1 IRQ_TYPE_NONE>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pmic_irq>;
+		reg = <0x47>;
+
+		voltage-regulators {
+			buck2_reg: BUCK2 {
+				regulator-name = "VDD_CPU_1P0";
+				regulator-min-microvolt = <562500>;
+				regulator-max-microvolt = <1400000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			buck3_reg: BUCK3 {
+				regulator-name = "VDD_DDRIO_1P5";
+				regulator-min-microvolt = <1500000>;
+				regulator-max-microvolt = <1500000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			buck4_reg: BUCK4 {
+				regulator-name = "VDD_DDR_1P0";
+				regulator-min-microvolt = <1000000>;
+				regulator-max-microvolt = <1000000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			buck5_reg: BUCK5 {
+				regulator-name = "VDD_CORE_1P0";
+				regulator-min-microvolt = <975000>;
+				regulator-max-microvolt = <1000000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			buck6_reg: BUCK6 {
+				regulator-name = "VDD_DDR_1P5";
+				regulator-min-microvolt = <1500000>;
+				regulator-max-microvolt = <1500000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			ldo9_reg: LDO9 {
+				regulator-name = "VDD_USB_1P0";
+				regulator-min-microvolt = <975000>;
+				regulator-max-microvolt = <1000000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			ldo14_reg: LDO14 {
+				regulator-name = "VDD_MM_1P0_AP";
+				regulator-min-microvolt = <975000>;
+				regulator-max-microvolt = <1000000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+		};
+	};
+};
+
+&cpu0 {
+	cpu-supply = <&buck2_reg>;
+};
+
+&cpu0_opp_table {
+	compatible = "operating-points-v2";
+	opp-shared;
+
+	opp-0 {
+		opp-hz = /bits/ 64 <100000000>;
+		opp-microvolt = <1000000>;
+	};
+	opp-1 {
+		opp-hz = /bits/ 64 <200000000>;
+		opp-microvolt = <1000000>;
+	};
+	opp-2 {
+		opp-hz = /bits/ 64 <300000000>;
+		opp-microvolt = <1000000>;
+	};
+	opp-3 {
+		opp-hz = /bits/ 64 <400000000>;
+		opp-microvolt = <1000000>;
+	};
+	opp-4 {
+		opp-hz = /bits/ 64 <500000000>;
+		opp-microvolt = <1000000>;
+	};
+	opp-5 {
+		opp-hz = /bits/ 64 <600000000>;
+		opp-microvolt = <1000000>;
+	};
+	opp-6 {
+		opp-hz = /bits/ 64 <700000000>;
+		opp-microvolt = <1000000>;
+	};
+	opp-7 {
+		opp-hz = /bits/ 64 <800000000>;
+		opp-microvolt = <1000000>;
+	};
+	opp-8 {
+		opp-hz = /bits/ 64 <900000000>;
+		opp-microvolt = <1100000>;
+	};
+	opp-9 {
+		opp-hz = /bits/ 64 <1000000000>;
+		opp-microvolt = <1100000>;
+	};
+	opp-10 {
+		opp-hz = /bits/ 64 <1100000000>;
+		opp-microvolt = <1200000>;
+	};
+	opp-11 {
+		opp-hz = /bits/ 64 <1200000000>;
+		opp-microvolt = <1300000>;
+	};
+	opp-12 {
+		opp-hz = /bits/ 64 <1300000000>;
+		opp-microvolt = <1300000>;
+	};
+	opp-13 {
+		opp-hz = /bits/ 64 <1400000000>;
+		opp-microvolt = <1300000>;
+	};
+
+};
