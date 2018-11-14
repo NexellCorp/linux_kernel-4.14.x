@@ -83,6 +83,8 @@ static LIST_HEAD(pll_list);
 #define to_clk_pll(hw) container_of(hw, struct clk_pll, hw)
 
 static struct pll_pms pll2555_pms_table[] = {
+	{ .rate = 1400000000U, .p = 3, .m = 175, .s = 0, .k = 0 },
+	{ .rate = 1300000000U, .p = 6, .m = 325, .s = 0, .k = 0 },
 	{ .rate = 1200000000U, .p = 4, .m = 400, .s = 1, .k = 0 },
 	{ .rate = 1100000000U, .p = 3, .m = 275, .s = 1, .k = 0 },
 	{ .rate = 1000000000U, .p = 3, .m = 250, .s = 1, .k = 0 },
