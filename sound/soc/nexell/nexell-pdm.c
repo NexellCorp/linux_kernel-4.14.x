@@ -577,8 +577,6 @@ static void nx_pdm_stop(struct nx_pdm_data *pdm)
 	}
 
 	writel(clk & ~PDM_CLK_ENB, &reg->pdm_clk);
-
-	clk_disable_unprepare(pdm->clk);
 }
 
 static void nx_pdm_sync_clk(struct nx_pdm_data *pdm)
@@ -860,6 +858,9 @@ static void nx_pdm_shutdown(struct snd_pcm_substream *substream,
 			  struct snd_soc_dai *dai)
 {
 	struct nx_pdm_data *pdm = snd_soc_dai_get_drvdata(dai);
+
+	if (__clk_is_enabled(pdm->clk))
+		clk_disable_unprepare(pdm->clk);
 
 	if (__clk_is_enabled(pdm->clk_axi))
 		clk_disable_unprepare(pdm->clk_axi);
