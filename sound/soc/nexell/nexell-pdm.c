@@ -862,7 +862,7 @@ static void nx_pdm_shutdown(struct snd_pcm_substream *substream,
 	struct nx_pdm_data *pdm = snd_soc_dai_get_drvdata(dai);
 
 	if (__clk_is_enabled(pdm->clk_axi))
-		clk_prepare_enable(pdm->clk_axi);
+		clk_disable_unprepare(pdm->clk_axi);
 
 	pdm->running = false;
 }
