@@ -6,5 +6,8 @@ nexell_drm-y := nexell_crtc.o nexell_plane.o nexell_connector.o \
 nexell_drm-y += soc/drm.o soc/display.o soc/low.o
 
 nexell_drm-$(CONFIG_DRM_NEXELL_RGB)	+= soc/rgb.o
+nexell_drm-$(CONFIG_DRM_NEXELL_LVDS) 	+= soc/lvds.o
+
 nexell_drm-$(CONFIG_DRM_NEXELL_RGB)	+= nexell_lcd.o
+nexell_drm-$(CONFIG_DRM_NEXELL_LVDS)	+= nexell_lcd.o
 obj-$(CONFIG_DRM_NEXELL)		+= nexell_drm.o
