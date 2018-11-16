@@ -116,6 +116,8 @@ static const struct nexell_clk_reset mm_resets[] = {
 		CLK_RESET(MM_LVDS_VCLK + 0x40, MM_LVDS_VCLK + 0x30, 0),
 	[CLK_RESET_MM_CODA960_CORE] =
 		CLK_RESET(MM_CODA960_CORE + 0x40, MM_CODA960_CORE + 0x30, 0),
+	[CLK_RESET_MM_LVDS_PHY] =
+		CLK_RESET(MM_AXI + 0x40, MM_AXI + 0x30, 12),
 };
 
 #define CLK_MM_REG(o)						\
