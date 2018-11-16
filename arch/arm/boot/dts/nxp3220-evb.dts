@@ -34,6 +34,22 @@
 		reg = <0x40000000 0x20000000>;
 	};
 
+	backlight: pwm-backlight {
+		compatible = "pwm-backlight";
+		pwms = <&pwm 3 20000 1>;
+		pwm-names = "pwm-backlight";
+
+		brightness-levels = <30 31 32 33 34 35 36 37 38 39
+				40 41 42 43 44 45 46 47 48 49
+				50 51 52 53 54 55 56 57 58 59
+				60 61 62 63 64 65 66 67 68 69
+				70 71 72 73 74 75 76 77 78 79
+				80 81 82 83 84 85 86 87 88 89
+				90>;
+		default-brightness-level = <45>;
+		status = "okay";
+	};
+
 	gpio_keys {
 		compatible = "gpio-keys";
 		#address-cells = <1>;
@@ -48,7 +64,7 @@
 			gpio-key,wakeup;
 		};
 	};
-	
+
 	i2c_gpio1: i2c@1 {
 		compatible = "i2c-gpio";
 		gpios = <&gpio_d 28 0 /* sda */
@@ -63,7 +79,7 @@
 			reg = <0x1a>;
 		};
 	};
-	
+
 	sound0: sound0 {
 		compatible = "simple-audio-card";
 		simple-audio-card,name = "nxp3220 Audio Card ALC5623";
@@ -135,7 +151,31 @@
 			};
 		};
 	};
+};
 
+&drm {
+        status = "okay";
+};
+
+&drm_lvds {
+        backlight = <&backlight>;
+        backlight-delay = <100>;
+	enable-gpios = <&gpio_e 13 GPIO_ACTIVE_HIGH>,
+		<&gpio_e 12 GPIO_ACTIVE_HIGH>,
+		<&gpio_e 14 GPIO_ACTIVE_HIGH>;
+        status = "okay";
+
+	display-timing {
+		clock-frequency = <51206400>;
+		hactive = <1024>;
+		vactive = <600>;
+		hfront-porch = <160>;
+		hback-porch = <140>;
+		hsync-len = <20>;
+		vfront-porch = <12>;
+		vback-porch = <20>;
+		vsync-len = <3>;
+	};
 };
 
 &dwmmc_0 {
@@ -349,6 +389,10 @@
 	};
 };
 
+&pwm {
+	nexell,pwm-outputs = <0>, <1>, <2>, <3>;
+	status = "okay";
+};
 
 &tmuctrl_0 {
 	status = "okay";
