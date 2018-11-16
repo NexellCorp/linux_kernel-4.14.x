@@ -122,6 +122,39 @@
 		};
 	};
 
+	snd_null_codec0:snd_null_codec@0 {
+		 #sound-dai-cells = <0>;
+		compatible = "nexell,snd-null-codec";
+		status = "okay";
+	};
+
+	/* PDM Reference IIS */
+	sound2: sound2 {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "nxp3220 PDM Reference I2S";
+		status = "okay";
+
+		simple-audio-card,dai-link@0 {
+			mclk-fs = <256>;
+			format = "i2s";
+			frame-master = <&sndcodec2>;
+			bitclock-master = <&sndcodec2>;
+
+			sndcpu2: cpu  {
+				sound-dai = <&i2s3 0>;
+			};
+
+			sndcodec2: codec {
+				sound-dai = <&snd_null_codec0>;
+			};
+		};
+	};
+
+	sound-pdm {
+		compatible = "nexell,nxp3220-pdm-card";
+		snd-controller = <&pdm>;
+	};
+
 	thermal-zones {
 		cpu_thermal: cpu-thermal {
 			thermal-sensors = <&tmuctrl_0>;
@@ -361,15 +394,21 @@
 	status = "okay";
 };
 
-&i2s2 {
+/* PDM Reference IIS */
+&i2s3 {
 	frame-bit = <32>;
 	sample-rate = <48000>;
 	status = "okay";
 };
 
-&i2s3 {
-	frame-bit = <32>;
-	sample-rate = <48000>;
+&i2s3_bus {
+	nexell,pins = "gpioc-8", "gpioc-12";
+	nexell,pin-pull = <NX_PIN_PULL_UP>;
+};
+
+&pdm {
+	ref-iis = <3>;
+	sample-rate = <16000>;
 	status = "okay";
 };
 
