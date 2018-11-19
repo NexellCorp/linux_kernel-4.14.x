@@ -130,8 +130,7 @@ static int lvds_prepare(struct nx_drm_display *display)
 	/* lvdsctrl4 */
 	val = readl(&reg->lvdsctrl4);
 	val &= ~((0xff << 14) | (0xff << 6));
-	val = ((voltage & 0xff) << 14)	/* CNT_VOD_H : 8bit */
-		| (0xf0 << 6);	/* CNT_PEN_H */
+	val = ((voltage & 0xff) << 14);	/* CNT_VOD_H : 8bit */
 	writel(val, &reg->lvdsctrl4);
 
 	return 0;
