@@ -309,6 +309,7 @@
 };
 
 &i2s0_bus {
+	nexell,pins = "gpioa-22", "gpioa-23";
 	nexell,pin-pull = <NX_PIN_PULL_UP>;
 };
 
