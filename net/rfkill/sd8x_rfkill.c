@@ -284,7 +284,7 @@ static int sd8x_pwr_on(struct sd8x_rfkill_platform_data *pdata)
 		retry = 2;
 		timeout_secs = 60;
 		timeout = msecs_to_jiffies(timeout_secs * 1000);
-		/*host->pdata->quirks |= DW_MCI_QUIRK_BROKEN_CARD_DETECTION;*/
+		host->pdata->quirks |= DW_MCI_QUIRK_BROKEN_CARD_DETECTION;
 
 		while (retry) {
 			pdata->mmc->detect_complete = &complete;
@@ -340,7 +340,7 @@ static int sd8x_pwr_on(struct sd8x_rfkill_platform_data *pdata)
 	} else {
   
 		pdata->is_on = 0;
-        /*host->pdata->quirks &= ~DW_MCI_QUIRK_BROKEN_CARD_DETECTION;*/
+		host->pdata->quirks &= ~DW_MCI_QUIRK_BROKEN_CARD_DETECTION;
 
 		/* roll back if fail */
 		sd8x_pwr_ctrl(pdata, 0);
@@ -385,9 +385,6 @@ static int sd8x_pwr_off(struct sd8x_rfkill_platform_data *pdata)
 		mmc_disable_sdio(pdata->mmc);
 #endif
 
-	/* Second: power off sd8x device */
-	sd8x_pwr_ctrl(pdata, 0);
-
 	if (pdata->pinctrl && pdata->pin_off)
 		pinctrl_select_state(pdata->pinctrl, pdata->pin_off);
 
@@ -398,7 +395,7 @@ static int sd8x_pwr_off(struct sd8x_rfkill_platform_data *pdata)
 		unsigned long timeout = 0;
 
 		timeout = msecs_to_jiffies(timeout_secs * 1000);
-		/*host->pdata->quirks &= ~DW_MCI_QUIRK_BROKEN_CARD_DETECTION;*/
+		host->pdata->quirks &= ~DW_MCI_QUIRK_BROKEN_CARD_DETECTION;
 		pdata->mmc->detect_complete = &complete;
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 18, 0))
 		spin_lock_irqsave(&host->lock, flags);
@@ -411,6 +408,8 @@ static int sd8x_pwr_off(struct sd8x_rfkill_platform_data *pdata)
 		pdata->mmc->detect_complete = NULL;
 	}
 #endif
+	/* Second: power off sd8x device */
+	sd8x_pwr_ctrl(pdata, 0);
 
 	/* Last: update the status */
 	//pm_runtime_put_sync(host->mmc->parent);
