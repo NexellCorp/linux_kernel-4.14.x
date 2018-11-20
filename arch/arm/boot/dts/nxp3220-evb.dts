@@ -311,7 +311,7 @@
 					PMIC_PDATA_INIT( 5,
 					"nxe1500_ldo1",
 					3300000, 3300000,
-					3300000, 1, 0, 0xF)
+					3300000, 1, 0, 0x2)
 					regulator-boot-on;
 				};
 
