@@ -248,12 +248,16 @@ struct dw_mci_dma_ops {
 	void (*exit)(struct dw_mci *host);
 };
 
+/* IP Quirks/flags. */
+#define DW_MCI_QUIRK_BROKEN_CARD_DETECTION  BIT(3)
+
 struct dma_pdata;
 
 /* Board platform data */
 struct dw_mci_board {
 	u32 num_slots;
 
+	u32 quirks; /* Quirk flags */
 	unsigned int bus_hz; /* Clock speed at the cclk_in pad */
 
 	u32 caps;	/* Capabilities */

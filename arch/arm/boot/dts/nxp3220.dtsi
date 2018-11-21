@@ -4,6 +4,7 @@
 #include <dt-bindings/clock/nxp3220-clk.h>
 #include <dt-bindings/media/nxp3220-vip.h>
 #include <dt-bindings/soc/nexell,boot-mode.h>
+#include <dt-bindings/reset/nexell,nxp3220-reset.h>
 
 / {
 	compatible = "nexell,nxp3220";
@@ -378,6 +379,19 @@
 			       <&cmu_mm CLK_MM_DPC_X2>;
 			clock-names = "axi", "clk_x1", "clk_x2";
 			plane-names = "primary", "video";
+			status = "disabled";
+		};
+
+		drm_lvds: drm_lvds@25150000 {
+			compatible = "nexell,nxp3220-drm-lvds";
+			reg = <0x25150000 0x1000>;
+			assigned-clocks = <&cmu CLK_SRC_LVDS0_VCLK>;
+			assigned-clock-parents = <&pll_0 0>;
+			assigned-clock-rates = <0>;
+			clocks = <&cmu_mm CLK_MM_LVDS_VCLK>,
+			       <&cmu_mm CLK_MM_LVDS_PHY>;
+			clock-names = "vclk", "phy";
+			resets = <&cmu_mm CLK_RESET_MM_LVDS_PHY>;
 			status = "disabled";
 		};
 

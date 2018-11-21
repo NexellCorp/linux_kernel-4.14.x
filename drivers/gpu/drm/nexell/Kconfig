@@ -42,3 +42,12 @@ config DRM_NEXELL_RGB
 	 If you want to enable RGB LCD display,
 	 you should selet this option.
 
+config DRM_NEXELL_LVDS
+	bool "LVDS LCD support"
+	depends on DRM_NEXELL
+	select DRM_PANEL
+	help
+	 This selects support for LVDS LCD display out.
+	 If you want to enable LVDS LCD display,
+	 you should selet this option.
+

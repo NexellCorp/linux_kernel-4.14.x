@@ -1,0 +1,221 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Nexell DRM driver
+ * Copyright (c) 2018 JungHyun Kim <jhkim@nexell.co.kr>
+ */
+
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+
+#include "display.h"
+
+struct nx_lvds_dev {
+	struct nx_display_ctx ctx;
+	struct nx_lvds_reg *reg;
+	struct clk *vclk;
+	struct clk *phy_clk;
+	struct reset_control *rst;
+	/* properties */
+	unsigned int format; /* 0:VESA, 1:JEIDA, 2: Location */
+	int voltage_level;
+};
+
+struct nx_lvds_reg {
+	u32 lvdsctrl0;		/* 0x00 */
+	u32 lvdsvblkctrl0;	/* 0x04 */
+	u32 lvdsvblkctrl1;	/* 0x08 */
+	u32 lvdsctrl1;		/* 0x0c */
+	u32 lvdsctrl2;		/* 0x10 */
+	u32 lvdsctrl3;		/* 0x14 */
+	u32 lvdsctrl4;		/* 0x18 */
+	u32 lvdsloc0;		/* 0x1c */
+	u32 lvdsloc1;		/* 0x20 */
+	u32 lvdsloc2;		/* 0x24 */
+	u32 lvdsloc3;		/* 0x28 */
+	u32 lvdsloc4;		/* 0x2c */
+	u32 lvdsloc5;		/* 0x30 */
+	u32 lvdsloc6;		/* 0x34 */
+	u32 lvdsloc7;		/* 0x38 */
+	u32 lvdsloc8;		/* 0x3c */
+	u32 lvdsloc9;		/* 0x40 */
+	u32 lvdsmask0;		/* 0x44 */
+	u32 lvdsmask1;		/* 0x48 */
+	u32 lvdspol0;		/* 0x4c */
+	u32 lvdspol1;		/* 0x50 */
+	u32 lvdsda0;		/* 0x54 */
+	u32 lvdsda1;		/* 0x58 */
+	u32 lvdsda2;		/* 0x5c */
+};
+
+enum nx_lvds_format {
+	LVDS_FORMAT_VESA = 0,
+	LVDS_FORMAT_JEIDA = 1,
+	LVDS_FORMAT_LOC = 2,
+};
+
+#define	DEF_VOLTAGE_LEVEL	(0x3f) /* 8bits width */
+#define MHZ(v)			(v * 1000000)
+
+static int lvds_is_enabled(struct nx_lvds_dev *lvds)
+{
+#ifdef CONFIG_DRM_CHECK_PRE_INIT
+	struct nx_lvds_reg *reg = lvds->reg;
+
+	return (readl(&reg->lvdsctrl0) & (1 << 28)) ? 1 : 0;
+#endif
+	return 0;
+}
+
+static int lvds_set_mode(struct nx_drm_display *display,
+			 struct drm_display_mode *mode, unsigned int flags)
+{
+	struct nx_lvds_dev *lvds = display->context;
+
+	lvds->ctx.vm = &display->vm;
+
+	clk_set_rate(lvds->vclk, display->vm.pixelclock);
+	clk_prepare_enable(lvds->vclk);
+	clk_prepare_enable(lvds->phy_clk);
+
+	return 0;
+}
+
+static int lvds_prepare(struct nx_drm_display *display)
+{
+	struct nx_lvds_dev *lvds = display->context;
+	struct nx_lvds_reg *reg = lvds->reg;
+	enum nx_lvds_format format = lvds->format;
+	int pixelclock = display->vm.pixelclock;
+	u32 voltage = lvds->voltage_level;
+	u32 val, pms_v, pms_s, pms_m, pms_p;
+
+	pr_debug("%s: format: %d, voltage:%d\n", __func__, format, voltage);
+
+	if (lvds_is_enabled(lvds))
+		return 0;
+
+	/* lvdsctrl0 */
+	val = readl(&reg->lvdsctrl0);
+	val &= ~((1<<24) | (1 << 23) | (0 << 22) | (0 << 21) | (0x3 << 19));
+	val |= (0 << 23) /* DE_POL */
+		| (0 << 22)	/* HSYNC_POL */
+		| (0 << 21)	/* VSYNC_POL */
+		| (format << 19) /* LVDS_FORMAT */
+		;
+	writel(val, &reg->lvdsctrl0);
+
+	/* lvdsctrl2 */
+	val = readl(&reg->lvdsctrl2);
+	val &= ~((1<<14) | (0x3 << 12) | (0x3f << 6) | (0x3f << 0));
+	if (pixelclock >= MHZ(90)) {
+		pms_v = 1 << 14;
+		pms_s = 1 << 12;
+		pms_m = 0xe << 6;
+		pms_p = 0xe << 0;
+	} else {
+		pms_v = 0 << 14;
+		pms_s = 0 << 12;
+		pms_m = 0xa << 6;
+		pms_p = 0xa << 0;
+	}
+	val |= pms_v | pms_s | pms_m | pms_p;
+	writel(val, &reg->lvdsctrl2);
+
+	/* lvdsctrl4 */
+	val = readl(&reg->lvdsctrl4);
+	val &= ~((0xff << 14) | (0xff << 6));
+	val = ((voltage & 0xff) << 14);	/* CNT_VOD_H : 8bit */
+	writel(val, &reg->lvdsctrl4);
+
+	return 0;
+}
+
+static int lvds_enable(struct nx_drm_display *display)
+{
+	struct nx_lvds_dev *lvds = display->context;
+	struct nx_lvds_reg *reg = lvds->reg;
+
+	/* DPCENB */
+	writel(readl(&reg->lvdsctrl0) | 1 << 28, &reg->lvdsctrl0);
+
+	/* LVDS PHY Reset */
+	reset_control_deassert(lvds->rst);
+
+	return 0;
+}
+
+static int lvds_disable(struct nx_drm_display *display)
+{
+	struct nx_lvds_dev *lvds = display->context;
+	struct nx_lvds_reg *reg = lvds->reg;
+
+	/* DPCENB */
+	writel(readl(&reg->lvdsctrl0) & ~(1 << 28), &reg->lvdsctrl0);
+
+	clk_disable_unprepare(lvds->vclk);
+	clk_disable_unprepare(lvds->phy_clk);
+
+	reset_control_assert(lvds->rst);
+
+	return 0;
+}
+
+static struct nx_drm_display_ops nx_lvds_ops = {
+	.set_mode = lvds_set_mode,
+	.prepare = lvds_prepare,
+	.enable = lvds_enable,
+	.disable = lvds_disable,
+};
+
+void *nx_drm_display_lvds_get(struct device *dev,
+			      struct device_node *node,
+			      struct nx_drm_display *display)
+{
+	struct nx_lvds_dev *lvds;
+	struct reset_control *rst;
+	u32 format, voltage;
+
+	rst = devm_reset_control_get_optional_exclusive(dev, NULL);
+	if (IS_ERR(rst))
+		return NULL;
+
+	lvds = kzalloc(sizeof(*lvds), GFP_KERNEL);
+	if (!lvds)
+		return NULL;
+
+	lvds->reg = of_iomap(dev->of_node, 0);
+	if (!lvds->reg)
+		return NULL;
+
+	lvds->vclk = of_clk_get_by_name(dev->of_node, "vclk");
+	if (!lvds->vclk)
+		return NULL;
+
+	lvds->phy_clk = of_clk_get_by_name(dev->of_node, "phy");
+	if (!lvds->phy_clk)
+		return NULL;
+
+	lvds->rst = rst;
+	lvds->format = LVDS_FORMAT_VESA;
+	lvds->voltage_level = DEF_VOLTAGE_LEVEL;
+
+	if (!of_property_read_u32(node, "format", &format))
+		lvds->format = format;
+
+	if (!of_property_read_u32(node, "voltage-level", &voltage))
+		lvds->voltage_level = voltage;
+
+	display->context = lvds;
+	display->ops = &nx_lvds_ops;
+
+	if (!lvds_is_enabled(lvds))
+		reset_control_assert(lvds->rst);
+
+	return &lvds->ctx;
+}

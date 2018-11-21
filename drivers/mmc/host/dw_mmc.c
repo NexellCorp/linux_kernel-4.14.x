@@ -993,6 +993,7 @@ static int dw_mci_get_cd(struct mmc_host *mmc)
 {
 	int present;
 	struct dw_mci_slot *slot = mmc_priv(mmc);
+	struct dw_mci_board *brd = slot->host->pdata;
 	struct dw_mci *host = slot->host;
 	int gpio_cd = mmc_gpio_get_cd(mmc);
 
@@ -1015,6 +1016,11 @@ static int dw_mci_get_cd(struct mmc_host *mmc)
 		return present;
 	} else if (gpio_cd >= 0)
 		present = gpio_cd;
+	else if (mmc->supports_detect_complete)
+		if (brd->quirks & DW_MCI_QUIRK_BROKEN_CARD_DETECTION)
+			present = 1;
+		else
+			present = 0;
 	else
 		present = (mci_readl(slot->host, CDETECT) & (1 << slot->id))
 			== 0 ? 1 : 0;
