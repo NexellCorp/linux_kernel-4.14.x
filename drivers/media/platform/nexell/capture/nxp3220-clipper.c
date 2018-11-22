@@ -808,6 +808,12 @@ static int do_clock_action(struct nx_clipper *me,
 {
 	if (me->pwm)
 		pwm_enable(me->pwm);
+	else {
+		if (action->enable && !me->sensor_enabled)
+			nx_vip_padout_clock_enable(me->module, true);
+		else if (!action->enable && me->sensor_enabled)
+			nx_vip_padout_clock_enable(me->module, false);
+	}
 
 	if (action->delay_ms > 0)
 		mdelay(action->delay_ms);
