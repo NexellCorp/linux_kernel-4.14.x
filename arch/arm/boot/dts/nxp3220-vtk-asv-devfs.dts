@@ -1,0 +1,307 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (C) 2018  Nexell Co., Ltd.
+ * Author: JungHyun, Kim <jhkim@nexell.co.kr>
+ */
+
+/dts-v1/;
+#include <dt-bindings/gpio/gpio.h>
+#include "nxp3220.dtsi"
+#include "nxp3220-vtk-common.dtsi"
+
+/ {
+	snd_null_codec0:snd_null_codec@0 {
+        	 #sound-dai-cells = <0>;
+         	compatible = "nexell,snd-null-codec";
+         	status = "okay";
+	};
+
+	snd_null_codec1:snd_null_codec@1 {
+        	 #sound-dai-cells = <0>;
+         	compatible = "nexell,snd-null-codec";
+         	status = "okay";
+	};
+
+	snd_null_codec2:snd_null_codec@2 {
+        	 #sound-dai-cells = <0>;
+         	compatible = "nexell,snd-null-codec";
+         	status = "okay";
+	};
+
+	snd_null_codec3:snd_null_codec@3 {
+        	 #sound-dai-cells = <0>;
+         	compatible = "nexell,snd-null-codec";
+         	status = "okay";
+	};
+
+	sound0: sound0 {
+		simple-audio-card,name = "nxp3220 Audio Card Null0";
+		status = "okay";
+
+		simple-audio-card,dai-link@0 {
+			sndcodec0: codec {
+				sound-dai = <&snd_null_codec0>;
+			};
+		};
+	};
+
+	sound1: sound1 {
+		simple-audio-card,name = "nxp3220 Audio Card Null1";
+		status = "okay";
+
+		simple-audio-card,dai-link@0 {
+			sndcodec1: codec {
+				sound-dai = <&snd_null_codec1>;
+			};
+		};
+	};
+
+	sound2: sound2 {
+		simple-audio-card,name = "nxp3220 Audio Card Null2";
+		status = "okay";
+
+		simple-audio-card,dai-link@0 {
+			sndcodec2: codec {
+				sound-dai = <&snd_null_codec2>;
+			};
+		};
+	};
+
+	sound3: sound3 {
+		simple-audio-card,name = "nxp3220 Audio Card Null3";
+		status = "okay";
+
+		simple-audio-card,dai-link@0 {
+			sndcodec3: codec {
+				sound-dai = <&snd_null_codec3>;
+			};
+		};
+	};
+
+	thermal-zones {
+		cpu_thermal: cpu-thermal {
+			thermal-sensors = <&tmuctrl_0>;
+			polling-delay-passive = <1000>;
+			polling-delay = <1000>;
+			trips {
+				cpu_alert0: cpu-alert-0 {
+					temperature = <40000>;
+					hysteresis = <10000>;
+					type = "passive";
+				};
+				cpu_alert1: cpu-alert-1 {
+					temperature = <50000>;
+					hysteresis = <10000>;
+					type = "passive";
+				};
+				cpu_alert2: cpu-alert-2 {
+					temperature = <55000>;
+					hysteresis = <10000>;
+					type = "passive";
+				};
+				cpu-crit-0 {
+					temperature = <65000>;
+					hysteresis = <10000>;
+					type = "critical";
+				};
+			};
+		};
+	};
+
+	timer {
+		status = "disabled";
+	};
+};
+
+&drm {
+	status = "okay";
+};
+
+&dp_green {
+	#if 0
+	nexell,pins = "gpioa-8", "gpioa-9", "gpioa-10", "gpioa-11",
+		"gpioa-12", "gpiod-0", "gpiod-1", "gpiod-2";
+	#else
+	nexell,pins = "gpioa-8", "gpioa-9", "gpioa-10", "gpioa-11", "gpioa-12";
+	#endif
+};
+
+&dp_red{
+	#if 0
+	nexell,pins = "gpiod-3", "gpiod-4", "gpiod-5", "gpiod-9"
+		"gpiod-6", "gpiod-7", "gpiod-8", "gpioa-18";
+	#else
+	nexell,pins = "gpiod-18";
+	#endif
+};
+
+&drm_rgb {
+status = "ok";
+display-timing {
+		clock-frequency = <24500000>;
+		hactive = <800>;
+		hfront-porch = <8>;
+		hback-porch = <13>;
+		hsync-len = <3>;
+		vactive = <480>;
+		vfront-porch = <5>;
+		vback-porch = <7>;
+		vsync-len = <1>;
+	};
+};
+
+&gmac0 {
+	/* conflict USB NFS */
+	status = "okay"; /* disabled */
+};
+
+&gmac1 {
+	/* conflict USB NFS */
+	status = "okay"; /* disabled */
+};
+
+&i2c_0 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	sm5011: sm5011-pmic@47 {
+		compatible = "sm,sm5011";
+		interrupt-parent = <&alive_0>;
+		interrupts = <1 IRQ_TYPE_NONE>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pmic_irq>;
+		reg = <0x47>;
+
+		voltage-regulators {
+			buck2_reg: BUCK2 {
+				regulator-name = "VDD_CPU_1P0";
+				regulator-min-microvolt = <1000000>;
+				regulator-max-microvolt = <1100000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			buck3_reg: BUCK3 {
+				regulator-name = "VDD_DDRIO_1P5";
+				regulator-min-microvolt = <1500000>;
+				regulator-max-microvolt = <1500000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			buck4_reg: BUCK4 {
+				regulator-name = "VDD_DDR_1P0";
+				regulator-min-microvolt = <1000000>;
+				regulator-max-microvolt = <1000000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			buck5_reg: BUCK5 {
+				regulator-name = "VDD_CORE_1P0";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <1000000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			buck6_reg: BUCK6 {
+				regulator-name = "VDD_DDR_1P5";
+				regulator-min-microvolt = <1500000>;
+				regulator-max-microvolt = <1500000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			ldo9_reg: LDO9 {
+				regulator-name = "VDD_USB_1P0";
+				regulator-min-microvolt = <975000>;
+				regulator-max-microvolt = <1000000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			ldo14_reg: LDO14 {
+				regulator-name = "VDD_MM_1P0_AP";
+				regulator-min-microvolt = <975000>;
+				regulator-max-microvolt = <1000000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+		};
+	};
+};
+
+&i2c_1 {
+        status = "okay";
+        #address-cells = <1>;
+        #size-cells = <0>;
+        samsung,i2c-sda-delay = <100>;
+        samsung,i2c-max-bus-freq = <100000>;
+};
+
+&i2c_2 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	/delete-property/pinctrl-0;
+	/delete-property/alc5623_0;
+};
+
+&i2c_3 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	/delete-property/pinctrl-0;
+	/delete-property/alc5623_1;
+};
+
+&i2c_4 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	/delete-property/pinctrl-0;
+	/delete-property/alc5623_2;
+};
+
+&i2s2 {
+	/delete-property/pinctrl-0;
+};
+
+&pinctrl_0 {
+	pmic_irq: sm5011-irq {
+		nexell,pins = "alive-1";
+		nexell,pin-function = <NX_PIN_FUNC0>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	cfg_wlanhostwake: cfg-wlanhostwake {
+		nexell,pins = "alive-3";
+		nexell,pin-function = <NX_PIN_FUNC0>;
+		nexell,pin-pull = <NX_PIN_PULL_UP>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+};
+
+&pwm {
+	nexell,pwm-outputs = <0>, <1>, <2>, <3>;
+	tclk_freq = <100000000>, <100000000>, <100000000>, <100000000>;
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&sys_bus {
+	status = "okay";
+	vdd-supply = <&buck5_reg>; /* "VDD_CORE_1P0" */
+};
+
+&vpu {
+	status = "okay";
+};
