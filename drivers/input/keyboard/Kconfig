@@ -277,6 +277,22 @@ config KEYBOARD_TCA8418
 	  To compile this driver as a module, choose M here: the
 	  module will be called tca8418_keypad.
 
+config KEYBOARD_TCA9535
+	tristate "TCA9535 Keypad Support"
+	depends on I2C
+	help
+	  This driver implements base keypad functionality
+	  for keys connect through TCA9535 keypad decoder.
+
+	  Say Y here if your device has keys connect to
+	  TCA9535 keypad decoder.
+
+	  If enabled the complete TCA9535 device will be managed through
+	  this driver.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called tca9535_keypad.
+
 config KEYBOARD_MATRIX
 	tristate "GPIO driven matrix keypad support"
 	depends on GPIOLIB || COMPILE_TEST
