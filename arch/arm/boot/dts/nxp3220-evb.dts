@@ -487,7 +487,8 @@
 };
 
 &pwm {
-	nexell,pwm-outputs = <0>, <1>, <2>, <3>;
+	nexell,pwm-outputs = <3>;
+	tclk_freq = <100000000>;
 	status = "okay";
 };
 
