@@ -48,9 +48,45 @@ struct alc5623_priv {
 	unsigned int jack_det_ctrl;
 };
 
+static struct reg_default init_list[] = {
+	{ALC5623_PWR_MANAG_ADD2,	0x2000},
+	{ALC5623_PWR_MANAG_ADD3,	0x8000},
+	{ALC5623_OUTPUT_MIXER_CTRL,	0x0740},
+	{ALC5623_ADC_REC_MIXER,		0x3f3f},
+	{ALC5623_STEREO_DAC_VOL,	0x0808},
+	{ALC5623_HP_OUT_VOL,		0xffff},
+	{ALC5623_SPK_OUT_VOL,		0x8080},
+	{ALC5623_DAI_CONTROL,		0x8000},
+	{ALC5623_STEREO_AD_DA_CLK_CTRL,	0x066d},
+	{ALC5623_ADD_CTRL_REG,		0x5f00},
+	{ALC5623_PWR_MANAG_ADD1,	0x8830},
+	{ALC5623_PWR_MANAG_ADD2,	0xa7f7},
+	{ALC5623_PWR_MANAG_ADD3,	0x960a},
+	{ALC5623_DAI_CONTROL,		0x8000},
+	{ALC5623_STEREO_DAC_VOL,	0x4000}, /* 0x4808 */
+	{ALC5623_OUTPUT_MIXER_CTRL,	0x9f00},
+	{ALC5623_SPK_OUT_VOL,		0x0000},
+	{ALC5623_HP_OUT_VOL,		0x0000},
+	{ALC5623_MIC_ROUTING_CTRL,	0xf0e0},
+	{ALC5623_MIC_CTRL,		0x0800},
+	{ALC5623_ADC_REC_MIXER,		0x3f3f},
+	{ALC5623_ADC_REC_GAIN,		0xf58b},
+};
+#define RT5623_INIT_REG_LEN ARRAY_SIZE(init_list)
+
 static inline int alc5623_reset(struct snd_soc_codec *codec)
 {
 	return snd_soc_write(codec, ALC5623_RESET, 0);
+}
+
+static void alc5623_reg_init(struct snd_soc_codec *codec)
+{
+	struct alc5623_priv *alc5623 = snd_soc_codec_get_drvdata(codec);
+	int i;
+
+	for (i = 0; i < RT5623_INIT_REG_LEN; i++)
+		regmap_write(alc5623->regmap,
+			      init_list[i].reg, init_list[i].def);
 }
 
 static int amp_mixer_event(struct snd_soc_dapm_widget *w,
@@ -770,7 +806,8 @@ static int alc5623_mute(struct snd_soc_dai *dai, int mute)
 	(ALC5623_PWR_ADD1_SHORT_CURR_DET_EN \
 	| ALC5623_PWR_ADD1_HP_OUT_AMP)
 
-static void enable_power_depop(struct snd_soc_codec *codec)
+static __attribute__((unused))
+void enable_power_depop(struct snd_soc_codec *codec)
 {
 	struct alc5623_priv *alc5623 = snd_soc_codec_get_drvdata(codec);
 
@@ -808,7 +845,8 @@ static int alc5623_set_bias_level(struct snd_soc_codec *codec,
 {
 	switch (level) {
 	case SND_SOC_BIAS_ON:
-		enable_power_depop(codec);
+		alc5623_reg_init(codec);
+		/* enable_power_depop(codec); */
 		break;
 	case SND_SOC_BIAS_PREPARE:
 		break;
@@ -937,6 +975,7 @@ static int alc5623_probe(struct snd_soc_codec *codec)
 	}
 
 	alc5623_reset(codec);
+	alc5623_reg_init(codec);
 
 	if (alc5623->add_ctrl) {
 		snd_soc_write(codec, ALC5623_ADD_CTRL_REG,
