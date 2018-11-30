@@ -12,6 +12,7 @@
 #include <linux/of_address.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
+#include <dt-bindings/display/nexell.h>
 
 #include "display.h"
 
@@ -24,6 +25,7 @@ struct nx_lvds_dev {
 	/* properties */
 	unsigned int format; /* 0:VESA, 1:JEIDA, 2: Location */
 	int voltage_level;
+	int voltage_output;
 };
 
 struct nx_lvds_reg {
@@ -60,6 +62,7 @@ enum nx_lvds_format {
 };
 
 #define	DEF_VOLTAGE_LEVEL	(0x3f) /* 8bits width */
+#define	DEF_VOLTAGE_OFFSET	LVDS_VOL_OFFS_1_1
 #define MHZ(v)			(v * 1000000)
 
 static int lvds_is_enabled(struct nx_lvds_dev *lvds)
@@ -92,10 +95,12 @@ static int lvds_prepare(struct nx_drm_display *display)
 	struct nx_lvds_reg *reg = lvds->reg;
 	enum nx_lvds_format format = lvds->format;
 	int pixelclock = display->vm.pixelclock;
-	u32 voltage = lvds->voltage_level;
+	u32 v_level = lvds->voltage_level;
+	u32 v_output = lvds->voltage_output;
 	u32 val, pms_v, pms_s, pms_m, pms_p;
 
-	pr_debug("%s: format: %d, voltage:%d\n", __func__, format, voltage);
+	pr_debug("%s: format: %d, voltage level:%d output:0x%x\n",
+		 __func__, format, v_level, v_output);
 
 	if (lvds_is_enabled(lvds))
 		return 0;
@@ -127,10 +132,10 @@ static int lvds_prepare(struct nx_drm_display *display)
 	val |= pms_v | pms_s | pms_m | pms_p;
 	writel(val, &reg->lvdsctrl2);
 
-	/* lvdsctrl4 */
+	/* lvdsctrl4 : CNT_VOD_H and FC_CODE */
 	val = readl(&reg->lvdsctrl4);
-	val &= ~((0xff << 14) | (0xff << 6));
-	val = ((voltage & 0xff) << 14);	/* CNT_VOD_H : 8bit */
+	val &= ~((0xff << 14) | (0x7 << 3));
+	val |= (((v_level & 0xff) << 14) | ((v_output & 0x7) << 3));
 	writel(val, &reg->lvdsctrl4);
 
 	return 0;
@@ -204,12 +209,16 @@ void *nx_drm_display_lvds_get(struct device *dev,
 	lvds->rst = rst;
 	lvds->format = LVDS_FORMAT_VESA;
 	lvds->voltage_level = DEF_VOLTAGE_LEVEL;
+	lvds->voltage_output = DEF_VOLTAGE_OFFSET;
 
 	if (!of_property_read_u32(node, "format", &format))
 		lvds->format = format;
 
 	if (!of_property_read_u32(node, "voltage-level", &voltage))
 		lvds->voltage_level = voltage;
+
+	if (!of_property_read_u32(node, "voltage-output", &voltage))
+		lvds->voltage_output = voltage;
 
 	display->context = lvds;
 	display->ops = &nx_lvds_ops;
