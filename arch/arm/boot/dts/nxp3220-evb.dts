@@ -184,6 +184,10 @@
 			};
 		};
 	};
+
+	nx-v4l2 {
+		status = "okay";
+	};
 };
 
 &adc_ts {
@@ -488,6 +492,13 @@
 		nexell,pin-pull = <NX_PIN_PULL_NONE>;
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
+
+	tp2825_reset: tp2825_reset {
+		nexell,pins = "gpioc-6";
+		nexell,pin-function = <0>;
+		nexell,pin-pull = <2>;
+		nexell,pin-strength = <0>;
+	};
 };
 
 &pwm {
@@ -512,3 +523,41 @@
 	status = "okay";
 };
 
+&vip {
+	assigned-clocks = <&cmu_mm CLK_MM_VIP_AXI>,
+			<&cmu_mm CLK_MM_VIP_APB>;
+	assigned-clock-rates = <300000000>,
+			<150000000>;
+	status = "okay";
+};
+
+&clipper {
+	status = "okay";
+	interface_type = <NX_CAPTURE_INTERFACE_PARALLEL>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&vid_data_clk &vid_sync &tp2825_reset>;
+	gpios = <&gpio_c 6 0>;
+	data_order = <NX_VIN_CBY0CRY1>;
+	port = <1>;
+	external_sync = <0>;
+	interlace = <1>;
+
+	sensor {
+		type = <NX_CAPTURE_SENSOR_I2C>;
+		sensor_name = "tp2825";
+		i2c-bus = <&i2c_gpio1>;
+		addr = <0x45>;
+		out_port = <1>;
+		vdelay = <0>;
+	};
+
+	power {
+		enable_seq = <
+			NX_ACTION_START NX_ACTION_TYPE_GPIO 0 1 20 NX_ACTION_END
+			>;
+
+		disable_seq = <
+			NX_ACTION_START NX_ACTION_TYPE_GPIO 0 0 10 NX_ACTION_END
+			>;
+	};
+};

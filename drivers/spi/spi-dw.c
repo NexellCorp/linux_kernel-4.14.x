@@ -185,7 +185,7 @@ static void dw_writer(struct dw_spi *dws)
 
 	while (max--) {
 		/* Set the tx word if the transfer's original "tx" is not null */
-		if (dws->tx_end - dws->len) {
+		if (dws->tx && dws->tx_end - dws->len) {
 			if (dws->n_bytes == 1)
 				txw = *(u8 *)(dws->tx);
 			else
@@ -201,8 +201,16 @@ static void dw_reader(struct dw_spi *dws)
 	u32 max = rx_max(dws);
 	u16 rxw;
 
+	if (dws->chip->tmode == SPI_TMOD_TO)
+		return;
+
 	while (max--) {
 		rxw = dw_read_io_reg(dws, DW_SPI_DR);
+		if (!dws->rx) {
+			dws->rx += dws->n_bytes;
+			continue;
+		}
+
 		/* Care rx only if the transfer's original "rx" is not null */
 		if (dws->rx_end - dws->len) {
 			if (dws->n_bytes == 1)
@@ -235,7 +243,7 @@ static irqreturn_t interrupt_transfer(struct dw_spi *dws)
 	}
 
 	dw_reader(dws);
-	if (dws->rx_end == dws->rx) {
+	if (dws->rx && dws->rx_end == dws->rx) {
 		spi_mask_intr(dws, SPI_INT_TXEI);
 		spi_finalize_current_transfer(dws->master);
 		return IRQ_HANDLED;
@@ -318,10 +326,9 @@ static int dw_spi_transfer_one(struct spi_master *master,
 	dws->tx = (void *)transfer->tx_buf;
 	dws->tx_end = dws->tx + transfer->len;
 	dws->rx = transfer->rx_buf;
-	dws->rx_end = dws->rx;
-	if (dws->rx)
-		dws->rx_end += transfer->len;
+	dws->rx_end = dws->rx + transfer->len;
 	dws->len = transfer->len;
+	dws->chip = chip;
 
 	spi_enable_chip(dws, 0);
 
@@ -464,7 +471,6 @@ static int dw_spi_setup(struct spi_device *spi)
 	 * if chip_info exists, use it
 	 */
 	chip_info = spi->controller_data;
-
 	if (!chip_info && dws->chip_info)
 		chip_info = dws->chip_info;
 

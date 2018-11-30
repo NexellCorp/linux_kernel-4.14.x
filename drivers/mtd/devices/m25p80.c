@@ -294,6 +294,10 @@ static int m25p_probe(struct spi_device *spi)
 	else
 		flash_name = spi->modalias;
 
+	ret = nor->write_reg(nor, 0x66, NULL, 0);
+	if (ret)
+		dev_err(&spi->dev, "failed reset command\n");
+
 	ret = spi_nor_scan(nor, flash_name, &hwcaps);
 	if (ret)
 		return ret;

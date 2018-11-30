@@ -487,12 +487,12 @@ static int nx_dw_spi_probe(struct platform_device *pdev)
 		dws->slave = true;
 	}
 
+	/* set chip info to support TR/RO/TO mode */
+	dws->chip_info = &nx_spi_chip;
+
 	ret = dw_spi_add_host(&pdev->dev, dws);
 	if (ret)
 		goto err_pclk;
-
-	/* set chip info to support TR/RO/TO mode */
-	dws->chip_info = &nx_spi_chip;
 
 	platform_set_drvdata(pdev, dws_nx);
 
