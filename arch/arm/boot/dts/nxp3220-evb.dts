@@ -186,6 +186,10 @@
 	};
 };
 
+&adc_ts {
+	status = "okay";
+};
+
 &drm {
         status = "okay";
 };
