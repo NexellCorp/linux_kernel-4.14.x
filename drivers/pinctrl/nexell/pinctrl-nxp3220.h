@@ -270,8 +270,10 @@ struct nx_gpio_reg_set {
 	u32 gpio_inenb;
 	/* 0x78 : */
 	u32 gpio_inenb_disable_default;
+#ifdef CONFIG_ARCH_NXP3220
 	/* 0x7c : */
 	u32 gpio_altfnex;
+#endif
 };
 
 struct module_init_data {

@@ -53,6 +53,8 @@ static void nx_gpio_setbit2(void __iomem *addr, u32 bit, u32 bit_value)
 {
 	u32 value = readl(addr);
 
+	bit_value &= 0x3;
+
 	value = value & ~(3ul << (bit * 2));
 	value = value | (bit_value << (bit * 2));
 
@@ -149,14 +151,27 @@ static void nx_gpio_set_pad_function(u32 idx, u32 bitnum, int fn)
 
 	nx_gpio_setbit2(base + GPIO_ALTFN + (bitnum / 16) * 4,
 			bitnum % 16, (u32)fn);
+#ifdef CONFIG_ARCH_NXP3220
+	fn = (fn >> 2) & 0x1;
+	nx_gpio_setbit(base + GPIO_ALTFNEX, bitnum, fn);
+#endif
 }
 
 static int nx_gpio_get_pad_function(u32 idx, u32 bitnum)
 {
 	void __iomem *base = gpio_modules[idx].gpio_regs;
+#ifdef CONFIG_ARCH_NXP3220
+	int fn;
 
+	fn = nx_gpio_getbit(base + GPIO_ALTFNEX, bitnum) << 2;
+	fn |= nx_gpio_getbit2(base + GPIO_ALTFN + (bitnum / 16) * 4,
+			bitnum % 16);
+
+	return fn;
+#else
 	return nx_gpio_getbit2(base + GPIO_ALTFN + (bitnum / 16) * 4,
 			bitnum % 16);
+#endif
 }
 
 static void nx_gpio_set_drive_strength(u32 idx, u32 bitnum, int drv)
@@ -745,7 +760,9 @@ static int nxp3220_gpio_suspend(int idx)
 	gpio_save->gpio_inenb = readl(&regs->gpio_inenb);
 	gpio_save->gpio_inenb_disable_default =
 		readl(&regs->gpio_inenb_disable_default);
+#ifdef CONFIG_ARCH_NXP3220
 	gpio_save->gpio_altfnex = readl(&regs->gpio_altfnex);
+#endif
 
 	return 0;
 }
@@ -779,7 +796,9 @@ static int nxp3220_gpio_resume(int idx)
 	writel(gpio_save->gpio_inenb, &regs->gpio_inenb);
 	writel(gpio_save->gpio_inenb_disable_default,
 		&regs->gpio_inenb_disable_default);
+#ifdef CONFIG_ARCH_NXP3220
 	writel(gpio_save->gpio_altfnex, &regs->gpio_altfnex);
+#endif
 
 	writel(gpio_save->gpio_out, &regs->gpio_out);
 	writel(gpio_save->gpio_outenb, &regs->gpio_outenb);
@@ -1043,7 +1062,9 @@ static int irq_gpio_set_type(struct irq_data *irqd, unsigned int type)
 	alt = nx_soc_gpio_get_altnum(bank->grange.pin_base + bit);
 	val |= alt << ((bit & 0xf) * 2);
 	writel(val, (void *)reg);
+#ifdef CONFIG_ARCH_NXP3220
 	writel(readl(base + GPIO_ALTFNEX) & ~(1 << bit), base + GPIO_ALTFNEX);
+#endif
 	pr_debug("%s: set func to gpio. alt:%d, base:%d, bit:%d\n", __func__,
 		 alt, bank->grange.pin_base, bit);
 
