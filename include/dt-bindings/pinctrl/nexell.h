@@ -14,6 +14,7 @@
 #define NX_PIN_FUNC1			1
 #define NX_PIN_FUNC2			2
 #define NX_PIN_FUNC3			3
+#define NX_PIN_FUNC4			4
 
 /* Pin pull Up/Down */
 #define NX_PIN_PULL_DOWN		0
