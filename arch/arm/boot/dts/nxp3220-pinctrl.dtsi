@@ -502,7 +502,7 @@
 	};
 
 	spi0_bus: spi0-bus {
-		nexell,pins = "gpiob-31", "gpioc-0", "gpioc-3", "gpioc-4";
+		nexell,pins = "gpiob-31", "gpioc-0", "gpioc-3";
 		nexell,pin-function = <NX_PIN_FUNC1>;
 		nexell,pin-pull = <NX_PIN_PULL_NONE>;
 		nexell,pin-strength = <NX_PIN_STR0>;
