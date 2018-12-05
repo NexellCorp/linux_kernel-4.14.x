@@ -32,6 +32,8 @@ struct nx_vip {
 	int irq;
 	struct clk *clk_axi;
 	struct clk *clk_apb;
+	struct clk *clk_padout0;
+	struct clk *clk_padout1;
 
 	atomic_t running_bitmap;
 
@@ -95,6 +97,13 @@ static int nx_vip_parse_dt(struct platform_device *pdev, struct nx_vip *me)
 		dev_err(dev, "failed to devm_clk_get for vip_apb\n");
 		return -ENODEV;
 	}
+
+	me->clk_padout0 = devm_clk_get(dev, "vip_padout0");
+	if (IS_ERR(me->clk_padout0))
+		me->clk_padout0 = NULL;
+	me->clk_padout1 = devm_clk_get(dev, "vip_padout1");
+	if (IS_ERR(me->clk_padout1))
+		me->clk_padout1 = NULL;
 
 	return 0;
 }
@@ -195,6 +204,46 @@ int nx_vip_clock_enable(u32 module, bool enable)
 	return 0;
 }
 EXPORT_SYMBOL_GPL(nx_vip_clock_enable);
+
+int nx_vip_padout_clock_enable(u32 module, bool enable)
+{
+	struct nx_vip *me;
+	u8 padout1_val, padout0_val;
+	u8 ret_padout1 = 0, ret_padout0 = 0;
+	u8 ret = 0;
+
+	ret_padout1 = 0x1 << 1;
+	ret_padout0 = 0x1 << 0;
+
+	if (module >= NUMBER_OF_VIP_MODULE) {
+		pr_err("[nx vip] invalid module num %d\n", module);
+		return -ENODEV;
+	}
+	me = _nx_vip_object[module];
+
+	if (enable) {
+		padout1_val = me->clk_padout1 ?
+			clk_prepare_enable(me->clk_padout1) : 0;
+		padout0_val = me->clk_padout0 ?
+			clk_prepare_enable(me->clk_padout0) : 0;
+
+		ret = padout1_val ? (ret | ret_padout1) :
+			(ret & ~(ret_padout1));
+		ret = padout0_val ? (ret | ret_padout0) :
+			(ret & ~(ret_padout0));
+
+		return ret;
+	}
+
+	if (me->clk_padout1)
+		clk_disable_unprepare(me->clk_padout1);
+
+	if (me->clk_padout0)
+		clk_disable_unprepare(me->clk_padout0);
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(nx_vip_padout_clock_enable);
 
 int nx_vip_register_irq_entry(u32 module, struct nx_v4l2_irq_entry *e)
 {
