@@ -245,14 +245,6 @@
 			status = "disabled";
 		};
 
-		adc_ts: adc-ts@20600000 {
-			compatible = "nexell,adc-tsc";
-			reg = <0x20600000 0x1000>;
-			interrupts = <GIC_SPI 0 IRQ_TYPE_NONE>;
-			clocks = <&cmu CLK_ADC0_APB>;
-			clock-names = "adc-ts";
-		};
-
 		cmu: clock-controller@27000000 {
 			compatible = "nexell,nxp3220-cmu";
 			reg = <0x27000000 0x8000>,
