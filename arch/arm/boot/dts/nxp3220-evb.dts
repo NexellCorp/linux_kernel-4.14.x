@@ -190,7 +190,9 @@
 	};
 };
 
-&adc_ts {
+&adc {
+	touchscreen-enable;
+	ts-sample-time = <4>;
 	status = "okay";
 };
 
