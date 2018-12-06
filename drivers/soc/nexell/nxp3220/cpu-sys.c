@@ -15,8 +15,14 @@
 #include <linux/platform_device.h>
 #include <linux/ctype.h>
 #include <linux/io.h>
+#include <linux/soc/nexell/sec_io.h>
 
 #define CHIPNAME_LEN	48
+#define EFUSE_SECURE	(0x20070000)
+#define HPM_IDS0	0x530
+#define HPM_IDS1	0x534
+#define HPM_IDS2	0x538
+#define HPM_IDS3	0x53C
 
 struct nx_ecid_regs {
 	u8 chipname[CHIPNAME_LEN]; /* 0x00 */
@@ -137,6 +143,16 @@ static void nx_ecid_get_guid(struct nx_guid *guid)
 	guid->guid3[7] = ecid_mod->base->guid3[7];
 }
 
+static void nx_efuse_get_hpm_ro(u32 hpm[4])
+{
+	void __iomem *reg = (void __iomem *)EFUSE_SECURE;
+
+	hpm[0] = sec_readl(reg + HPM_IDS0);
+	hpm[1] = sec_readl(reg + HPM_IDS1);
+	hpm[2] = sec_readl(reg + HPM_IDS2);
+	hpm[3] = sec_readl(reg + HPM_IDS2);
+}
+
 static int wait_key_ready(void)
 {
 	unsigned long timeout = jiffies + msecs_to_jiffies(20);
@@ -171,6 +187,27 @@ static int nx_cpu_id_ecid(u32 ecid[4])
 		return -EBUSY;
 
 	nx_ecid_get_ecid(ecid);
+
+	return 0;
+}
+
+static int nx_cpu_hpm_ro(u16 hpm[8])
+{
+	u32 _hpm[4];
+
+	if (wait_key_ready() < 0)
+		return -EBUSY;
+
+	nx_efuse_get_hpm_ro(_hpm);
+
+	hpm[0] = (_hpm[0] >> 0) & 0x3ff;
+	hpm[1] = (_hpm[0] >> 10) & 0x3ff;
+	hpm[2] = (_hpm[0] >> 20) & 0x3ff;
+	hpm[3] = ((_hpm[0] >> 30) & 0x3) | ((_hpm[1] & 0xff) << 2);
+	hpm[4] = (_hpm[1] >> 8) & 0x3ff;
+	hpm[5] = (_hpm[1] >> 18) & 0x3ff;
+	hpm[6] = ((_hpm[1] >> 28) & 0xf) | ((_hpm[2] & 0x3f) << 4);
+	hpm[7] = (_hpm[2] >> 6) & 0x3ff;
 
 	return 0;
 }
@@ -237,17 +274,93 @@ static ssize_t sys_id_show(struct device *pdev, struct device_attribute *attr,
 	return (s - buf);
 }
 
+static ssize_t sys_ids_show(struct device *pdev, struct device_attribute *attr,
+			    char *buf)
+{
+	struct attribute *at = &attr->attr;
+	char *s = buf;
+	u32 uid[4] = {0, };
+	int ret = 0;
+
+	u32 cpu_ids;
+	u32 core_ids;
+	int cpu_frac, cpu_inte;
+	int core_frac, core_inte;
+	int len;
+
+	pr_debug("[%s : name =%s ]\n", __func__, at->name);
+
+	ret = nx_cpu_id_ecid(uid);
+	if (ret < 0)
+		return ret;
+
+	cpu_ids = (uid[1] >> 16) & 0xff;
+	core_ids = (uid[1] >> 24) & 0xff;
+
+	cpu_frac = ((uid[1] >> 16) & 0x3) * 25;
+	cpu_inte = ((uid[1] >> 18) & 0x3f);
+
+	core_frac = ((uid[1] >> 24) & 0x3) * 25;
+	core_inte = ((uid[1] >> 26) & 0x3f);
+
+	s += snprintf(s, 7, "%02x:%02x ", cpu_ids, core_ids);
+	len = snprintf(NULL, 0, "cpu: %2d.%02d mA, ", cpu_inte, cpu_frac);
+	s += snprintf(s, len + 1, "cpu: %2d.%02d mA, ", cpu_inte, cpu_frac);
+	len = snprintf(NULL, 0, "core: %2d.%02d mA\n", core_inte, core_frac);
+	s += snprintf(s, len + 1, "core: %2d.%02d mA\n", core_inte, core_frac);
+
+	if (s != buf)
+		*(s-1) = '\n';
+
+	return (s - buf);
+}
+
+static ssize_t sys_ro_show(struct device *pdev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct attribute *at = &attr->attr;
+	char *s = buf;
+	u16 hpm[8] = {0, };
+	int ret = 0;
+	int len = 0;
+
+	pr_debug("[%s : name =%s ]\n", __func__, at->name);
+
+	ret = nx_cpu_hpm_ro(hpm);
+	if (ret < 0)
+		return ret;
+
+	len = snprintf(NULL, 0, "%03x:%03x:%03x:%03x:%03x:%03x:%03x:%03x\n",
+			hpm[0], hpm[1], hpm[2], hpm[3],
+			hpm[4], hpm[5], hpm[6], hpm[7]);
+	s += snprintf(s, len + 1, "%03x:%03x:%03x:%03x:%03x:%03x:%03x:%03x\n",
+			hpm[0], hpm[1], hpm[2], hpm[3],
+			hpm[4], hpm[5], hpm[6], hpm[7]);
+
+	if (s != buf)
+		*(s-1) = '\n';
+
+	return (s - buf);
+}
+
+
 static struct device_attribute __guid__ =
 			__ATTR(guid, 0444, sys_id_show, NULL);
 static struct device_attribute __uuid__ =
 			__ATTR(uuid, 0444, sys_id_show, NULL);
 static struct device_attribute __name__ =
 			__ATTR(name, 0444, sys_id_show, NULL);
+static struct device_attribute __ids__ =
+			__ATTR(ids, 0444, sys_ids_show, NULL);
+static struct device_attribute __ro__ =
+			__ATTR(ro, 0444, sys_ro_show, NULL);
 
 static struct attribute *sys_attrs[] = {
 	&__guid__.attr,
 	&__uuid__.attr,
 	&__name__.attr,
+	&__ids__.attr,
+	&__ro__.attr,
 	NULL,
 };
 
