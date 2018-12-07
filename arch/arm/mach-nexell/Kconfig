@@ -37,3 +37,10 @@ config ARCH_SIP_S31NX
 	  Nexell SIP_S31NX (ARM Cortex A7) based on NXP3220
 
 endif
+
+config SMP_IRQ_AFFINITY
+	bool "SMP IRQ AFFINITY"
+	depends on ARCH_NXP3220_COMMON
+	help
+	  This enbalse support allows multi-core to handle irq.
+
