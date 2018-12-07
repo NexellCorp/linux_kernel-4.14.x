@@ -19,6 +19,7 @@ Required properties:
   - #io-channel-cells: <1> - As ADC has multiple outputs.
         For details about this, see:
             Documentation/devicetree/bindings/iio/iio-bindings.txt
+  - touchscreen-enable: Enable the touchscreen feature on the adc controller.
 
 Example:
 	adc:adc@20600000 {
@@ -29,4 +30,5 @@ Example:
 		clock-names = "adc";
 		sample_rate = <200000>;
 		#io-channel-cells = <1>;
+		touchscreen-enable;
 	};
