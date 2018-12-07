@@ -1045,17 +1045,6 @@ config TOUCHSCREEN_TSC2007_IIO
 	  or ambient light monitoring), temperature and raw input
 	  values.
 
-config TOUCHSCREEN_NEXELL
-	tristate "NEXELL based touchscreens"
-	help
-	  Say Y here if you have a Nexell touchscreen adc280a-tsc
-	  and want to enable support for the build-in touchscreen.
-
-	  If unsure, say N
-
-	  To compile this driver as a module, choose M here: the
-	  module will be called adc280a-tsc.
-
 config TOUCHSCREEN_W90X900
 	tristate "W90P910 touchscreen driver"
 	depends on ARCH_W90X900
