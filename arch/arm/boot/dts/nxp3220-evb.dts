@@ -188,6 +188,19 @@
 	nx-v4l2 {
 		status = "okay";
 	};
+
+	bt_control {
+		compatible = "broadcom,bcm434545bt";
+		gpios = <&alive_0 12 0>;   /* Alive GPIO12 = BT_REG_ON, output */
+		pinctrl-names = "bt reg on";
+		pinctrl-0 = <&bt_reg_on>;
+		status = "okay";
+	};
+};
+
+&uart4 {
+	pinctrl-0 = <&uart4_bus>, <&uart4_hflow>;
+	status = "okay";
 };
 
 &adc {
@@ -500,6 +513,13 @@
 		nexell,pin-function = <0>;
 		nexell,pin-pull = <2>;
 		nexell,pin-strength = <0>;
+	};
+
+	bt_reg_on: bt_reg_on {
+		nexell,pins = "alive-12";
+		nexell,pin-function = <NX_PIN_FUNC0>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
 	};
 };
 
