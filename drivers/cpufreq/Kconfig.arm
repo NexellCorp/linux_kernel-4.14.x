@@ -95,6 +95,13 @@ config ARM_MEDIATEK_CPUFREQ
 	help
 	  This adds the CPUFreq driver support for MediaTek SoCs.
 
+config ARM_NXP3220_CPUFREQ
+	tristate "CPU Frequency scaling support for NXP3220 SoC"
+	depends on ARCH_NEXELL
+	select PM_OPP
+	help
+	  This adds the CPUFreq driver support for NXP3220 SoC.
+
 config ARM_OMAP2PLUS_CPUFREQ
 	bool "TI OMAP2+"
 	depends on ARCH_OMAP2PLUS
