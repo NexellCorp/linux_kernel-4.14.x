@@ -161,7 +161,7 @@
 };
 
 &cpu0 {
-	cpu-supply = <&buck2_reg>;
+	//cpu-supply = <&buck2_reg>;
 };
 
 &cpu0_opp_table {
