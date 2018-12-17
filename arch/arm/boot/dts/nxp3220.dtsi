@@ -112,6 +112,8 @@
 	};
 
 	timer {
+		status = "disabled";
+
 		compatible = "arm,armv7-timer";
 		interrupt-parent = <&gic>;
 		interrupts = <GIC_PPI 13 (GIC_CPU_MASK_SIMPLE(2) |
@@ -268,8 +270,10 @@
 			assigned-clocks = <&pll_0 0>,
 					  <&cmu CLK_SRC_SYS0_AXI>,
 					  <&cmu CLK_SYS_DIV_SYS0_AXI>,
+					  <&cmu CLK_SRC_TIMER0_APB>,
 					  <&cmu CLK_SRC_TIMER0_TCLK0>,
 					  <&cmu CLK_SRC_TIMER0_TCLK1>,
+					  <&cmu CLK_SRC_TIMER0_TCLK2>,
 					  <&cmu CLK_SRC_I2C0_APB>,
 					  <&cmu CLK_SRC_USB0_AHB>,
 					  <&cmu CLK_SRC_SPI0_APB>,
@@ -283,8 +287,10 @@
 			assigned-clock-parents = <0>,		/* PLL_0 */
 						 <&pll_0 0>,	/* SRC_SYS0_AXI */
 						 <0>,		/* SYS_DIV_SYS0_AXI */
+						 <&pll_0 0>,	/* SRC_TIMER0_APB */
 						 <&pll_0 0>,	/* SRC_TIMER0_TCLK0 */
 						 <&pll_0 0>,	/* SRC_TIMER0_TCLK1 */
+						 <&pll_0 0>,	/* SRC_TIMER0_TCLK2 */
 						 <&pll_0 0>,	/* SRC_I2C0_APB */
 						 <&pll_0 0>,	/* SRC_USB0_AHB */
 						 <&pll_0 0>,	/* SRC_SPI0_APB */
@@ -298,8 +304,10 @@
 			assigned-clock-rates = <1000000000>,	/* PLL_0 */
 					       <333333334>,     /* SRC_SYS0_AXI */
 					       <333333334>,     /* SYS_DIV_SYS0_AXI */
+					       <100000000>,     /* SRC_TIMER0_APB */
 					       <0>,             /* SRC_TIMER0_TCLK0 */
 					       <0>,             /* SRC_TIMER0_TCLK1 */
+					       <0>,             /* SRC_TIMER0_TCLK2 */
 					       <0>,             /* SRC_I2C0_APB */
 					       <250000000>,     /* SRC_USB0_AHB */
 					       <0>,             /* SRC_SPI0_APB */
@@ -845,14 +853,22 @@
 		};
 
 		pwm_timer: pwm-timer@208c0000 {
+			status = "okay";
+
 			compatible = "nexell,nxp3220-timer";
 			reg = <0x208c0000 0x1000>;
-			clocks =  <&cmu CLK_TIMER0_TCLK0>,
-			       <&cmu CLK_TIMER0_TCLK1>;
-			clock-names = "timer0", "timer1";
-			interrupts = <GIC_SPI 107 IRQ_TYPE_NONE>;
+			clocks =  <&cmu CLK_TIMER0_APB>,
+				  <&cmu CLK_TIMER0_TCLK0>,
+				  <&cmu CLK_TIMER0_TCLK1>,
+				  <&cmu CLK_TIMER0_TCLK2>;
+			clock-names = "apb", "clksrc", "clkevt0", "clkevt1";
+			clksrc-frequency = <100000000>;
+			clkevt-frequencies = <100000000>, <100000000>;
+			interrupts = <GIC_SPI 107 IRQ_TYPE_NONE>,
+				     <GIC_SPI 108 IRQ_TYPE_NONE>;
 			clksource = <0>;
-			clkevent = <1>;
+			clkevent0 = <1>;
+			clkevent1 = <2>;
 		};
 
 		tmuctrl_0: tmuctrl@200e0000 {
