@@ -468,12 +468,14 @@
 &i2s0 {
 	frame-bit = <32>;
 	sample-rate = <48000>;
+	supply-mclk-always;
 	status = "okay";
 };
 
 &i2s1 {
 	frame-bit = <32>;
 	sample-rate = <48000>;
+	supply-mclk-always;
 	status = "okay";
 };
 
