@@ -617,7 +617,7 @@ static int nx_i2s_resume(struct snd_soc_dai *dai)
 	writel(i2s->iis_mod, &reg->mod);
 	writel(i2s->iis_con, &reg->con);
 
-	if (i2s_is_active(i2s->base))
+	if (i2s_is_active(i2s->base) || i2s->supply_mclk_always)
 		clk_prepare_enable(i2s->clk);
 
 	return 0;
