@@ -118,6 +118,7 @@ struct nx_i2s_data {
 	int sample_rate; /* fix sample rate range */
 	int frame_bit; /* fix frame bit range */
 	int external_frequency; /* when use external clock in master mode */
+	int supply_mclk_always;
 
 	/* susepnd */
 	u32 iis_con;
@@ -320,6 +321,9 @@ static void nx_i2s_clk_enable(struct nx_i2s_data *i2s)
 
 static void nx_i2s_clk_disable(struct nx_i2s_data *i2s)
 {
+	if (i2s->supply_mclk_always)
+		return;
+
 	if (!__clk_is_enabled(i2s->clk))
 		return;
 
@@ -777,6 +781,8 @@ static int nx_i2s_parse_dt(struct platform_device *pdev,
 	of_property_read_u32(node, "sample-rate", &i2s->sample_rate);
 	of_property_read_u32(node, "external-mclk-frequency",
 		&i2s->external_frequency);
+	i2s->supply_mclk_always =
+		of_property_read_bool(node, "supply-mclk-always");
 
 	return 0;
 }

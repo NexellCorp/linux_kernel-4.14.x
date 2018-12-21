@@ -21,6 +21,7 @@ Optional Properties:
 - frame-bit : Set frame bit. (16/24/32/48 fs)
 - sample-rate : Set sample rate. (8000~192000hz)
 - external-mclk-frequency : set external mclk frequency to use in master mode
+- supply-mclk-always : supply mclk ouput always (not disable mclk output).
 
 Example:
 
