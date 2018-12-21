@@ -674,7 +674,7 @@
 			#sound-dai-cells = <0>;
 			reg = <0x20790000 0x1000>;
 			assigned-clocks = <&cmu CLK_SRC_I2S1_CORE>,
-					  <&cmu CLK_I2S0_CORE>,
+					  <&cmu CLK_I2S1_CORE>,
 					  <&cmu CLK_PLL1_DIV>;
 			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>, <0>;
 			assigned-clock-rates = <0>, <12288000>, <0>;
@@ -692,7 +692,7 @@
 			#sound-dai-cells = <0>;
 			reg = <0x207a0000 0x1000>;
 			assigned-clocks = <&cmu CLK_SRC_I2S2_CORE>,
-					  <&cmu CLK_I2S0_CORE>,
+					  <&cmu CLK_I2S2_CORE>,
 					  <&cmu CLK_PLL1_DIV>;
 			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>, <0>;
 			assigned-clock-rates = <0>, <12288000>, <0>;
@@ -710,7 +710,7 @@
 			#sound-dai-cells = <0>;
 			reg = <0x207b0000 0x1000>;
 			assigned-clocks = <&cmu CLK_SRC_I2S3_CORE>,
-					  <&cmu CLK_I2S0_CORE>,
+					  <&cmu CLK_I2S3_CORE>,
 					  <&cmu CLK_PLL1_DIV>;
 			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>, <0>;
 			assigned-clock-rates = <0>, <12288000>, <0>;
