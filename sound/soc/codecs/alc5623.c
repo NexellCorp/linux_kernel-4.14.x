@@ -61,9 +61,9 @@ static struct reg_default init_list[] = {
 	{ALC5623_ADD_CTRL_REG,		0x5f00},
 	{ALC5623_PWR_MANAG_ADD1,	0x8830},
 	{ALC5623_PWR_MANAG_ADD2,	0xa7f7},
-	{ALC5623_PWR_MANAG_ADD3,	0x960a},
+	{ALC5623_PWR_MANAG_ADD3,	0x96ca},
 	{ALC5623_DAI_CONTROL,		0x8000},
-	{ALC5623_STEREO_DAC_VOL,	0x4000}, /* 0x4808 */
+	{ALC5623_STEREO_DAC_VOL,	0x4000},
 	{ALC5623_OUTPUT_MIXER_CTRL,	0x9f00},
 	{ALC5623_SPK_OUT_VOL,		0x0000},
 	{ALC5623_HP_OUT_VOL,		0x0000},
@@ -87,6 +87,51 @@ static void alc5623_reg_init(struct snd_soc_codec *codec)
 	for (i = 0; i < RT5623_INIT_REG_LEN; i++)
 		regmap_write(alc5623->regmap,
 			      init_list[i].reg, init_list[i].def);
+}
+
+#define ALC5623_ADD1_BIAS_ON_ADD (ALC5623_PWR_ADD1_MIC1_BIAS_EN \
+	| ALC5623_PWR_ADD1_MAIN_I2S_EN \
+	)
+
+#define ALC5623_ADD2_BIAS_ON_ADD (ALC5623_PWR_ADD2_VREF \
+	| ALC5623_PWR_ADD2_DAC_REF_CIR \
+	| ALC5623_PWR_ADD2_L_DAC_CLK \
+	| ALC5623_PWR_ADD2_R_DAC_CLK \
+	| ALC5623_PWR_ADD2_L_ADC_CLK_GAIN \
+	| ALC5623_PWR_ADD2_R_ADC_CLK_GAIN \
+	| ALC5623_PWR_ADD2_L_HP_MIXER \
+	| ALC5623_PWR_ADD2_R_HP_MIXER \
+	| ALC5623_PWR_ADD2_SPK_MIXER \
+	| ALC5623_PWR_ADD2_MONO_MIXER \
+	| ALC5623_PWR_ADD2_L_ADC_REC_MIXER \
+	| ALC5623_PWR_ADD2_R_ADC_REC_MIXER \
+	)
+
+static void alc5623_bias_on_add(struct snd_soc_codec *codec)
+{
+	snd_soc_update_bits(codec, ALC5623_PWR_MANAG_ADD1,
+				ALC5623_ADD1_BIAS_ON_ADD,
+				ALC5623_ADD1_BIAS_ON_ADD);
+
+	snd_soc_update_bits(codec, ALC5623_PWR_MANAG_ADD2,
+				ALC5623_ADD2_BIAS_ON_ADD,
+				ALC5623_ADD2_BIAS_ON_ADD);
+
+	/* Line out enable */
+	snd_soc_update_bits(codec, ALC5623_PWR_MANAG_ADD2,
+				ALC5623_PWR_ADD2_LINEOUT,
+				ALC5623_PWR_ADD2_LINEOUT);
+
+	/*
+	 * AUXOUT
+	 * aux out[7:6] 11b:mono, 10b:speaker
+	 */
+	snd_soc_update_bits(codec, ALC5623_OUTPUT_MIXER_CTRL,
+				(3 << 6), (3 << 6));
+
+	/* aux out 1_mute[15] 0:On 1:Mute / r_mute[7] 0:On 1:Mute */
+	snd_soc_update_bits(codec, ALC5623_MONO_AUX_OUT_VOL,
+				(1 << 15 | 1 << 7), (0 << 15 | 0 << 7));
 }
 
 static int amp_mixer_event(struct snd_soc_dapm_widget *w,
@@ -332,7 +377,12 @@ SND_SOC_DAPM_DAC("Left DAC", "Left HiFi Playback",
 	ALC5623_PWR_MANAG_ADD2, 9, 0),
 SND_SOC_DAPM_DAC("Right DAC", "Right HiFi Playback",
 	ALC5623_PWR_MANAG_ADD2, 8, 0),
-SND_SOC_DAPM_MIXER("I2S Mix", ALC5623_PWR_MANAG_ADD1, 15, 0, NULL, 0),
+/*
+ * delete to capture I2SOUT
+ * if it is enabled, the 'dapm_power_widgets' calls it and disabled I2SOUT
+ * when the power if off after playback
+ * SND_SOC_DAPM_MIXER("I2S Mix", ALC5623_PWR_MANAG_ADD1, 15, 0, NULL, 0),
+*/
 SND_SOC_DAPM_MIXER("AuxI Mix", SND_SOC_NOPM, 0, 0, NULL, 0),
 SND_SOC_DAPM_MIXER("Line Mix", SND_SOC_NOPM, 0, 0, NULL, 0),
 SND_SOC_DAPM_ADC("Left ADC", "Left HiFi Capture",
@@ -806,8 +856,7 @@ static int alc5623_mute(struct snd_soc_dai *dai, int mute)
 	(ALC5623_PWR_ADD1_SHORT_CURR_DET_EN \
 	| ALC5623_PWR_ADD1_HP_OUT_AMP)
 
-static __attribute__((unused))
-void enable_power_depop(struct snd_soc_codec *codec)
+static void enable_power_depop(struct snd_soc_codec *codec)
 {
 	struct alc5623_priv *alc5623 = snd_soc_codec_get_drvdata(codec);
 
@@ -845,8 +894,8 @@ static int alc5623_set_bias_level(struct snd_soc_codec *codec,
 {
 	switch (level) {
 	case SND_SOC_BIAS_ON:
-		alc5623_reg_init(codec);
-		/* enable_power_depop(codec); */
+		enable_power_depop(codec);
+		alc5623_bias_on_add(codec);
 		break;
 	case SND_SOC_BIAS_PREPARE:
 		break;
