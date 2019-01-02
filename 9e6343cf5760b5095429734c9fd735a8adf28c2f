@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f08ddb97_d1417402",
+        "filename": "Documentation/devicetree/bindings/media/nexell-vpu.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-02T03:21:09Z",
+      "side": 1,
+      "message": "change to \"nexell,nxp3220-vpu\"",
+      "range": {
+        "startLine": 4,
+        "startChar": 32,
+        "endLine": 4,
+        "endChar": 46
+      },
+      "revId": "9e6343cf5760b5095429734c9fd735a8adf28c2f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "67d37989_a25c62a1",
+        "filename": "Documentation/devicetree/bindings/media/nexell-vpu.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-02T03:21:09Z",
+      "side": 1,
+      "message": "Please describe in detail.\n- if not set \"memory-region\" : ......",
+      "range": {
+        "startLine": 10,
+        "startChar": 3,
+        "endLine": 10,
+        "endChar": 74
+      },
+      "revId": "9e6343cf5760b5095429734c9fd735a8adf28c2f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "00c9cb75_385d257d",
+        "filename": "Documentation/devicetree/bindings/media/nexell-vpu.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-02T03:21:09Z",
+      "side": 1,
+      "message": "change to \"nexell,nxp3220-vpu\"",
+      "range": {
+        "startLine": 14,
+        "startChar": 15,
+        "endLine": 14,
+        "endChar": 29
+      },
+      "revId": "9e6343cf5760b5095429734c9fd735a8adf28c2f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c8699059_a9f40058",
+        "filename": "drivers/media/platform/Kconfig",
+        "patchSetId": 1
+      },
+      "lineNbr": 621,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-02T03:21:09Z",
+      "side": 1,
+      "message": "this is depend on nxp3220, i think so set with VIDEO_NXP3220_CODEC",
+      "range": {
+        "startLine": 621,
+        "startChar": 7,
+        "endLine": 621,
+        "endChar": 19
+      },
+      "revId": "9e6343cf5760b5095429734c9fd735a8adf28c2f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
