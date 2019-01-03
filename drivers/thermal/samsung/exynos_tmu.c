@@ -1501,7 +1501,15 @@ static struct platform_driver exynos_tmu_driver = {
 	.remove	= exynos_tmu_remove,
 };
 
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+static int __init exynos_tmu_driver_init(void)
+{
+	return platform_driver_register(&exynos_tmu_driver);
+}
+deferred_module_init(exynos_tmu_driver_init)
+#else
 module_platform_driver(exynos_tmu_driver);
+#endif
 
 MODULE_DESCRIPTION("EXYNOS TMU Driver");
 MODULE_AUTHOR("Donggeun Kim <dg77.kim@samsung.com>");

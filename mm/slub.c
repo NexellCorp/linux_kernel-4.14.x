@@ -5830,7 +5830,11 @@ static int __init slab_sysfs_init(void)
 	return 0;
 }
 
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+deferred_module_init(slab_sysfs_init)
+#else
 __initcall(slab_sysfs_init);
+#endif
 #endif /* CONFIG_SYSFS */
 
 /*

@@ -451,7 +451,11 @@ static int __init tca9535_keypad_init(void)
 {
 	return i2c_add_driver(&tca9535_keypad_driver);
 }
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+deferred_module_init(tca9535_keypad_init)
+#else
 module_init(tca9535_keypad_init);
+#endif
 
 static void __exit tca9535_keypad_exit(void)
 {

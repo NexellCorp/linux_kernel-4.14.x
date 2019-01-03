@@ -505,7 +505,15 @@ static struct platform_driver dwc2_platform_driver = {
 	.shutdown = dwc2_driver_shutdown,
 };
 
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+static int __init dwc2_platform_init(void)
+{
+	return platform_driver_register(&dwc2_platform_driver);
+}
+deferred_module_init(dwc2_platform_init)
+#else
 module_platform_driver(dwc2_platform_driver);
+#endif
 
 MODULE_DESCRIPTION("DESIGNWARE HS OTG Platform Glue");
 MODULE_AUTHOR("Matthijs Kooijman <matthijs@stdin.nl>");
