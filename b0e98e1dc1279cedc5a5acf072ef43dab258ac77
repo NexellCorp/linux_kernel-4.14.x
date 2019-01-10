@@ -1,0 +1,348 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2ae01642_c34cd260",
+        "filename": "drivers/media/platform/nx-vpu/Makefile",
+        "patchSetId": 1
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-10T08:54:32Z",
+      "side": 1,
+      "message": "change build macros: ex\u003e sound/soc/nexell/Makefile",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 27,
+        "endChar": 5
+      },
+      "revId": "b0e98e1dc1279cedc5a5acf072ef43dab258ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fdc964bb_3740e858",
+        "filename": "drivers/media/platform/nx-vpu/nx_vpu_enc_v4l2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1695,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-10T08:54:32Z",
+      "side": 1,
+      "message": "change -EFAULT or other",
+      "range": {
+        "startLine": 1695,
+        "startChar": 10,
+        "endLine": 1695,
+        "endChar": 11
+      },
+      "revId": "b0e98e1dc1279cedc5a5acf072ef43dab258ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "1c225c4c_db086325",
+        "filename": "drivers/media/platform/nx-vpu/nx_vpu_encoder.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 276,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-10T08:54:32Z",
+      "side": 1,
+      "message": "change to -EFAULT or other",
+      "range": {
+        "startLine": 276,
+        "startChar": 10,
+        "endLine": 276,
+        "endChar": 11
+      },
+      "revId": "b0e98e1dc1279cedc5a5acf072ef43dab258ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f4cb5a33_d6427962",
+        "filename": "drivers/media/platform/nx-vpu/nx_vpu_v4l2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 776,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-10T08:54:32Z",
+      "side": 1,
+      "message": "remove not necessary lines",
+      "range": {
+        "startLine": 775,
+        "startChar": 0,
+        "endLine": 776,
+        "endChar": 80
+      },
+      "revId": "b0e98e1dc1279cedc5a5acf072ef43dab258ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9a070188_f6986c12",
+        "filename": "drivers/media/platform/nx-vpu/nx_vpu_v4l2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 954,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-10T08:54:32Z",
+      "side": 1,
+      "message": "remove empty line",
+      "revId": "b0e98e1dc1279cedc5a5acf072ef43dab258ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "1dcf9b73_48ff86d2",
+        "filename": "drivers/media/platform/nx-vpu/nx_vpu_v4l2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1177,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-10T08:54:32Z",
+      "side": 1,
+      "message": "if not necessary, remove this",
+      "range": {
+        "startLine": 1170,
+        "startChar": 0,
+        "endLine": 1177,
+        "endChar": 6
+      },
+      "revId": "b0e98e1dc1279cedc5a5acf072ef43dab258ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0a6f7298_da4cee75",
+        "filename": "drivers/media/platform/nx-vpu/nx_vpu_v4l2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1189,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-10T08:54:32Z",
+      "side": 1,
+      "message": "if not necessary, remove this",
+      "range": {
+        "startLine": 1182,
+        "startChar": 0,
+        "endLine": 1189,
+        "endChar": 6
+      },
+      "revId": "b0e98e1dc1279cedc5a5acf072ef43dab258ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9a81f92d_58bb90e0",
+        "filename": "drivers/media/platform/nx-vpu/nx_vpu_v4l2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1200,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-10T08:54:32Z",
+      "side": 1,
+      "message": "if not necessary, remove this",
+      "range": {
+        "startLine": 1200,
+        "startChar": 0,
+        "endLine": 1200,
+        "endChar": 5
+      },
+      "revId": "b0e98e1dc1279cedc5a5acf072ef43dab258ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b7a07d72_33dd4852",
+        "filename": "drivers/media/platform/nx-vpu/nx_vpu_v4l2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1212,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-10T08:54:32Z",
+      "side": 1,
+      "message": "if not necessary, remove this",
+      "range": {
+        "startLine": 1212,
+        "startChar": 0,
+        "endLine": 1212,
+        "endChar": 5
+      },
+      "revId": "b0e98e1dc1279cedc5a5acf072ef43dab258ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "253dd40b_91f9a640",
+        "filename": "drivers/media/platform/nx-vpu/nx_vpu_v4l2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1224,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-10T08:54:32Z",
+      "side": 1,
+      "message": "if not necessary, remove this",
+      "range": {
+        "startLine": 1224,
+        "startChar": 0,
+        "endLine": 1224,
+        "endChar": 5
+      },
+      "revId": "b0e98e1dc1279cedc5a5acf072ef43dab258ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "7f365a94_72ec88db",
+        "filename": "drivers/media/platform/nx-vpu/nx_vpu_v4l2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1236,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-10T08:54:32Z",
+      "side": 1,
+      "message": "if not necessary, remove this",
+      "range": {
+        "startLine": 1236,
+        "startChar": 0,
+        "endLine": 1236,
+        "endChar": 5
+      },
+      "revId": "b0e98e1dc1279cedc5a5acf072ef43dab258ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c811e714_843d32f9",
+        "filename": "drivers/media/platform/nx-vpu/vpu_types.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 395,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-10T08:54:32Z",
+      "side": 1,
+      "message": "remove empty lines",
+      "revId": "b0e98e1dc1279cedc5a5acf072ef43dab258ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "33458d3e_5f8a7ff9",
+        "filename": "include/uapi/linux/videodev2_nxp_media.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-10T08:54:32Z",
+      "side": 1,
+      "message": "change copyright",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 17,
+        "endChar": 3
+      },
+      "revId": "b0e98e1dc1279cedc5a5acf072ef43dab258ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "784ccc64_a270dad0",
+        "filename": "include/uapi/linux/videodev2_nxp_media.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-10T08:54:32Z",
+      "side": 1,
+      "message": "remove empty lines",
+      "revId": "b0e98e1dc1279cedc5a5acf072ef43dab258ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d249c722_9421e6a5",
+        "filename": "include/uapi/linux/videodev2_nxp_media.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-10T08:54:32Z",
+      "side": 1,
+      "message": "remove empty lines",
+      "range": {
+        "startLine": 52,
+        "startChar": 0,
+        "endLine": 52,
+        "endChar": 0
+      },
+      "revId": "b0e98e1dc1279cedc5a5acf072ef43dab258ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "533e0a50_e61423ad",
+        "filename": "include/uapi/linux/videodev2_nxp_media.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-10T08:54:32Z",
+      "side": 1,
+      "message": "remove empty lines",
+      "revId": "b0e98e1dc1279cedc5a5acf072ef43dab258ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
