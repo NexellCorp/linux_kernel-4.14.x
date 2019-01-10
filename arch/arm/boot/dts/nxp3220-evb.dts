@@ -93,7 +93,7 @@
 
 	sound0: sound0 {
 		compatible = "simple-audio-card";
-		simple-audio-card,name = "nxp3220 Audio Card ALC5623";
+		simple-audio-card,name = "nxp3220 Audio Card ALC5623 0";
 		status = "okay";
 
 		simple-audio-card,dai-link@0 {
@@ -114,7 +114,7 @@
 
 	sound1: sound1 {
 		compatible = "simple-audio-card";
-		simple-audio-card,name = "nxp3220 Audio Card ALC5623";
+		simple-audio-card,name = "nxp3220 Audio Card ALC5623 1";
 		status = "okay";
 
 		simple-audio-card,dai-link@0 {
