@@ -1112,6 +1112,19 @@
 			status = "disabled";
 		};
 
+		vpu: vpu@25180000 {
+			compatible = "nexell,nx-vpu";
+			reg = <0x25180000 0x10000>;
+			interrupts = <GIC_SPI 31 IRQ_TYPE_NONE>;
+			clocks = <&cmu_mm CLK_MM_CODA960_AXI>,
+				<&cmu_mm CLK_MM_CODA960_APB>,
+				<&cmu_mm CLK_MM_CODA960_CORE>;
+			clock-names = "vpu-clk-axi", "vpu-clk-apb", "vpu-clk-core";
+			assigned-clocks = <&cmu_mm CLK_MM_CODA960_CORE>;
+			assigned-clock-rates = <250000000>;
+			status = "disabled";
+		};
+
 		watchdog_secure: watchdog@20810000 {
 			compatible = "nexell,nxp3220-wdt";
 			reg = <0x20810000 0x1000>;
