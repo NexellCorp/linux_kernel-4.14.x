@@ -51,7 +51,7 @@ static struct nx_gem_object *nx_drm_gem_object_new(struct drm_device *drm,
 	struct drm_gem_object *obj;
 	int ret;
 
-	DRM_DEBUG_DRIVER("size:%zu\n", size);
+	DRM_DEBUG_KMS("size:%zu\n", size);
 
 	nx_obj = kzalloc(sizeof(*nx_obj), GFP_KERNEL);
 	if (!nx_obj)
@@ -84,7 +84,7 @@ static void nx_drm_gem_object_delete(struct nx_gem_object *nx_obj)
 {
 	struct drm_gem_object *obj;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	obj = &nx_obj->base;
 
@@ -102,7 +102,7 @@ static inline bool __gem_is_cacheable(uint32_t flags)
 		flags == NEXELL_BO_SYSTEM_NONCONTIG_CACHEABLE)
 		cachable = true;
 
-	DRM_DEBUG_DRIVER("cachable:%s\n", cachable ? "O" : "X");
+	DRM_DEBUG_KMS("cachable:%s\n", cachable ? "O" : "X");
 	return cachable;
 }
 
@@ -116,7 +116,7 @@ static inline bool __gem_is_system(uint32_t flags)
 		flags == NEXELL_BO_SYSTEM_NONCONTIG_CACHEABLE)
 		system = true;
 
-	DRM_DEBUG_DRIVER("system:%s\n", system ? "O" : "X");
+	DRM_DEBUG_KMS("system:%s\n", system ? "O" : "X");
 	return system;
 }
 
@@ -166,7 +166,7 @@ static inline void __gem_page_cpu_sync(struct device *dev, struct page *page,
 {
 	struct scatterlist sg;
 
-	DRM_DEBUG_DRIVER("cpu sync\n");
+	DRM_DEBUG_KMS("cpu sync\n");
 
 	sg_init_table(&sg, 1);
 	sg_set_page(&sg, page, size, 0);
@@ -212,7 +212,7 @@ static struct page *__alloc_order_pages(struct device *dev,
 
 		/*
 		 * For debug status :
-		 * DRM_DEBUG_DRIVER("va:%p, i:%d order:%d,%d, size:%u\n",
+		 * DRM_DEBUG_KMS("va:%p, i:%d order:%d,%d, size:%u\n",
 		 * page_address(page), i, max_order, order,
 		 * order_to_size(order));
 		 */
@@ -269,7 +269,7 @@ out:
 	if (!cpu_addr)
 		return ERR_PTR(-ENOMEM);
 
-	DRM_DEBUG_DRIVER("map va:%p, size:%zu\n", cpu_addr, size);
+	DRM_DEBUG_KMS("map va:%p, size:%zu\n", cpu_addr, size);
 
 	return cpu_addr;
 }
@@ -305,7 +305,7 @@ static int nx_drm_gem_sys_alloc(struct nx_gem_object *nx_obj,
 		if (!nx_obj->dma_addr)
 			nx_obj->dma_addr = dma_addr;
 
-		DRM_DEBUG_DRIVER("[%3d] va:%p, pa:%pad, size:%zu, remain:%zu\n",
+		DRM_DEBUG_KMS("[%3d] va:%p, pa:%pad, size:%zu, remain:%zu\n",
 			i, page_address(page), &dma_addr, length, remaining);
 
 		i++;
@@ -330,7 +330,7 @@ static int nx_drm_gem_sys_alloc(struct nx_gem_object *nx_obj,
 	nx_obj->cpu_addr = __drm_gem_sys_remap(nx_obj, size);
 	nx_obj->size = size;
 
-	DRM_DEBUG_DRIVER("va:%p, sgt:%p, nents:%d\n",
+	DRM_DEBUG_KMS("va:%p, sgt:%p, nents:%d\n",
 		nx_obj->cpu_addr, sgt,  sgt->nents);
 
 	return 0;
@@ -356,7 +356,7 @@ static void nx_drm_gem_sys_free(struct nx_gem_object *nx_obj)
 	for_each_sg(sgt->sgl, sg, sgt->nents, i) {
 		struct page *page = sg_page(sg);
 
-		DRM_DEBUG_DRIVER("[%3d] %p, va:%p, pa:0x%lx, size:%ld\n",
+		DRM_DEBUG_KMS("[%3d] %p, va:%p, pa:0x%lx, size:%ld\n",
 			i, page, page_address(page),
 			(unsigned long)phys_to_dma(nx_obj->base.dev->dev,
 			page_to_phys(page)),
@@ -384,7 +384,7 @@ static int nx_drm_gem_sys_mmap(struct nx_gem_object *nx_obj,
 		unsigned long remainder = vma->vm_end - addr;
 		unsigned long len = sg->length;
 
-		DRM_DEBUG_DRIVER("vma:0x%lx~0x%lx, va:%p, size:%ld\n",
+		DRM_DEBUG_KMS("vma:0x%lx~0x%lx, va:%p, size:%ld\n",
 			addr, vma->vm_end, page_address(page), len);
 
 		if (offset >= sg->length) {
@@ -432,7 +432,7 @@ static int nx_drm_gem_sys_contig_alloc(struct nx_gem_object *nx_obj,
 	page = alloc_pages(GFP_HIGHUSER | __GFP_ZERO | __GFP_NOWARN, order);
 	if (!page) {
 		dev_err(drm->dev,
-			"Failed to allocate buffer %zu, ret:%d\n", size, ret);
+			"Failed to allocate buffer %zu, system contig\n", size);
 		return ret;
 	}
 
@@ -462,7 +462,7 @@ static int nx_drm_gem_sys_contig_alloc(struct nx_gem_object *nx_obj,
 	/* cached flush */
 	__gem_page_dev_sync(drm->dev, page, size, DMA_BIDIRECTIONAL);
 
-	DRM_DEBUG_DRIVER("va:%p->%p, pa:%pad, size:%zu\n",
+	DRM_DEBUG_KMS("va:%p->%p, pa:%pad, size:%zu\n",
 		page_address(page), nx_obj->cpu_addr, &nx_obj->dma_addr, size);
 
 	return 0;
@@ -484,7 +484,7 @@ static void nx_drm_gem_sys_contig_free(struct nx_gem_object *nx_obj)
 	unsigned long pages = PAGE_ALIGN(nx_obj->size) >> PAGE_SHIFT;
 	int i;
 
-	DRM_DEBUG_DRIVER("va:%p, pa:%pad, size:%zu\n",
+	DRM_DEBUG_KMS("va:%p, pa:%pad, size:%zu\n",
 		page_address(page), &nx_obj->dma_addr, nx_obj->size);
 
 	vunmap(nx_obj->cpu_addr);
@@ -509,7 +509,7 @@ static int nx_drm_gem_sys_contig_mmap(struct nx_gem_object *nx_obj,
 	dma_addr = nx_obj->dma_addr;
 	size = vma->vm_end - vma->vm_start;
 
-	DRM_DEBUG_DRIVER("va:%p, pa:%pad, vma:0x%lx~0x%lx, size:%zu\n",
+	DRM_DEBUG_KMS("va:%p, pa:%pad, vma:0x%lx~0x%lx, size:%zu\n",
 		nx_obj->cpu_addr, &dma_addr, vma->vm_start, vma->vm_end, size);
 
 	nr_vma_pages = (size) >> PAGE_SHIFT;
@@ -538,7 +538,7 @@ static int nx_drm_gem_dma_alloc(struct nx_gem_object *nx_obj,
 	cpu_addr = dma_alloc_writecombine(drm->dev, size, &dma_addr,
 				GFP_KERNEL);
 	if (!cpu_addr) {
-		dev_err(drm->dev, "Failed to allocate buffer with size %zu\n",
+		dev_err(drm->dev, "Failed to allocate buffer size %zu, DMA\n",
 			size);
 		return -ENOMEM;
 	}
@@ -556,7 +556,7 @@ static int nx_drm_gem_dma_alloc(struct nx_gem_object *nx_obj,
 	nx_obj->dma_addr = dma_addr;
 	nx_obj->size = size;
 
-	DRM_DEBUG_DRIVER("va:%p, pa:%pad, size:%zu\n",
+	DRM_DEBUG_KMS("va:%p, pa:%pad, size:%zu\n",
 			cpu_addr, &dma_addr, size);
 
 	return 0;
@@ -582,7 +582,7 @@ static void nx_drm_gem_dma_free(struct nx_gem_object *nx_obj)
 	dma_addr = nx_obj->dma_addr;
 	size = nx_obj->size;
 
-	DRM_DEBUG_DRIVER("va:%p, pa:%pad, size:%zu\n",
+	DRM_DEBUG_KMS("va:%p, pa:%pad, size:%zu\n",
 			cpu_addr, &dma_addr, nx_obj->size);
 
 	if (cpu_addr)
@@ -607,7 +607,7 @@ static int nx_drm_gem_dma_mmap(struct nx_gem_object *nx_obj,
 	dma_addr = nx_obj->dma_addr;
 	size = vma->vm_end - vma->vm_start;
 
-	DRM_DEBUG_DRIVER("va:%p, pa:%pad, vma:0x%lx~0x%lx, size:%zu\n",
+	DRM_DEBUG_KMS("va:%p, pa:%pad, vma:0x%lx~0x%lx, size:%zu\n",
 		cpu_addr, &dma_addr, vma->vm_start, vma->vm_end, size);
 
 	return dma_mmap_writecombine(drm->dev, vma, cpu_addr, dma_addr, size);
@@ -644,7 +644,7 @@ static void nx_drm_gem_buf_free(struct nx_gem_object *nx_obj)
 	struct drm_gem_object *obj = &nx_obj->base;
 	uint32_t flags = nx_obj->flags;
 
-	DRM_DEBUG_DRIVER("va:%p, pa:%pad, attach:%s\n",
+	DRM_DEBUG_KMS("va:%p, pa:%pad, attach:%s\n",
 		nx_obj->cpu_addr, &nx_obj->dma_addr,
 		obj->import_attach ? "o" : "x");
 
@@ -681,7 +681,7 @@ static int nx_drm_gem_buf_pages(struct nx_gem_object *nx_obj,
 	struct scatterlist *sg;
 	int i, j, k = 0;
 
-	DRM_DEBUG_DRIVER("num_pages:%d\n", num_pages);
+	DRM_DEBUG_KMS("num_pages:%d\n", num_pages);
 
 	if (!sgt)
 		return 0;
@@ -714,7 +714,7 @@ static void __vm_set_cache_attr(struct vm_area_struct *vma, uint32_t flags)
 					vm_get_page_prot(vma->vm_flags));
 	}
 
-	DRM_DEBUG_DRIVER("flags: %s\n", gem_type_name[flags]);
+	DRM_DEBUG_KMS("flags: %s\n", gem_type_name[flags]);
 }
 
 static int nx_drm_gem_buf_mmap(struct nx_gem_object *nx_obj,
@@ -723,7 +723,7 @@ static int nx_drm_gem_buf_mmap(struct nx_gem_object *nx_obj,
 	uint32_t flags = nx_obj->flags;
 	int ret;
 
-	DRM_DEBUG_DRIVER("va:%p, pa:%pad, s:0x%lx, e:0x%lx, size:%zu\n",
+	DRM_DEBUG_KMS("va:%p, pa:%pad, s:0x%lx, e:0x%lx, size:%zu\n",
 		nx_obj->cpu_addr, &nx_obj->dma_addr,
 		vma->vm_start, vma->vm_end, nx_obj->size);
 
@@ -781,7 +781,7 @@ static void __gem_vma_list_add(struct vm_area_struct *vma)
 	struct nx_gem_object *nx_obj = to_nx_gem_obj(obj);
 	struct gem_vma_list *vma_list;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	vma_list = kmalloc(sizeof(struct gem_vma_list), GFP_KERNEL);
 	if (!vma_list)
@@ -792,7 +792,7 @@ static void __gem_vma_list_add(struct vm_area_struct *vma)
 	list_add(&vma_list->list, &nx_obj->vmas);
 	mutex_unlock(&nx_obj->lock);
 
-	DRM_DEBUG_DRIVER("adding %p\n", vma);
+	DRM_DEBUG_KMS("adding %p\n", vma);
 }
 
 static void __gem_vma_list_del(struct vm_area_struct *vma)
@@ -801,7 +801,7 @@ static void __gem_vma_list_del(struct vm_area_struct *vma)
 	struct nx_gem_object *nx_obj = to_nx_gem_obj(obj);
 	struct gem_vma_list *vma_list, *tmp;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	mutex_lock(&nx_obj->lock);
 	list_for_each_entry_safe(vma_list, tmp, &nx_obj->vmas, list) {
@@ -809,7 +809,7 @@ static void __gem_vma_list_del(struct vm_area_struct *vma)
 			continue;
 		list_del(&vma_list->list);
 		kfree(vma_list);
-		DRM_DEBUG_DRIVER("deleting %p\n", vma);
+		DRM_DEBUG_KMS("deleting %p\n", vma);
 		break;
 	}
 	mutex_unlock(&nx_obj->lock);
@@ -825,7 +825,7 @@ static int __gem_map_vm_sync(struct drm_gem_object *obj,
 	uint32_t flags = nx_obj->flags;
 	int i;
 
-	DRM_DEBUG_DRIVER("map syncing\n");
+	DRM_DEBUG_KMS("map syncing\n");
 
 	if (!__gem_is_cacheable(flags))
 		return 0;
@@ -860,7 +860,7 @@ static void __gem_unmap_vm_sync(struct drm_gem_object *obj,
 	uint32_t flags = nx_obj->flags;
 	int i;
 
-	DRM_DEBUG_DRIVER("unmap syncing\n");
+	DRM_DEBUG_KMS("unmap syncing\n");
 
 	if (!__gem_is_cacheable(flags))
 		return;
@@ -888,7 +888,7 @@ static int nx_drm_gem_vm_fault(struct vm_fault *vmf)
 	pgoff_t offset;
 	int ret = 0;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	if (nx_obj->pages) {
 		mutex_lock(&nx_obj->lock);
@@ -921,7 +921,7 @@ static int nx_drm_gem_vm_fault(struct vm_fault *vmf)
 		break;
 	}
 
-	DRM_DEBUG_DRIVER("ret %d\n", ret);
+	DRM_DEBUG_KMS("ret %d\n", ret);
 	return ret;
 }
 
@@ -954,7 +954,7 @@ static int nx_drm_gem_vm_map(struct drm_gem_object *obj,
 	struct nx_gem_object *nx_obj = to_nx_gem_obj(obj);
 	uint32_t flags = nx_obj->flags;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	/* Check for valid size. */
 	if (obj_size < vma->vm_end - vma->vm_start)
@@ -991,7 +991,7 @@ static int nx_drm_gem_mmap_vma(struct file *filp, struct vm_area_struct *vma)
 	struct drm_vma_offset_node *node;
 	int ret;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	if (drm_dev_is_unplugged(drm))
 		return -ENODEV;
@@ -1030,7 +1030,7 @@ static int nx_drm_gem_mmap_vma(struct file *filp, struct vm_area_struct *vma)
 
 	drm_gem_object_put_unlocked(obj);
 
-	DRM_DEBUG_DRIVER("exit\n");
+	DRM_DEBUG_KMS("exit\n");
 
 	return ret;
 }
@@ -1051,7 +1051,7 @@ static int nx_drm_gem_map_attach(struct dma_buf *dma_buf,
 	struct drm_gem_object *obj = dma_buf->priv;
 	struct drm_device *drm = obj->dev;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	prime_attach = kzalloc(sizeof(*prime_attach), GFP_KERNEL);
 	if (!prime_attach)
@@ -1074,7 +1074,7 @@ static void nx_drm_gem_map_detach(struct dma_buf *dma_buf,
 	struct drm_device *drm = obj->dev;
 	struct sg_table *sgt;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	if (drm->driver->gem_prime_unpin)
 		drm->driver->gem_prime_unpin(obj);
@@ -1103,7 +1103,7 @@ static struct sg_table *nx_drm_gem_map_dma_buf(
 	struct drm_gem_object *obj = attach->dmabuf->priv;
 	struct sg_table *sgt;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	if (WARN_ON(dir == DMA_NONE || !prime_attach))
 		return ERR_PTR(-EINVAL);
@@ -1134,7 +1134,7 @@ static struct sg_table *nx_drm_gem_map_dma_buf(
 		}
 	}
 
-	DRM_DEBUG_DRIVER("exit\n");
+	DRM_DEBUG_KMS("exit\n");
 	return sgt;
 }
 
@@ -1143,7 +1143,7 @@ static void nx_drm_gem_unmap_dma_buf(struct dma_buf_attachment *attach,
 				     enum dma_data_direction dir)
 {
 	/* nothing to be done here */
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 }
 
 static void nx_drm_gem_dmabuf_release(struct dma_buf *dma_buf)
@@ -1151,7 +1151,7 @@ static void nx_drm_gem_dmabuf_release(struct dma_buf *dma_buf)
 	struct drm_gem_object *obj = dma_buf->priv;
 	struct drm_device *drm = obj->dev;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	/* drop the reference on the export fd holds */
 	drm_gem_object_put_unlocked(obj);
@@ -1176,7 +1176,7 @@ static int nx_drm_gem_dmabuf_mmap(struct dma_buf *dma_buf,
 	struct drm_gem_object *obj = dma_buf->priv;
 	struct drm_device *drm = obj->dev;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	if (!drm->driver->gem_prime_mmap)
 		return -EACCES;
@@ -1189,7 +1189,7 @@ static void *nx_drm_gem_dmabuf_vmap(struct dma_buf *dma_buf)
 	struct drm_gem_object *obj = dma_buf->priv;
 	struct drm_device *drm = obj->dev;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	return drm->driver->gem_prime_vmap(obj);
 }
@@ -1199,7 +1199,7 @@ static void nx_drm_gem_dmabuf_vunmap(struct dma_buf *dma_buf, void *vaddr)
 	struct drm_gem_object *obj = dma_buf->priv;
 	struct drm_device *drm = obj->dev;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	drm->driver->gem_prime_vunmap(obj, vaddr);
 }
@@ -1226,10 +1226,14 @@ struct nx_gem_object *nx_drm_gem_create(struct drm_device *drm,
 	struct nx_gem_object *nx_obj;
 	int ret;
 
+#ifndef DRM_NEXELL_GEM_SYSTEM
+	flags = NEXELL_BO_DMA;
+#endif
+
 	if (flags > NEXELL_BO_MAX - 1)
 		flags = 0;
 
-	DRM_DEBUG_DRIVER("size:%zu, flags:0x%x[%s]\n",
+	DRM_DEBUG_KMS("size:%zu, flags:0x%x[%s]\n",
 		size, flags, gem_type_name[flags]);
 
 	/*
@@ -1266,7 +1270,7 @@ error:
 
 void nx_drm_gem_destroy(struct nx_gem_object *nx_obj)
 {
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	nx_drm_gem_buf_free(nx_obj);
 	nx_drm_gem_object_delete(nx_obj);
@@ -1294,7 +1298,7 @@ int nx_drm_gem_dumb_create(struct drm_file *file_priv,
 	args->pitch = ALIGN(args->pitch, 8);
 	args->size = (uint64_t)args->pitch * args->height;
 
-	DRM_DEBUG_DRIVER("widht:%d, bpp:%d, pitch:%d, flags:0x%x\n",
+	DRM_DEBUG_KMS("widht:%d, bpp:%d, pitch:%d, flags:0x%x\n",
 		args->width, args->bpp, args->pitch, flags);
 
 	/* create gem buffer */
@@ -1324,7 +1328,7 @@ int nx_drm_gem_dumb_map_offset(struct drm_file *file_priv,
 	struct drm_gem_object *obj;
 	int ret = 0;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	mutex_lock(&drm->struct_mutex);
 
@@ -1354,14 +1358,14 @@ out:
 
 	mutex_unlock(&drm->struct_mutex);
 
-	DRM_DEBUG_DRIVER("offset:0x%llx\n", *offset);
+	DRM_DEBUG_KMS("offset:0x%llx\n", *offset);
 
 	return ret;
 }
 
 void nx_drm_gem_free_object(struct drm_gem_object *obj)
 {
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 	nx_drm_gem_destroy(to_nx_gem_obj(obj));
 }
 
@@ -1370,7 +1374,7 @@ struct dma_buf *nx_drm_gem_prime_export(struct drm_device *drm,
 {
 	DEFINE_DMA_BUF_EXPORT_INFO(exp_info);
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 	/* we want to be able to write in mmapped buffer */
 	flags |= O_RDWR;
 
@@ -1397,7 +1401,7 @@ int nx_drm_gem_prime_mmap(struct drm_gem_object *obj,
 	struct drm_device *drm = obj->dev;
 	int ret;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	mutex_lock(&drm->struct_mutex);
 	ret = nx_drm_gem_vm_map(obj, obj->size, vma);
@@ -1412,7 +1416,7 @@ void *nx_drm_gem_prime_vmap(struct drm_gem_object *obj)
 {
 	struct nx_gem_object *nx_obj = to_nx_gem_obj(obj);
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	return nx_obj->cpu_addr;
 }
@@ -1437,7 +1441,7 @@ struct sg_table *nx_drm_gem_prime_get_sg_table(struct drm_gem_object *obj)
 
 	noncontig = __gem_is_system_noncontig(nx_obj->flags);
 
-	DRM_DEBUG_DRIVER("enter sgt:%p %s [%s]\n",
+	DRM_DEBUG_KMS("enter sgt:%p %s [%s]\n",
 			sgt, noncontig ? "non-contig" : "contig",
 			gem_type_name[nx_obj->flags]);
 
@@ -1468,7 +1472,7 @@ struct sg_table *nx_drm_gem_prime_get_sg_table(struct drm_gem_object *obj)
 				PAGE_SIZE << compound_order(page), 0);
 			sg_dma_address(sg) = sg_phys(sg);
 
-			DRM_DEBUG_DRIVER("[%d] sg pa:0x%lx, va:%p, size:%d\n",
+			DRM_DEBUG_KMS("[%d] sg pa:0x%lx, va:%p, size:%d\n",
 				n++, (unsigned long)page_to_phys(page),
 				page_address(sg_page(sg)), sg_dma_len(sg));
 
@@ -1485,7 +1489,7 @@ struct sg_table *nx_drm_gem_prime_get_sg_table(struct drm_gem_object *obj)
 		sg_set_page(sg, phys_to_page(sg_phys(s)),
 					PAGE_ALIGN(obj->size), 0);
 
-		DRM_DEBUG_DRIVER("sg pa:%pad, va:%p size:%d\n",
+		DRM_DEBUG_KMS("sg pa:%pad, va:%p size:%d\n",
 			&nx_obj->dma_addr, nx_obj->cpu_addr, (int)obj->size);
 	}
 
@@ -1507,7 +1511,7 @@ struct drm_gem_object *nx_drm_gem_prime_import_sg_table(
 	struct nx_gem_object *nx_obj;
 	int ret;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	/* Create a CMA GEM buffer. */
 	nx_obj = nx_drm_gem_object_new(drm, attach->dmabuf->size);
@@ -1525,7 +1529,7 @@ struct drm_gem_object *nx_drm_gem_prime_import_sg_table(
 		goto error;
 	}
 
-	DRM_DEBUG_DRIVER("dma_addr:%pad, size:%zu\n",
+	DRM_DEBUG_KMS("dma_addr:%pad, size:%zu\n",
 			&nx_obj->dma_addr, attach->dmabuf->size);
 
 	return &nx_obj->base;
@@ -1542,7 +1546,7 @@ int nx_drm_gem_fops_mmap(struct file *filp, struct vm_area_struct *vma)
 {
 	int ret;
 
-	DRM_DEBUG_DRIVER("enter 0x%lx~0x%lx 0x%lx, pgoff 0x%lx\n",
+	DRM_DEBUG_KMS("enter 0x%lx~0x%lx 0x%lx, pgoff 0x%lx\n",
 		vma->vm_start, vma->vm_end, vma->vm_end - vma->vm_start,
 		vma->vm_pgoff);
 
@@ -1571,7 +1575,7 @@ int nx_drm_gem_create_ioctl(struct drm_device *drm, void *data,
 	size_t size = args->size;
 	int ret;
 
-	DRM_DEBUG_DRIVER("size:%lld, flags:0x%x\n", args->size, flags);
+	DRM_DEBUG_KMS("size:%lld, flags:0x%x\n", args->size, flags);
 
 	/*
 	 * The pitch should be aligned by 8
@@ -1618,7 +1622,7 @@ int nx_drm_gem_sync_ioctl(struct drm_device *drm, void *data,
 	nx_obj = to_nx_gem_obj(obj);
 	system = __gem_is_system(nx_obj->flags);
 
-	DRM_DEBUG_DRIVER("enter flags: 0x%x [%s]\n",
+	DRM_DEBUG_KMS("enter flags: 0x%x [%s]\n",
 			nx_obj->flags, gem_type_name[nx_obj->flags]);
 
 	/* non-cachable */
@@ -1641,7 +1645,7 @@ out:
 
 	mutex_unlock(&drm->struct_mutex);
 
-	DRM_DEBUG_DRIVER("sync va:%p pa:%pad\n",
+	DRM_DEBUG_KMS("sync va:%p pa:%pad\n",
 			nx_obj->cpu_addr, &nx_obj->dma_addr);
 
 	return 0;
@@ -1654,7 +1658,7 @@ int nx_drm_gem_get_ioctl(struct drm_device *drm, void *data,
 	struct nx_gem_object *nx_obj;
 	struct drm_gem_object *obj;
 
-	DRM_DEBUG_DRIVER("enter\n");
+	DRM_DEBUG_KMS("enter\n");
 
 	mutex_lock(&drm->struct_mutex);
 
@@ -1671,7 +1675,7 @@ int nx_drm_gem_get_ioctl(struct drm_device *drm, void *data,
 	drm_gem_object_unreference(obj);
 	mutex_unlock(&drm->struct_mutex);
 
-	DRM_DEBUG_DRIVER("get dma pa:%pad, va:%p\n",
+	DRM_DEBUG_KMS("get dma pa:%pad, va:%p\n",
 			&nx_obj->dma_addr, nx_obj->cpu_addr);
 
 	return 0;

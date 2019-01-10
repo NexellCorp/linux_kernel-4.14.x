@@ -9,6 +9,7 @@ config DRM_NEXELL
 	select FB_SYS_COPYAREA
 	select FB_SYS_IMAGEBLIT
 	select VT_HW_CONSOLE_BINDING if FRAMEBUFFER_CONSOLE
+	select DRM_NEXELL_GEM
 	help
 	  Choose this option if you have a Nexell soc chipset.
 	  This driver provides kernel mode setting and buffer
@@ -26,14 +27,17 @@ config DRM_CHECK_AUTHENTICATION
           If in doubt, say "Y".
 
 config DRM_NEXELL_GEM
-        bool "Nexell GEM"
+	bool
+
+config DRM_NEXELL_GEM_SYSTEM
+        bool "Nexell gem supports system memory allocation"
         depends on DRM_NEXELL
         default n
         help
-	 Choose this if you need the NEXELL GEM.
+	 Choose this if you need the NEXELL GEM SYSTEM.
 	 NEXELL GEM allocates buffer in CMA or system memory for non-contiguous,
 	 cached memory. If this option is not selected, drm allocates buffer
-	 with GEM CMA helper functions 
+	 in CMA memory. 
 
 config DRM_CHECK_PRE_INIT
         bool "Don't reinitialize, use bootloader's Display configuration"
