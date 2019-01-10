@@ -15,6 +15,16 @@ config DRM_NEXELL
 	  management to userspace. If M is selected the module
 	  will be called nexell drm.
 
+config DRM_CHECK_AUTHENTICATION
+        bool "Check Authentication for modesetting driver"
+        depends on DRM
+        default y
+        help
+         Choose this option if you need check authentication
+         for modesetting driver
+
+          If in doubt, say "Y".
+
 config DRM_NEXELL_GEM
         bool "Nexell GEM"
         depends on DRM_NEXELL

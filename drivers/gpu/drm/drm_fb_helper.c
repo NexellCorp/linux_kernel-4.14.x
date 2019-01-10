@@ -521,6 +521,7 @@ EXPORT_SYMBOL(drm_fb_helper_restore_fbdev_mode_unlocked);
 
 static bool drm_fb_helper_is_bound(struct drm_fb_helper *fb_helper)
 {
+#ifdef CONFIG_DRM_CHECK_AUTHENTICATION
 	struct drm_device *dev = fb_helper->dev;
 	struct drm_crtc *crtc;
 	int bound = 0, crtcs_bound = 0;
@@ -543,7 +544,7 @@ static bool drm_fb_helper_is_bound(struct drm_fb_helper *fb_helper)
 
 	if (bound < crtcs_bound)
 		return false;
-
+#endif
 	return true;
 }
 

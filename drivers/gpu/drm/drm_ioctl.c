@@ -110,6 +110,7 @@
 int drm_getunique(struct drm_device *dev, void *data,
 		  struct drm_file *file_priv)
 {
+#ifdef CONFIG_DRM_CHECK_AUTHENTICATION
 	struct drm_unique *u = data;
 	struct drm_master *master = file_priv->master;
 
@@ -122,7 +123,7 @@ int drm_getunique(struct drm_device *dev, void *data,
 	}
 	u->unique_len = master->unique_len;
 	mutex_unlock(&master->dev->master_mutex);
-
+#endif
 	return 0;
 }
 
