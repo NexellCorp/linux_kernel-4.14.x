@@ -432,7 +432,7 @@ static int nx_drm_gem_sys_contig_alloc(struct nx_gem_object *nx_obj,
 	page = alloc_pages(GFP_HIGHUSER | __GFP_ZERO | __GFP_NOWARN, order);
 	if (!page) {
 		dev_err(drm->dev,
-			"Failed to allocate buffer %zu, ret:%d\n", size, ret);
+			"Failed to allocate buffer %zu, system contig\n", size);
 		return ret;
 	}
 
@@ -538,7 +538,7 @@ static int nx_drm_gem_dma_alloc(struct nx_gem_object *nx_obj,
 	cpu_addr = dma_alloc_writecombine(drm->dev, size, &dma_addr,
 				GFP_KERNEL);
 	if (!cpu_addr) {
-		dev_err(drm->dev, "Failed to allocate buffer with size %zu\n",
+		dev_err(drm->dev, "Failed to allocate buffer size %zu, DMA\n",
 			size);
 		return -ENOMEM;
 	}
@@ -1225,6 +1225,10 @@ struct nx_gem_object *nx_drm_gem_create(struct drm_device *drm,
 {
 	struct nx_gem_object *nx_obj;
 	int ret;
+
+#ifndef DRM_NEXELL_GEM_SYSTEM
+	flags = NEXELL_BO_DMA;
+#endif
 
 	if (flags > NEXELL_BO_MAX - 1)
 		flags = 0;
