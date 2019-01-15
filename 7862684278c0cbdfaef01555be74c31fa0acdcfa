@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "705318b5_782fbee0",
+        "filename": "arch/arm/boot/dts/nxp3220.dtsi",
+        "patchSetId": 1
+      },
+      "lineNbr": 1114,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-15T07:10:23Z",
+      "side": 1,
+      "message": "- remove empty tab\n- Fit in alphabetical order",
+      "range": {
+        "startLine": 1114,
+        "startChar": 0,
+        "endLine": 1114,
+        "endChar": 2
+      },
+      "revId": "7862684278c0cbdfaef01555be74c31fa0acdcfa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
