@@ -401,7 +401,8 @@ void nx_display_ovl_disable(struct nx_display *dp)
 }
 
 static int nx_overlay_rgb_set_format(struct nx_overlay *ovl,
-				     unsigned int format, int pixelbyte)
+				     unsigned int format, int pixelbyte,
+				     bool sync)
 {
 	struct nx_mlc_reg *reg = ovl->base;
 	int id = ovl->id;
@@ -436,14 +437,15 @@ static int nx_overlay_rgb_set_format(struct nx_overlay *ovl,
 	nx_mlc_set_rgb_format(reg, id, format);
 	nx_mlc_set_rgb_invalid_position(reg, id, 0, 0, 0, 0, 0, false);
 	nx_mlc_set_rgb_invalid_position(reg, id, 1, 0, 0, 0, 0, false);
-	nx_mlc_set_layer_dirty(reg, id, true);
+	nx_mlc_set_layer_dirty(reg, id, sync);
 
 	return 0;
 }
 
 static int nx_overlay_rgb_set_pos(struct nx_overlay *ovl,
 				  int src_x, int src_y, int src_w, int src_h,
-				  int dst_x, int dst_y, int dst_w, int dst_h)
+				  int dst_x, int dst_y, int dst_w, int dst_h,
+				  bool sync)
 
 {
 	struct nx_mlc_reg *reg = ovl->base;
@@ -472,7 +474,7 @@ static int nx_overlay_rgb_set_pos(struct nx_overlay *ovl,
 		src_x, src_y, src_w, src_h, sx, sy, ex, ey);
 
 	nx_mlc_set_layer_position(reg, id, sx, sy, ex - 1, ey - 1);
-	nx_mlc_set_layer_dirty(reg, id, true);
+	nx_mlc_set_layer_dirty(reg, id, sync);
 
 	return 0;
 }
@@ -497,7 +499,7 @@ static void nx_overlay_rgb_enb(struct nx_overlay *ovl, bool on)
 }
 
 static int nx_overlay_yuv_set_format(struct nx_overlay *ovl,
-				     unsigned int format)
+				     unsigned int format, bool sync)
 {
 	struct nx_mlc_reg *reg = ovl->base;
 	int lock_size = 16;
@@ -509,14 +511,15 @@ static int nx_overlay_yuv_set_format(struct nx_overlay *ovl,
 
 	nx_mlc_set_layer_lock_size(reg, NX_PLANE_VIDEO_LAYER, lock_size);
 	nx_mlc_set_vid_format(reg, format);
-	nx_mlc_set_layer_dirty(reg, NX_PLANE_VIDEO_LAYER, true);
+	nx_mlc_set_layer_dirty(reg, NX_PLANE_VIDEO_LAYER, sync);
 
 	return 0;
 }
 
 static int nx_overlay_yuv_set_pos(struct nx_overlay *ovl,
 				  int src_x, int src_y, int src_w, int src_h,
-				  int dst_x, int dst_y, int dst_w, int dst_h)
+				  int dst_x, int dst_y, int dst_w, int dst_h,
+				  bool sync)
 {
 	struct nx_mlc_reg *reg = ovl->base;
 	int sx, sy, ex, ey;
@@ -563,7 +566,7 @@ static int nx_overlay_yuv_set_pos(struct nx_overlay *ovl,
 	nx_mlc_set_vid_scale(reg, src_w, src_h, dst_w, dst_h, hf, hf, vf, vf);
 	nx_mlc_set_layer_position(reg, NX_PLANE_VIDEO_LAYER,
 			sx, sy, ex ? ex - 1 : ex, ey ? ey - 1 : ey);
-	nx_mlc_set_layer_dirty(reg, NX_PLANE_VIDEO_LAYER, true);
+	nx_mlc_set_layer_dirty(reg, NX_PLANE_VIDEO_LAYER, sync);
 
 	return 0;
 }
@@ -574,8 +577,6 @@ static void nx_overlay_yuv_enb(struct nx_overlay *ovl, bool on)
 	int hl, hc, vl, vc;
 
 	pr_debug("%s: %s, %s\n", __func__, ovl->name, on ? "on" : "off");
-
-	nx_mlc_wait_vblank(reg, NX_PLANE_VIDEO_LAYER);
 
 	if (on) {
 		nx_mlc_set_vid_line_buffer_power(reg, true);
@@ -632,26 +633,26 @@ void nx_overlay_set_priority(struct nx_overlay *ovl,
 }
 
 int nx_overlay_set_format(struct nx_overlay *ovl,
-			  unsigned int format, int pixelbyte)
+			  unsigned int format, int pixelbyte, bool sync)
 {
 	if (is_video_plane(ovl->type))
-		return nx_overlay_yuv_set_format(ovl, format);
+		return nx_overlay_yuv_set_format(ovl, format, sync);
 	else
-		return nx_overlay_rgb_set_format(ovl, format, pixelbyte);
+		return nx_overlay_rgb_set_format(ovl, format, pixelbyte, sync);
 }
 
 int nx_overlay_set_position(struct nx_overlay *ovl,
 			    int sx, int sy, int sw, int sh,
-			    int dx, int dy, int dw, int dh)
+			    int dx, int dy, int dw, int dh, bool sync)
 {
 	int ret;
 
 	if (is_video_plane(ovl->type))
 		ret = nx_overlay_yuv_set_pos(ovl,
-				sx, sy, sw, sh, dx, dy, dw, dh);
+				sx, sy, sw, sh, dx, dy, dw, dh, sync);
 	else
 		ret = nx_overlay_rgb_set_pos(ovl,
-				sx, sy, sw, sh, dx, dy, dw, dh);
+				sx, sy, sw, sh, dx, dy, dw, dh, sync);
 
 	return ret;
 }
@@ -724,7 +725,7 @@ void nx_overlay_set_color(struct nx_overlay *ovl,
 
 void nx_overlay_set_addr_rgb(struct nx_overlay *ovl,
 			     unsigned int addr, unsigned int pixelbyte,
-			     unsigned int stride, int align)
+			     unsigned int stride, int align, bool sync)
 {
 	struct nx_mlc_reg *reg = ovl->base;
 	int id = ovl->id;
@@ -744,13 +745,14 @@ void nx_overlay_set_addr_rgb(struct nx_overlay *ovl,
 	nx_mlc_wait_vblank(reg, id);
 	nx_mlc_set_rgb_stride(reg, id, pixelbyte, stride);
 	nx_mlc_set_rgb_address(reg, id, phys);
-	nx_mlc_set_layer_dirty(reg, id, true);
+	nx_mlc_set_layer_dirty(reg, id, sync);
 }
 
 void nx_overlay_set_addr_yuv(struct nx_overlay *ovl,
 			     unsigned int lu_a, unsigned int lu_s,
 			     unsigned int cb_a, unsigned int cb_s,
-			     unsigned int cr_a, unsigned int cr_s, int planes)
+			     unsigned int cr_a, unsigned int cr_s, int planes,
+			     bool sync)
 {
 	struct nx_mlc_reg *reg = ovl->base;
 	int cl = ovl->left;
@@ -810,5 +812,5 @@ void nx_overlay_set_addr_yuv(struct nx_overlay *ovl,
 	nx_mlc_wait_vblank(reg, NX_PLANE_VIDEO_LAYER);
 	nx_mlc_set_vid_stride(reg, lu_s, cb_s, cr_s);
 	nx_mlc_set_vid_address(reg, lu_a, cb_a, cr_a);
-	nx_mlc_set_layer_dirty(reg, NX_PLANE_VIDEO_LAYER, true);
+	nx_mlc_set_layer_dirty(reg, NX_PLANE_VIDEO_LAYER, sync);
 }

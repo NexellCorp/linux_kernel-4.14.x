@@ -163,18 +163,19 @@ void nx_overlay_set_color(struct nx_overlay *ovl,
 			enum nx_overlay_color type, unsigned int color,
 			bool on, bool adjust);
 int nx_overlay_set_format(struct nx_overlay *ovl,
-			unsigned int format, int pixelbyte);
+			unsigned int format, int pixelbyte, bool sync);
 int nx_overlay_set_position(struct nx_overlay *ovl,
 			int sx, int sy, int sw, int sh,
-			int dx, int dy, int dw, int dh);
+			int dx, int dy, int dw, int dh, bool sync);
 void nx_overlay_set_priority(struct nx_overlay *ovl, int priority);
 void nx_overlay_enable(struct nx_overlay *ovl, bool on);
 void nx_overlay_set_addr_rgb(struct nx_overlay *ovl,
 			unsigned int paddr, unsigned int pixelbyte,
-			unsigned int stride, int align);
+			unsigned int stride, int align, bool sync);
 void nx_overlay_set_addr_yuv(struct nx_overlay *ovl,
 			unsigned int lu_a, unsigned int lu_s,
 			unsigned int cb_a, unsigned int cb_s,
-			unsigned int cr_a, unsigned int cr_s, int planes);
+			unsigned int cr_a, unsigned int cr_s, int planes,
+			bool sync);
 
 #endif
