@@ -526,11 +526,12 @@ static int nx_display_plane_update_rgb(struct drm_framebuffer *fb,
 	plane_rgb_rect(&rect, crtc_x, crtc_y, crtc_w, crtc_h,
 			dp->width, dp->height);
 
-	nx_overlay_set_format(ovl, format, pixel);
+	nx_overlay_set_format(ovl, format, pixel, false);
 	nx_overlay_set_position(ovl,
 			src_x, src_y, src_w, src_h, rect.left, rect.top,
-			rect.right - rect.left, rect.bottom - rect.top);
-	nx_overlay_set_addr_rgb(ovl, dma_addr, pixel, pitch, align);
+			rect.right - rect.left, rect.bottom - rect.top,
+			false);
+	nx_overlay_set_addr_rgb(ovl, dma_addr, pixel, pitch, align, true);
 	nx_overlay_enable(ovl, true);
 
 	return 0;
@@ -539,7 +540,8 @@ static int nx_display_plane_update_rgb(struct drm_framebuffer *fb,
 static int nx_display_plane_addr_yuv(struct nx_overlay *ovl,
 				     dma_addr_t dma_addrs[4],
 				     unsigned int pitches[4],
-				     unsigned int offsets[4], int planes)
+				     unsigned int offsets[4], int planes,
+				     bool sync)
 {
 	dma_addr_t lua, cba, cra;
 	int lus, cbs, crs;
@@ -548,7 +550,8 @@ static int nx_display_plane_addr_yuv(struct nx_overlay *ovl,
 	switch (planes) {
 	case 1:
 		lua = dma_addrs[0], lus = pitches[0];
-		nx_overlay_set_addr_yuv(ovl, lua, lus, 0, 0, 0, 0, planes);
+		nx_overlay_set_addr_yuv(ovl, lua, lus,
+					0, 0, 0, 0, planes, sync);
 		break;
 	case 2:
 	case 3:
@@ -557,7 +560,7 @@ static int nx_display_plane_addr_yuv(struct nx_overlay *ovl,
 		cra = offsets[2] ? lua + offsets[2] : dma_addrs[2];
 		lus = pitches[0], cbs = pitches[1], crs = pitches[2];
 		nx_overlay_set_addr_yuv(ovl, lua, lus,
-				cba, cbs, cra, crs, planes);
+				cba, cbs, cra, crs, planes, sync);
 		break;
 	default:
 		ret = -EINVAL;
@@ -597,12 +600,13 @@ static int nx_display_plane_update_yuv(struct drm_framebuffer *fb,
 	plane_yuv_rect(&rect, crtc_x, crtc_y, crtc_w, crtc_h,
 			dp->width, dp->height);
 
-	nx_overlay_set_format(ovl, format, 0);
+	nx_overlay_set_format(ovl, format, 0, false);
 	nx_overlay_set_position(ovl, src_x, src_y, src_w, src_h,
 			rect.left, rect.top, rect.right - rect.left,
-			rect.bottom - rect.top);
+			rect.bottom - rect.top,
+			false);
 	ret = nx_display_plane_addr_yuv(ovl,
-			dma_addrs, pitches, offsets, num_overlays);
+			dma_addrs, pitches, offsets, num_overlays, true);
 	if (ret < 0)
 		return ret;
 
@@ -799,7 +803,8 @@ static struct nx_overlay *nx_display_plane_create(
 	ovl->type |= yuv ? NX_PLANE_TYPE_VIDEO : 0;
 	ovl->color.alpha = yuv ? 15 : 0;
 
-	snprintf(ovl->name, sizeof(ovl->name), "%d-%s.%d", dp->module, yuv ? "vid" : "rgb", id);
+	snprintf(ovl->name, sizeof(ovl->name),
+		"%d-%s.%d", dp->module, yuv ? "vid" : "rgb", id);
 
 	return ovl;
 }
