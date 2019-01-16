@@ -1207,13 +1207,13 @@ int vpu_dec_decode_slice(struct nx_vpu_ctx *ctx)
 			ctx->strm_size =
 				(STREAM_BUF_SIZE - dec_ctx->start_Addr)
 					+ dec_ctx->end_Addr;
-	}
 
 #ifdef USE_DEPRECATED_STRUCTURE
-	put_dec_info(ctx, &decArg, &timestamp);
+		put_dec_info(ctx, &decArg, &timestamp);
 #else
-	put_dec_info(ctx, &decArg, timestamp);
+		put_dec_info(ctx, &decArg, timestamp);
 #endif
+	}
 
 	if (0 < ret) {
 		NX_DbgMsg(INFO_MSG, "need more frame.\n");
