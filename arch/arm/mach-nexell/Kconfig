@@ -51,6 +51,12 @@ config QUICKBOOT_DEFERRED_INIT
 	help
 	  This option delays some initcall to support quickboot.
 
+config QUICKBOOT_QUIET
+	bool "quickboot quiet booting"
+	default n
+	help
+	  This enables quiet booting for nexell quickboot.
+
 config LATE_INIT_TO_DEFER
 	bool "late init to defer for quickboot"
 	default n
