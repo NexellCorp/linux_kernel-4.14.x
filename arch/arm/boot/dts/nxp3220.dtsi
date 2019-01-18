@@ -776,10 +776,10 @@
 			#sound-dai-cells = <0>;
 			reg = <0x20c00000 0x1000>, <0x20c04000 0x4000>;
 			reg-names = "pdm", "sram";
-			assigned-clocks = <&cmu CLK_SRC_PDM0_CORE>,
-					  <&cmu CLK_SRC_PDM0_AXI>,
+			assigned-clocks = <&cmu CLK_SRC_PDM0_AXI>,
+					  <&cmu CLK_SRC_PDM0_CORE>,
 					  <&cmu CLK_PDM0_AXI>,
-					  <&cmu CLK_PLL1_DIV>;
+					  <&cmu CLK_PDM0_CORE>;
 			assigned-clock-parents = <&cmu CLK_PLL1_DIV>,
 						 <&cmu CLK_PLL1_DIV>,
 						 <0>,
