@@ -31,6 +31,8 @@ Optional Properties:
 - select-pads: The PDM input channel is 8 channels (pdm_lr0/1/2/3),
                but the PDM operates only 4 channels with 2 pads,
 	       you can select input pads number.
+-assigned-core-freqeuncy : skip pdm core clock set, use default core clock.
+
 Example:
 
 pdm: pdm0@20c00000 {
