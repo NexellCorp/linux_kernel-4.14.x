@@ -229,7 +229,7 @@
 
 		pll_ddr1: pll-ddr1 {
 			compatible = "nexell,pll2651", "syscon";
-			reg = <0x23070000 0x60>;
+			reg = <0x23080000 0x60>;
 
 			#clock-cells = <1>;
 			clocks = <&oscclk>;
