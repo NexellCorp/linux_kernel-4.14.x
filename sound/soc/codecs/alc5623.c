@@ -377,12 +377,8 @@ SND_SOC_DAPM_DAC("Left DAC", "Left HiFi Playback",
 	ALC5623_PWR_MANAG_ADD2, 9, 0),
 SND_SOC_DAPM_DAC("Right DAC", "Right HiFi Playback",
 	ALC5623_PWR_MANAG_ADD2, 8, 0),
-/*
- * delete to capture I2SOUT
- * if it is enabled, the 'dapm_power_widgets' calls it and disabled I2SOUT
- * when the power if off after playback
- * SND_SOC_DAPM_MIXER("I2S Mix", ALC5623_PWR_MANAG_ADD1, 15, 0, NULL, 0),
-*/
+
+SND_SOC_DAPM_MIXER("I2S Mix", ALC5623_PWR_MANAG_ADD1, 15, 0, NULL, 0),
 SND_SOC_DAPM_MIXER("AuxI Mix", SND_SOC_NOPM, 0, 0, NULL, 0),
 SND_SOC_DAPM_MIXER("Line Mix", SND_SOC_NOPM, 0, 0, NULL, 0),
 SND_SOC_DAPM_ADC("Left ADC", "Left HiFi Capture",
@@ -825,6 +821,15 @@ static int alc5623_pcm_hw_params(struct snd_pcm_substream *substream,
 	dev_dbg(codec->dev, "%s: sysclk=%d,rate=%d,coeff=0x%04x\n",
 		__func__, alc5623->sysclk, rate, coeff);
 	snd_soc_write(codec, ALC5623_STEREO_AD_DA_CLK_CTRL, coeff);
+
+	/*
+	 * set i2s out
+	 * 'dapm_power_widgets' calls "I2S Mix" and disable I2S out
+	 * after playback, so can't work capture at next time.
+	 */
+	snd_soc_update_bits(codec, ALC5623_PWR_MANAG_ADD1,
+				ALC5623_ADD1_BIAS_ON_ADD,
+				ALC5623_ADD1_BIAS_ON_ADD);
 
 	return 0;
 }
