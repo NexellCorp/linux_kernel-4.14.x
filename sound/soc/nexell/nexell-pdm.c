@@ -1216,6 +1216,9 @@ static int nx_pdm_parse_of_dt(struct platform_device *pdev,
 	of_property_read_u32(node, "sample-rate", &pdm->sample_rate);
 	of_property_read_u32(node, "strobe-hz", &pdm->strobe_hz);
 
+	if (of_property_read_bool(node, "assigned-core-freqeuncy"))
+		pdm->sys_freq = clk_get_rate(pdm->clk);
+
 	step = nx_pdm_strobe_check(pdm->strobe_hz);
 	if (step < 0) {
 		dev_err(&pdev->dev,
