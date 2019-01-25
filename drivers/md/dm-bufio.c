@@ -1983,7 +1983,11 @@ static void __exit dm_bufio_exit(void)
 	BUG_ON(bug);
 }
 
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+deferred_module_init(dm_bufio_init)
+#else
 module_init(dm_bufio_init)
+#endif
 module_exit(dm_bufio_exit)
 
 module_param_named(max_cache_size_bytes, dm_bufio_cache_size, ulong, S_IRUGO | S_IWUSR);

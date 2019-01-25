@@ -117,7 +117,11 @@ static void __exit xfrm6_transport_exit(void)
 	BUG_ON(err);
 }
 
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+deferred_module_init(xfrm6_transport_init);
+#else
 module_init(xfrm6_transport_init);
+#endif
 module_exit(xfrm6_transport_exit);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_XFRM_MODE(AF_INET6, XFRM_MODE_TRANSPORT);

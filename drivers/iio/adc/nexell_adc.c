@@ -957,7 +957,15 @@ static struct platform_driver nexell_adc_driver = {
 	},
 };
 
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+static int __init nexell_adc_driver_init(void)
+{
+	return platform_driver_register(&nexell_adc_driver);
+}
+deferred_module_init(nexell_adc_driver_init)
+#else
 module_platform_driver(nexell_adc_driver);
+#endif
 
 MODULE_AUTHOR("Bon-gyu, KOO <freestyle@nexell.co.kr>");
 MODULE_DESCRIPTION("ADC driver for the Nexell SoC");

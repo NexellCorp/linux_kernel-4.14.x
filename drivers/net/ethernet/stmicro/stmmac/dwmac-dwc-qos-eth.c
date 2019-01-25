@@ -871,7 +871,15 @@ static struct platform_driver dwc_eth_dwmac_driver = {
 		.of_match_table = dwc_eth_dwmac_match,
 	},
 };
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+static int __init dwmac_pltfm_init(void)
+{
+	return platform_driver_register(&dwc_eth_dwmac_driver);
+}
+deferred_module_init(dwmac_pltfm_init)
+#else
 module_platform_driver(dwc_eth_dwmac_driver);
+#endif
 
 MODULE_AUTHOR("Joao Pinto <jpinto@synopsys.com>");
 MODULE_DESCRIPTION("Synopsys DWC Ethernet Quality-of-Service v4.10a driver");

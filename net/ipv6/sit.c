@@ -1935,7 +1935,11 @@ xfrm_tunnel_failed:
 	goto out;
 }
 
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+deferred_module_init(sit_init);
+#else
 module_init(sit_init);
+#endif
 module_exit(sit_cleanup);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_RTNL_LINK("sit");
