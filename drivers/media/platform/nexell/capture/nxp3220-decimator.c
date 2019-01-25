@@ -675,7 +675,15 @@ static struct platform_driver nx_decimator_driver = {
 	},
 };
 
+#ifdef CONFIG_DEFERRED_DECIMATOR
+static int __init nx_decimator_driver_init(void)
+{
+	return platform_driver_register(&nx_decimator_driver);
+}
+deferred_module_init(nx_decimator_driver_init)
+#else
 module_platform_driver(nx_decimator_driver);
+#endif
 
 MODULE_AUTHOR("JongKeun Choi<jkchoi@nexell.co.kr>");
 MODULE_DESCRIPTION("Nexell NXP3220 SoC V4L2 capture decimator driver");
