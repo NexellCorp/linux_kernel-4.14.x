@@ -198,7 +198,11 @@ static void __exit jent_mod_exit(void)
 	crypto_unregister_rng(&jent_alg);
 }
 
+#ifdef CONFIG_DEFERRED_CRYPTO
+deferred_module_init(jent_mod_init)
+#else
 module_init(jent_mod_init);
+#endif
 module_exit(jent_mod_exit);
 
 MODULE_LICENSE("Dual BSD/GPL");
