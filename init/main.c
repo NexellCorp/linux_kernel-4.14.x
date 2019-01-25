@@ -811,7 +811,11 @@ static int __init_or_module do_one_initcall_debug(initcall_t fn)
 	return ret;
 }
 
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+int do_one_initcall(initcall_t fn)
+#else
 int __init_or_module do_one_initcall(initcall_t fn)
+#endif
 {
 	int count = preempt_count();
 	int ret;
@@ -851,6 +855,9 @@ extern initcall_t __initcall4_start[];
 extern initcall_t __initcall5_start[];
 extern initcall_t __initcall6_start[];
 extern initcall_t __initcall7_start[];
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+extern initcall_t __initcall8_start[];
+#endif
 extern initcall_t __initcall_end[];
 
 static initcall_t *initcall_levels[] __initdata = {
@@ -862,6 +869,9 @@ static initcall_t *initcall_levels[] __initdata = {
 	__initcall5_start,
 	__initcall6_start,
 	__initcall7_start,
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+	__initcall8_start,
+#endif
 	__initcall_end,
 };
 
@@ -873,11 +883,18 @@ static char *initcall_level_names[] __initdata = {
 	"arch",
 	"subsys",
 	"fs",
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+	"early_device",
+#endif
 	"device",
 	"late",
 };
 
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+static void do_initcall_level(int level)
+#else
 static void __init do_initcall_level(int level)
+#endif
 {
 	initcall_t *fn;
 
@@ -896,8 +913,13 @@ static void __init do_initcalls(void)
 {
 	int level;
 
+#ifdef CONFIG_LATE_INIT_TO_DEFER
+	for (level = 0; level < ARRAY_SIZE(initcall_levels) - 2; level++)
+		do_initcall_level(level);
+#else
 	for (level = 0; level < ARRAY_SIZE(initcall_levels) - 1; level++)
 		do_initcall_level(level);
+#endif
 }
 
 /*
@@ -993,6 +1015,27 @@ static inline void mark_readonly(void)
 }
 #endif
 
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+
+#define __DEFERRED_LOG__
+
+#ifdef __DEFERRED_LOG__
+#define DEFERRED_LOG(msg)	pr_alert(msg)
+#else
+#define DEFERRED_LOG(msg)	/* nothing */
+#endif
+void do_deferred_initcalls(void);
+
+static int deferred_init_thread(void *nothing)
+{
+	DEFERRED_LOG("deferred init : S T A R T\n");
+	do_deferred_initcalls();
+	DEFERRED_LOG("deferred init : D O N E\n");
+
+	return 0;
+}
+#endif
+
 static int __ref kernel_init(void *unused)
 {
 	int ret;
@@ -1001,12 +1044,18 @@ static int __ref kernel_init(void *unused)
 	/* need to finish all async __init code before freeing the memory */
 	async_synchronize_full();
 	ftrace_free_init_mem();
+#ifndef CONFIG_QUICKBOOT_DEFERRED_INIT
 	free_initmem();
 	mark_readonly();
+#endif
 	system_state = SYSTEM_RUNNING;
 	numa_default_policy();
 
 	rcu_end_inkernel_boot();
+
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+	kthread_run(deferred_init_thread, NULL, "deferred_init");
+#endif
 
 	if (ramdisk_execute_command) {
 		ret = run_init_process(ramdisk_execute_command);
@@ -1029,6 +1078,9 @@ static int __ref kernel_init(void *unused)
 		panic("Requested init %s failed (error %d).",
 		      execute_command, ret);
 	}
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+	pr_alert("init\n");
+#endif
 	if (!try_to_run_init_process("/sbin/init") ||
 	    !try_to_run_init_process("/etc/init") ||
 	    !try_to_run_init_process("/bin/init") ||
@@ -1103,3 +1155,57 @@ static noinline void __init kernel_init_freeable(void)
 	integrity_load_keys();
 	load_default_modules();
 }
+
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+extern initcall_t __deferred_initcall0_start[];
+extern initcall_t __deferred_initcall1_start[];
+extern initcall_t __deferred_initcall2_start[];
+extern initcall_t __deferred_initcall_end[];
+
+static initcall_t *deferred_initcall_levels[] __initdata = {
+	__deferred_initcall0_start,
+	__deferred_initcall1_start,
+	__deferred_initcall2_start,
+	__deferred_initcall_end,
+};
+
+static void __init do_deferred_initcall_level(int level)
+{
+	initcall_t *call;
+
+	for (call = deferred_initcall_levels[level];
+			call < deferred_initcall_levels[level+1]; call++)
+		do_one_initcall(*call);
+}
+
+/* call deferred init routines */
+void do_deferred_initcalls(void)
+{
+	static int already_run = 0;
+	int level;
+
+	if (already_run) {
+		printk("do_deferred_initcalls() has already run\n");
+		return;
+	}
+
+	already_run = 1;
+
+	printk("Running do_deferred_initcalls()\n");
+
+	for (level = 0; level < ARRAY_SIZE(deferred_initcall_levels) - 1;
+			level++)
+		do_deferred_initcall_level(level);
+
+#ifdef CONFIG_LATE_INIT_TO_DEFER
+	for (level = ARRAY_SIZE(initcall_levels) - 2;
+			level < ARRAY_SIZE(initcall_levels) - 1; level++)
+		do_initcall_level(level);
+#endif
+
+	flush_scheduled_work();
+
+	free_initmem();
+	mark_readonly();
+}
+#endif

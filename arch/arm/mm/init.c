@@ -721,8 +721,16 @@ static void update_sections_early(struct section_perm perms[], int n)
 	for_each_process(t) {
 		if (t->flags & PF_KTHREAD)
 			continue;
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+		for_each_thread(t, s) {
+			if (!s->mm)
+				continue;
+			set_section_perms(perms, n, true, s->mm);
+		}
+#else
 		for_each_thread(t, s)
 			set_section_perms(perms, n, true, s->mm);
+#endif
 	}
 	set_section_perms(perms, n, true, current->active_mm);
 	set_section_perms(perms, n, true, &init_mm);
