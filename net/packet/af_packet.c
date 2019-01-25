@@ -4630,7 +4630,11 @@ out:
 	return rc;
 }
 
+#ifdef CONFIG_DEFERRED_IPV6
+deferred_module_init(packet_init);
+#else
 module_init(packet_init);
+#endif
 module_exit(packet_exit);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_NETPROTO(PF_PACKET);
