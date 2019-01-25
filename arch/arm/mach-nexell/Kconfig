@@ -62,3 +62,65 @@ config LATE_INIT_TO_DEFER
 	default n
 	help
 	  This option delays late initcall for quickboot.
+
+if QUICKBOOT_DEFERRED_INIT
+
+menu "Deferred initcall features"
+
+config DEFERRED_CRYPTO
+	bool "deferred initcall crypto"
+
+config DEFERRED_BLOCK_LOOP
+	bool "deferred initcall block loop"
+
+config DEFERRED_BLUETOOTH
+	bool "deferred initcall bluetooth"
+
+config DEFERRED_ADC
+	bool "deferred initcall adc"
+
+config DEFERRED_KEYPAD
+	bool "deferred initcall keypad"
+
+config DEFERRED_BUFIO
+	bool "deferred initcall buffered IO"
+
+config DEFERRED_DECIMATOR
+	bool "deferred initcall decimator"
+
+config DEFERRED_NXE2000
+	bool "deferred initcall NXE2000"
+
+config DEFERRED_NEXELL_MMC
+	bool "deferred initcall NEXELL MMC"
+
+config DEFERRED_DWC_ETHERNET
+	bool "deferred initcall dwc ethernet"
+
+config DEFERRED_TMU
+	bool "deferred initcall TMU"
+
+config DEFERRED_DWC_PLAT
+	bool "deferred initcall dwc platform"
+
+config DEFERRED_EHCI_PLAT
+	bool "deferred initcall ehci platform"
+
+config DEFERRED_OHCI_PLAT
+	bool "deferred initcall ohci platform"
+
+config DEFERRED_SLAB_SYSFS
+	bool "deferred initcall slab sysfs"
+
+config DEFERRED_IPV6
+	bool "deferred initcall ipv6"
+
+config DEFERRED_SOUND_I2S
+	bool "deferred initcall SOUND I2S"
+
+config DEFERRED_SOUND_PDM
+	bool "deferred initcall SOUND PDM"
+
+endmenu
+
+endif

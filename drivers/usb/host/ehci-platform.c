@@ -441,7 +441,11 @@ static int __init ehci_platform_init(void)
 	ehci_init_driver(&ehci_platform_hc_driver, &platform_overrides);
 	return platform_driver_register(&ehci_platform_driver);
 }
+#ifdef CONFIG_DEFERRED_EHCI_PLAT
+deferred_module_init(ehci_platform_init)
+#else
 module_init(ehci_platform_init);
+#endif
 
 static void __exit ehci_platform_cleanup(void)
 {

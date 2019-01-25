@@ -420,7 +420,16 @@ static struct platform_driver bcm434545_bluetooth_platform_driver = {
 		   },
 };
 
+#ifdef CONFIG_DEFERRED_BLUETOOTH
+static int __init dw_bcm434545_bt_pltfm_init(void)
+{
+	return platform_driver_register(&bcm434545_bluetooth_platform_driver);
+}
+deferred_module_init(dw_bcm434545_bt_pltfm_init)
+#else
 module_platform_driver(bcm434545_bluetooth_platform_driver);
+#endif
+
 #endif
 MODULE_ALIAS("platform:bcm434545");
 MODULE_DESCRIPTION("bcm434545_bluetooth");

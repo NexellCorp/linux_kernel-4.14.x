@@ -2060,7 +2060,11 @@ static void __exit drbg_exit(void)
 	crypto_unregister_rngs(drbg_algs, (ARRAY_SIZE(drbg_cores) * 2));
 }
 
+#ifdef CONFIG_DEFERRED_CRYPTO
+deferred_module_init(drbg_init)
+#else
 module_init(drbg_init);
+#endif
 module_exit(drbg_exit);
 #ifndef CRYPTO_DRBG_HASH_STRING
 #define CRYPTO_DRBG_HASH_STRING ""
