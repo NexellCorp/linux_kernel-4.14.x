@@ -83,6 +83,9 @@ extern void cleanup_module(void);
  * be one per module.
  */
 #define module_init(x)	__initcall(x);
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+#define deferred_module_init(x)	deferred_2_initcall(x);
+#endif
 
 /**
  * module_exit() - driver exit entry point
@@ -116,6 +119,9 @@ extern void cleanup_module(void);
 #define fs_initcall(fn)			module_init(fn)
 #define fs_initcall_sync(fn)		module_init(fn)
 #define rootfs_initcall(fn)		module_init(fn)
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+#define early_device_initcall(fn)	module_init(fn)
+#endif
 #define device_initcall(fn)		module_init(fn)
 #define device_initcall_sync(fn)	module_init(fn)
 #define late_initcall(fn)		module_init(fn)

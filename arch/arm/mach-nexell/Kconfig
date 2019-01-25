@@ -44,3 +44,15 @@ config SMP_IRQ_AFFINITY
 	help
 	  This enbalse support allows multi-core to handle irq.
 
+config QUICKBOOT_DEFERRED_INIT
+	bool "deferred initcall for quickboot"
+	depends on ARCH_NEXELL
+	default n
+	help
+	  This option delays some initcall to support quickboot.
+
+config LATE_INIT_TO_DEFER
+	bool "late init to defer for quickboot"
+	default n
+	help
+	  This option delays late initcall for quickboot.
