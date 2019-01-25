@@ -72,7 +72,15 @@ static struct platform_driver nx_pdm_driver = {
 		.of_match_table = of_match_ptr(of_pdm_card),
 	},
 };
+#ifdef CONFIG_DEFERRED_SOUND_PDM
+static int __init nx_pdm_card_driver_init(void)
+{
+	return platform_driver_register(&nx_pdm_driver);
+}
+deferred_module_init(nx_pdm_card_driver_init)
+#else
 module_platform_driver(nx_pdm_driver);
+#endif
 
 MODULE_AUTHOR("jhkim <jhkim@nexell.co.kr>");
 MODULE_DESCRIPTION("Sound PDM/PCM card for Nexell sound");

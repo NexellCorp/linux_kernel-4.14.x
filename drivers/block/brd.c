@@ -597,6 +597,10 @@ static void __exit brd_exit(void)
 	pr_info("brd: module unloaded\n");
 }
 
+#ifdef CONFIG_DEFERRED_BLOCK_LOOP
+deferred_module_init(brd_init);
+#else
 module_init(brd_init);
+#endif
 module_exit(brd_exit);
 
