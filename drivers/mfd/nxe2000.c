@@ -739,7 +739,11 @@ static int __init nxe2000_i2c_init(void)
 
 	return ret;
 }
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+deferred_module_init(nxe2000_i2c_init)
+#else
 subsys_initcall_sync(nxe2000_i2c_init);
+#endif
 
 static void __exit nxe2000_i2c_exit(void)
 {
