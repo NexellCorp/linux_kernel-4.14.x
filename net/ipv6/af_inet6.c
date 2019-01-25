@@ -1095,6 +1095,10 @@ out_unregister_tcp_proto:
 	proto_unregister(&tcpv6_prot);
 	goto out;
 }
+#ifdef CONFIG_DEFERRED_IPV6
+deferred_module_init(inet6_init);
+#else
 module_init(inet6_init);
+#endif
 
 MODULE_ALIAS_NETPROTO(PF_INET6);

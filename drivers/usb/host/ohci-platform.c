@@ -398,7 +398,11 @@ static int __init ohci_platform_init(void)
 	ohci_init_driver(&ohci_platform_hc_driver, &platform_overrides);
 	return platform_driver_register(&ohci_platform_driver);
 }
+#ifdef CONFIG_DEFERRED_OHCI_PLAT
+deferred_module_init(ohci_platform_init)
+#else
 module_init(ohci_platform_init);
+#endif
 
 static void __exit ohci_platform_cleanup(void)
 {

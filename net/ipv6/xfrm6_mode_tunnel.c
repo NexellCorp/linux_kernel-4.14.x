@@ -146,7 +146,11 @@ static void __exit xfrm6_mode_tunnel_exit(void)
 	BUG_ON(err);
 }
 
+#ifdef CONFIG_DEFERRED_IPV6
+deferred_module_init(xfrm6_mode_tunnel_init);
+#else
 module_init(xfrm6_mode_tunnel_init);
+#endif
 module_exit(xfrm6_mode_tunnel_exit);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_XFRM_MODE(AF_INET6, XFRM_MODE_TUNNEL);

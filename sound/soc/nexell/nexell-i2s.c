@@ -890,7 +890,15 @@ static struct platform_driver nx_i2s_driver = {
 	},
 };
 
+#ifdef CONFIG_DEFERRED_SOUND_I2S
+static int __init nx_i2s_driver_init(void)
+{
+	return platform_driver_register(&nx_i2s_driver);
+}
+deferred_module_init(nx_i2s_driver_init)
+#else
 module_platform_driver(nx_i2s_driver);
+#endif
 
 MODULE_AUTHOR("jhkim <jhkim@nexell.co.kr>");
 MODULE_DESCRIPTION("Sound I2S driver for Nexell sound");
