@@ -22,6 +22,7 @@ Optional Properties:
 - sample-rate : Set sample rate. (8000~192000hz)
 - external-mclk-frequency : set external mclk frequency to use in master mode
 - supply-mclk-always : supply mclk ouput always (not disable mclk output).
+- supply-lrck-always : supply lrck ouput always (not disable lrck output).
 
 Example:
 
