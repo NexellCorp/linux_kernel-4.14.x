@@ -119,6 +119,7 @@ struct nx_i2s_data {
 	int frame_bit; /* fix frame bit range */
 	int external_frequency; /* when use external clock in master mode */
 	int supply_mclk_always;
+	int supply_lrck_always;
 
 	/* susepnd */
 	u32 iis_con;
@@ -191,7 +192,7 @@ static void nx_i2s_trx_stop(struct nx_i2s_data *i2s, int stream)
 	else
 		con &= ~CON_RXDMA_ACT;
 
-	if (!(con & CON_DMA_MASK))
+	if (!i2s->supply_lrck_always && !(con & CON_DMA_MASK))
 		con &= ~CON_IIS_ACT;
 
 	writel(con, &reg->con);
@@ -627,6 +628,7 @@ static int nx_i2s_clock_setup(struct platform_device *pdev,
 			struct nx_i2s_data *i2s)
 {
 	struct device_node *node = pdev->dev.of_node;
+	struct i2s_reg *reg = i2s->base;
 
 	i2s->clk = of_clk_get_by_name(node, "i2s");
 	if (IS_ERR(i2s->clk)) {
@@ -650,9 +652,14 @@ static int nx_i2s_clock_setup(struct platform_device *pdev,
 
 	clk_prepare_enable(i2s->pclk);
 
+	if (i2s->supply_lrck_always)
+		writel(readl(&reg->con) | CON_IIS_ACT, &reg->con);
+
 	dev_info(&pdev->dev,
-		"i2s.0x%x: iis %lu hz [pclk:%lu hz]\n",
-		i2s->addr, clk_get_rate(i2s->clk), clk_get_rate(i2s->pclk));
+		"i2s.0x%x: iis %lu hz [pclk:%lu hz] mclk:%s, lrck:%s\n",
+		i2s->addr, clk_get_rate(i2s->clk), clk_get_rate(i2s->pclk),
+		i2s->supply_mclk_always ? "always" : "runtime",
+		i2s->supply_lrck_always ? "always" : "runtime");
 
 	return 0;
 }
@@ -781,6 +788,8 @@ static int nx_i2s_parse_dt(struct platform_device *pdev,
 	of_property_read_u32(node, "sample-rate", &i2s->sample_rate);
 	of_property_read_u32(node, "external-mclk-frequency",
 		&i2s->external_frequency);
+	i2s->supply_lrck_always =
+		of_property_read_bool(node, "supply-lrck-always");
 	i2s->supply_mclk_always =
 		of_property_read_bool(node, "supply-mclk-always");
 
