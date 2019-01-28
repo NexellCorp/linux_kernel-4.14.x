@@ -1017,7 +1017,7 @@ static inline void mark_readonly(void)
 
 #ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
 
-#define __DEFERRED_LOG__
+#undef __DEFERRED_LOG__
 
 #ifdef __DEFERRED_LOG__
 #define DEFERRED_LOG(msg)	pr_alert(msg)
