@@ -1178,18 +1178,19 @@ static void __init do_deferred_initcall_level(int level)
 		do_one_initcall(*call);
 }
 
+int ready_to_run_deferred = 0;
+
 /* call deferred init routines */
 void do_deferred_initcalls(void)
 {
-	static int already_run = 0;
 	int level;
 
-	if (already_run) {
+	if (ready_to_run_deferred) {
 		printk("do_deferred_initcalls() has already run\n");
 		return;
 	}
 
-	already_run = 1;
+	ready_to_run_deferred = 1;
 
 	printk("Running do_deferred_initcalls()\n");
 
