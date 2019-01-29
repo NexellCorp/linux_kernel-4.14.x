@@ -1,5 +1,5 @@
 /*
- * Bluetooth Broadcom GPIO and Low Power Mode control
+ *  Bluetooth Broadcom GPIO and Low Power Mode control
  *
  *  Copyright (C) 2011 Samsung Electronics Co., Ltd.
  *  Copyright (C) 2011 Google, Inc.
@@ -37,9 +37,6 @@
 #include <linux/of.h>
 #include <linux/gpio.h>
 
-//#define BT_LPM_ENABLE
-//#define FORCE_ENABLE_BT_WAKE
-
 static struct rfkill *bt_rfkill;
 #ifdef BT_LPM_ENABLE
 static int bt_wake_state = -1;
@@ -67,17 +64,17 @@ struct bcm_bt_gpio {
 	int irq;
 } bt_gpio;
 
-int bt_is_running;
-unsigned int is_inverted_power;
+struct bcm_bt_status {
+	int bt_is_running;
+	unsigned int is_inverted_power;
+} bt_status;
 
-int check_bt_op(void)
-{
-	return bt_is_running;
+int check_bt_op(void) {
+	return bt_status.bt_is_running;
 }
 EXPORT_SYMBOL(check_bt_op);
 
-static int bcm434545_bt_rfkill_set_power(void *data, bool blocked)
-{
+static int bcm434545_bt_rfkill_set_power(void *data, bool blocked) {
 	/* rfkill_ops callback. Turn transmitter on when blocked is false */
 	if (!blocked) {
 		pr_info("[BT] Bluetooth Power On.\n");
@@ -88,7 +85,7 @@ static int bcm434545_bt_rfkill_set_power(void *data, bool blocked)
 			return -1;
 		}
 #endif
-        if (is_inverted_power) {
+        if (bt_status.is_inverted_power) {
             pr_info("%s: run inverted power reset (onoff=1)\n",
                 __func__);
             gpio_set_value(bt_gpio.bt_en, 1);
@@ -100,7 +97,7 @@ static int bcm434545_bt_rfkill_set_power(void *data, bool blocked)
 
 		msleep(400);
 
-		if (is_inverted_power) {
+		if (bt_status.is_inverted_power) {
 			pr_info("%s: run inverted power control (onoff=0)\n",
 				__func__);
 			gpio_set_value(bt_gpio.bt_en, 0);
@@ -109,14 +106,14 @@ static int bcm434545_bt_rfkill_set_power(void *data, bool blocked)
 				__func__);
 			gpio_set_value(bt_gpio.bt_en, 1);
 		}
-		bt_is_running = 1;
+		bt_status.bt_is_running = 1;
 		msleep(100);
 
 	} else {
 		pr_info("[BT] Bluetooth Power Off.\n");
 
 #ifdef BT_LPM_ENABLE
-		if (is_inverted_power) {
+		if (bt_status.is_inverted_power) {
 			pr_info("%s: check inverted power control\n",
 				__func__);
 			if (!gpio_get_value(bt_gpio.bt_en) &&
@@ -134,8 +131,8 @@ static int bcm434545_bt_rfkill_set_power(void *data, bool blocked)
 			}
 		}
 #endif
-		bt_is_running = 0;
-		if (is_inverted_power) {
+		bt_status.bt_is_running = 0;
+		if (bt_status.is_inverted_power) {
 			pr_info("%s: run inverted power control (onoff=1)\n",
 				__func__);
 			gpio_set_value(bt_gpio.bt_en, 1);
@@ -153,65 +150,64 @@ static const struct rfkill_ops bcm434545_bt_rfkill_ops = {
 };
 
 #ifdef BT_LPM_ENABLE
-static void set_wake_locked(int wake)
-{
+static void set_wake_locked(int wake) {
 #ifdef CONFIG_BT_UART_IN_AUDIO
 	struct uart_port *port = bt_lpm.uport;
 #endif
 #ifdef CONFIG_HAS_WAKELOCK
-	if (wake)
+	if (wake) {
 		wake_lock(&bt_lpm.bt_wake_lock);
+	}
 #endif
 	gpio_set_value(bt_gpio.bt_wake, wake);
 	bt_lpm.dev_wake = wake;
 
 	if (bt_wake_state != wake) {
 #ifdef CONFIG_BT_UART_IN_AUDIO
-		if (bt_lpm.host_wake)
-			if (wake)
+		if (bt_lpm.host_wake) {
+			if (wake) {
 				port->ops->set_wake(port, wake);
-		else
+			}
+		} else {
 			port->ops->set_wake(port, wake);
+		}
 #endif
 		pr_debug("[BT] set_wake_locked value = %d\n", wake);
 		bt_wake_state = wake;
 	}
 }
 
-static enum hrtimer_restart enter_lpm(struct hrtimer *timer)
-{
+static enum hrtimer_restart enter_lpm(struct hrtimer *timer) {
 	if (bt_lpm.uport != NULL)
 		set_wake_locked(0);
 
-	bt_is_running = 0;
+	bt_status.bt_is_running = 0;
 
 #ifdef CONFIG_HAS_WAKELOCK
-	wake_lock_timeout(&bt_lpm.bt_wake_lock, HZ/2);
+	wake_lock_timeout(&bt_lpm.bt_wake_lock, HZ / 2);
 #endif
-
 	return HRTIMER_NORESTART;
 }
 
-void bcm_bt_lpm_exit_lpm_locked(struct uart_port *uport)
-{
+void bcm_bt_lpm_exit_lpm_locked(struct uart_port *uport) {
 	bt_lpm.uport = uport;
 
 	hrtimer_try_to_cancel(&bt_lpm.enter_lpm_timer);
-	bt_is_running = 1;
+	bt_status.bt_is_running = 1;
 	set_wake_locked(1);
 
 	hrtimer_start(&bt_lpm.enter_lpm_timer, bt_lpm.enter_lpm_delay,
 		HRTIMER_MODE_REL);
 }
 
-static void update_host_wake_locked(int host_wake)
-{
-	if (host_wake == bt_lpm.host_wake)
+static void update_host_wake_locked(int host_wake) {
+	if (host_wake == bt_lpm.host_wake) {
 		return;
+	}
 
 	bt_lpm.host_wake = host_wake;
 
-	bt_is_running = 1;
+	bt_status.bt_is_running = 1;
 
 	if (host_wake) {
 #ifdef CONFIG_HAS_WAKELOCK
@@ -230,8 +226,7 @@ static void update_host_wake_locked(int host_wake)
 	}
 }
 
-static irqreturn_t host_wake_isr(int irq, void *dev)
-{
+static irqreturn_t host_wake_isr(int irq, void *dev) {
 #ifdef CONFIG_BT_UART_IN_AUDIO
 	struct uart_port *port = bt_lpm.uport;
 #endif
@@ -247,19 +242,19 @@ static irqreturn_t host_wake_isr(int irq, void *dev)
 	}
 
 #ifdef CONFIG_BT_UART_IN_AUDIO
-	if (bt_lpm.dev_wake)
-		if (host_wake)
+	if (bt_lpm.dev_wake) {
+		if (host_wake) {
 			port->ops->set_wake(port, host_wake);
-	else
+		}
+	} else {
 		port->ops->set_wake(port, host_wake);
+	}
 #endif
 	update_host_wake_locked(host_wake);
-
 	return IRQ_HANDLED;
 }
 
-static int bcm_bt_lpm_init(struct platform_device *pdev)
-{
+static int bcm_bt_lpm_init(struct platform_device *pdev) {
 	int ret;
 
 	hrtimer_init(&bt_lpm.enter_lpm_timer, CLOCK_MONOTONIC,
@@ -283,13 +278,11 @@ static int bcm_bt_lpm_init(struct platform_device *pdev)
 		pr_err("[BT] Request_host wake irq failed.\n");
 		return ret;
 	}
-
 	return 0;
 }
 #endif
 
-static int bcm434545_bluetooth_probe(struct platform_device *pdev)
-{
+static int bcm434545_bluetooth_probe(struct platform_device *pdev) {
 	int rc = 0;
 
 	bt_gpio.bt_en = of_get_gpio(pdev->dev.of_node, 0);
@@ -299,10 +292,10 @@ static int bcm434545_bluetooth_probe(struct platform_device *pdev)
 	}
 
 	if (of_property_read_u32(pdev->dev.of_node, "inverted-power-control",
-				&is_inverted_power)) {
+				&bt_status.is_inverted_power)) {
 		pr_info("%s: inverted-power-control property not found",
 				  __func__);
-		is_inverted_power = 0;
+		bt_status.is_inverted_power = 0;
 	}
 
 	rc = devm_gpio_request(&pdev->dev, bt_gpio.bt_en, "bten_gpio");
@@ -347,7 +340,7 @@ static int bcm434545_bluetooth_probe(struct platform_device *pdev)
 #endif
 #endif
 
-	if (is_inverted_power) {
+	if (bt_status.is_inverted_power) {
 		 pr_info("%s: run inverted power control (onoff=1)\n",
 				   __func__);
 		 gpio_direction_output(bt_gpio.bt_en, 1);
@@ -384,11 +377,11 @@ static int bcm434545_bluetooth_probe(struct platform_device *pdev)
 	rfkill_set_sw_state(bt_rfkill, true);
 
 	dev_info(&pdev->dev, "bcm434545_bluetooth_probe End\n");
+
 	return 0;
 }
 
-static int bcm434545_bluetooth_remove(struct platform_device *pdev)
-{
+static int bcm434545_bluetooth_remove(struct platform_device *pdev) {
 	rfkill_unregister(bt_rfkill);
 	rfkill_destroy(bt_rfkill);
 
