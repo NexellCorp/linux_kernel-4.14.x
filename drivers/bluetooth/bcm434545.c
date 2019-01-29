@@ -1,5 +1,5 @@
 /*
- * Bluetooth Broadcom GPIO and Low Power Mode control
+ *  Bluetooth Broadcom GPIO and Low Power Mode control
  *
  *  Copyright (C) 2011 Samsung Electronics Co., Ltd.
  *  Copyright (C) 2011 Google, Inc.
@@ -37,9 +37,6 @@
 #include <linux/of.h>
 #include <linux/gpio.h>
 
-//#define BT_LPM_ENABLE
-//#define FORCE_ENABLE_BT_WAKE
-
 static struct rfkill *bt_rfkill;
 #ifdef BT_LPM_ENABLE
 static int bt_wake_state = -1;
@@ -67,8 +64,8 @@ struct bcm_bt_gpio {
 	int irq;
 } bt_gpio;
 
-int bt_is_running;
-unsigned int is_inverted_power;
+static int bt_is_running;
+static unsigned int is_inverted_power;
 
 int check_bt_op(void)
 {
