@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d31f1b97_a7f6f549",
+        "filename": "arch/arm/mach-nexell/Kconfig",
+        "patchSetId": 4
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-01-29T03:12:36Z",
+      "side": 1,
+      "message": "set with \"depends on\"\n-------------------------------------------\nmenu \"Deferred initcall features\"\n   depends on QUICKBOOT_DEFERRED_INIT\n-------------------------------------------",
+      "range": {
+        "startLine": 66,
+        "startChar": 0,
+        "endLine": 68,
+        "endChar": 33
+      },
+      "revId": "afd64214b39f2df0fd9d2c8ee33638d5af18784a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
