@@ -16,6 +16,24 @@
       "revId": "1e7435b4a109204a1deed27ccd9c7da24c921e2e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "00cca230_6e3c5f4d",
+        "filename": "init/main.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1181,
+      "author": {
+        "id": 1015651
+      },
+      "writtenOn": "2019-01-29T09:03:52Z",
+      "side": 1,
+      "message": "referenced by drivers/mmc/core/host.c",
+      "parentUuid": "b2a5dcd4_c7ddda11",
+      "revId": "1e7435b4a109204a1deed27ccd9c7da24c921e2e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
     }
   ]
 }
