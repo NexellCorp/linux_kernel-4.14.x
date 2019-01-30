@@ -146,8 +146,35 @@
 		status = "okay";
 	};
 
-	/* PDM Reference IIS */
 	sound2: sound2 {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "nxp3220 blutooth hs sco";
+		status = "okay";
+
+		simple-audio-card,dai-link@0 {
+			mclk-fs = <256>;
+			format = "i2s";
+			frame-master = <&sndcodec2>;
+			bitclock-master = <&sndcodec2>;
+
+			sndcpu2: cpu  {
+				sound-dai = <&i2s2 0>;
+			};
+
+			sndcodec2: codec {
+				sound-dai = <&snd_null_codec0>;
+			};
+		};
+	};
+
+	snd_null_codec1:snd_null_codec@1 {
+		 #sound-dai-cells = <0>;
+		compatible = "nexell,snd-null-codec";
+		status = "okay";
+	};
+
+	/* PDM Reference IIS */
+	sound3: sound3 {
 		compatible = "simple-audio-card";
 		simple-audio-card,name = "nxp3220 PDM Reference I2S";
 		status = "okay";
@@ -158,12 +185,12 @@
 			frame-master = <&sndcodec2>;
 			bitclock-master = <&sndcodec2>;
 
-			sndcpu2: cpu  {
+			sndcpu3: cpu  {
 				sound-dai = <&i2s3 0>;
 			};
 
-			sndcodec2: codec {
-				sound-dai = <&snd_null_codec0>;
+			sndcodec3: codec {
+				sound-dai = <&snd_null_codec1>;
 			};
 		};
 	};
@@ -233,7 +260,7 @@
 
 &drm_lvds {
         backlight = <&backlight>;
-        backlight-delay = <100>;
+        backlight-delay = <200>;
 	enable-gpios = <&gpio_e 13 GPIO_ACTIVE_HIGH>,
 		<&gpio_e 12 GPIO_ACTIVE_HIGH>,
 		<&gpio_e 14 GPIO_ACTIVE_HIGH>;
@@ -483,6 +510,10 @@
 	frame-bit = <32>;
 	sample-rate = <48000>;
 	supply-mclk-always;
+	status = "okay";
+};
+
+&i2s2 {
 	status = "okay";
 };
 
