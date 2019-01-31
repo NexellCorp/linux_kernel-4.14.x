@@ -30,11 +30,11 @@ config ARCH_NXP3220
 	help
 	   Nexell NXP3220 (ARM Cortex A7) SoC based systems
 
-config ARCH_SIP_S31NX
-	bool "SIP_S31NX"
+config ARCH_NXP3225
+	bool "NXP3225"
 	select ARCH_NXP3220_COMMON
 	help
-	  Nexell SIP_S31NX (ARM Cortex A7) based on NXP3220
+	  Nexell NXP3225 (ARM Cortex A7) based on NXP3220
 
 endif
 
