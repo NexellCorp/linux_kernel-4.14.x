@@ -314,7 +314,7 @@ config PWM_MXS
 
 config PWM_NEXELL
 	tristate "Nexell PWM support"
-	depends on ARCH_NXP3220 || ARCH_SIP_S31NX
+	depends on ARCH_NXP3220 || ARCH_NXP3225
 	help
 	  Generic PWM framework driver for Nexell nxp3220 and sip_s31nx.
 

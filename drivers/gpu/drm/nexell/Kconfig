@@ -1,6 +1,6 @@
 config DRM_NEXELL
 	tristate "DRM Support for NEXELL Display Controller"
-	depends on DRM && (ARCH_NXP3220 || ARCH_SIP_S31NX)
+	depends on DRM && (ARCH_NXP3220 || ARCH_NXP3225)
 	select DRM_KMS_HELPER
 	select DRM_KMS_FB_HELPER
 	select DRM_GEM_CMA_HELPER
