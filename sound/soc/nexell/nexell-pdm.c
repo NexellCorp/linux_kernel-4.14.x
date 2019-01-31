@@ -1268,17 +1268,16 @@ static int nx_pdm_parse_of_dt(struct platform_device *pdev,
 	of_property_read_u32(node, "cic-pos-value", &cic->posv);
 	of_property_read_u32(node, "cic-neg-value", &cic->negv);
 
-	dev_info(&pdev->dev, "PDM : irq.%d, %d:%d:%d, filters:%d\n",
-		pdm->irq, pdm->sync_type == pdm_sync_mclk ? pdm->ref_freq :
-		pdm->sys_freq, pdm->strobe_hz, pdm->sample_rate,
-		fir->num_coefs);
-	dev_info(&pdev->dev, "PDM : sync:%s iis.%d rate:%d, freq:%d\n",
-		pdm->sync_type == pdm_sync_mclk ? "MCLK" :
+	dev_info(&pdev->dev, "PDM: sysclk:%d: storbe:%d, sample rate:%d\n",
+		pdm->sync_type == pdm_sync_mclk ? pdm->ref_freq :
+		pdm->sys_freq, pdm->strobe_hz, pdm->sample_rate);
+	dev_info(&pdev->dev, "PDM: ref (iis.%d, sync:%s, rate:%d, freq:%d)\n",
+		pdm->ref_iis, pdm->sync_type == pdm_sync_mclk ? "MCLK" :
 		pdm->sync_type == pdm_sync_lrck ? "LRCLK" : "None",
-		pdm->ref_iis, pdm->ref_sample_rate, pdm->ref_freq);
-	dev_info(&pdev->dev, "PDM : taps:%d,%d, sh:%d, div:%d, pv:%d, nv:%d\n",
-		cic->comb_stages, cic->integrators, cic->shfit, cic->divide,
-		cic->posv, cic->negv);
+		pdm->ref_sample_rate, pdm->ref_freq);
+	dev_info(&pdev->dev, "PDM: filter:%d taps:%d,%d, sh:%d, div:%d, pv:%d, nv:%d\n",
+		fir->num_coefs, cic->comb_stages, cic->integrators,
+		cic->shfit, cic->divide, cic->posv, cic->negv);
 
 	return 0;
 }
