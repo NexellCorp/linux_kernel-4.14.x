@@ -120,4 +120,10 @@ config DEFERRED_SOUND_I2S
 config DEFERRED_SOUND_PDM
 	bool "deferred initcall SOUND PDM"
 
+config DEFERRED_PARAM_SYSFS
+	bool "deferred initcall param sysfs"
+
+config DEFERRED_WIRELESS
+	bool "deferred initcall wireless"
+
 endmenu
