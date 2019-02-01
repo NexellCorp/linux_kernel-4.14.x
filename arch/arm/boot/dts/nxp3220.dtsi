@@ -270,7 +270,9 @@
 					  <&cmu CLK_SRC_UART0_APB>,
 					  <&cmu CLK_SYS_DIV_SYS0_HSIF_APB>,
 					  <&cmu CLK_SYS_DIV_SYS0_HSIF_AXI>,
-					  <&cmu CLK_SYS_DIV_I2C0_APB>;
+					  <&cmu CLK_SYS_DIV_I2C0_APB>,
+					  <&cmu CLK_PLL1_DIV>;		/* for audio 48 khz */
+
 			assigned-clock-parents = <0>,		/* PLL_0 */
 						 <&pll_0 0>,	/* SRC_SYS0_AXI */
 						 <0>,		/* SYS_DIV_SYS0_AXI */
@@ -287,7 +289,9 @@
 						 <&pll_0 0>,	/* SRC_UART0_APB */
 						 <0>,		/* SYS_DIV_SYS0_HSIF_APB */
 						 <0>,		/* SYS_DIV_SYS0_HSIF_AXI */
-						 <0>;		/* SYS_DIV_I2C0_APB */
+						 <0>,		/* SYS_DIV_I2C0_APB */
+					         <0>;		/* CLK_PLL1_DIV */
+
 			assigned-clock-rates = <1000000000>,	/* PLL_0 */
 					       <333333334>,     /* SRC_SYS0_AXI */
 					       <333333334>,     /* SYS_DIV_SYS0_AXI */
@@ -304,7 +308,8 @@
 					       <0>,             /* SRC_UART0_APB */
 					       <125000000>,     /* SYS_DIV_SYS0_HSIF_APB */
 					       <250000000>,     /* SYS_DIV_SYS0_HSIF_AXI */
-					       <100000000>;	/* SYS_DIV_I2C0_APB */
+					       <100000000>,	/* SYS_DIV_I2C0_APB */
+					       <614400000>;	/* CLK_PLL1_DIV: 48 khz */
 		};
 
 		cmu_cpu: clock-controller@22000000 {
@@ -317,6 +322,9 @@
 			compatible = "nexell,nxp3220-cmu-ddr";
 			reg = <0x23000000 0x1000>;
 			#clock-cells = <1>;
+			assigned-clocks = <&cmu_ddr CLK_PLL_DDR1_DIV>;  /* for audio 44.1 khz */
+			assigned-clock-parents = <0>;		/* CLK_PLL_DDR1_DIV */
+			assigned-clock-rates = <677376000>;	/* CLK_PLL_DDR1_DIV: 44.1 Khz */
 		};
 
 		cmu_usb: clock-controller@24000000 {
