@@ -254,19 +254,6 @@
 			#clock-cells = <1>;
 			#reset-cells = <1>;
 
-			clock-names = "oscclk",
-				"pll0",
-				"pll1",
-				"div_cpu_pll",
-				"div_pll_ddr0",
-				"div_pll_ddr1";
-			clocks = <&oscclk>,
-			       <&pll_0>,
-			       <&pll_1>,
-			       <&cmu_cpu CLK_CPU_DIV_PLL>,
-			       <&cmu_ddr CLK_DDR_DIV_PLL_DDR0>,
-			       <&cmu_ddr CLK_DDR_DIV_PLL_DDR1>;
-
 			assigned-clocks = <&pll_0 0>,
 					  <&cmu CLK_SRC_SYS0_AXI>,
 					  <&cmu CLK_SYS_DIV_SYS0_AXI>,
@@ -324,9 +311,6 @@
 			compatible = "nexell,nxp3220-cmu-cpu";
 			reg = <0x22000000 0x800>;
 			#clock-cells = <1>;
-
-			clock-names = "pll_cpu";
-			clocks = <&pll_cpu>;
 		};
 
 		cmu_ddr: clock-controller@23000000 {
@@ -344,9 +328,6 @@
 			compatible = "nexell,nxp3220-cmu-usb";
 			reg = <0x24000000 0x400>;
 			#clock-cells = <1>;
-
-			clock-names = "src_usb0_ahb";
-			clocks = <&cmu CLK_SRC_USB0_AHB>;
 		};
 
 		cmu_mm: clock-controller@25000000 {
@@ -354,20 +335,6 @@
 			reg = <0x25000000 0x1000>;
 			#clock-cells = <1>;
 			#reset-cells = <1>;
-
-			clk-names = "src_mm0_axi",
-				"src_vip0_padout0",
-				"src_vip0_padout1",
-				"src_dpc0_x2",
-				"src_lvds0_vclk",
-				"src_coda960_0_core";
-			clocks = <&cmu CLK_SRC_MM0_AXI>,
-			       <&cmu CLK_SRC_VIP0_PADOUT0>,
-			       <&cmu CLK_SRC_VIP0_PADOUT1>,
-			       <&cmu CLK_SRC_DPC0_X2>,
-			       <&cmu CLK_SRC_LVDS0_VCLK>,
-			       <&cmu CLK_SRC_CODA960_0_CORE>;
-
 			assigned-clocks = <&cmu_mm CLK_MM_DIV_AXI>,
 					  <&cmu_mm CLK_MM_DIV_APB>;
 			assigned-clock-rates = <333333334>, <166666667>;
