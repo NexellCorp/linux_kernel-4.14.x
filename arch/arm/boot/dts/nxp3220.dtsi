@@ -625,11 +625,10 @@
 			compatible = "nexell,nxp3220-i2s";
 			#sound-dai-cells = <0>;
 			reg = <0x20780000 0x1000>;
+			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>;
 			assigned-clocks = <&cmu CLK_SRC_I2S0_CORE>,
-					  <&cmu CLK_I2S0_CORE>,
-					  <&cmu CLK_PLL1_DIV>;
-			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>, <0>;
-			assigned-clock-rates = <0>, <12288000>, <0>;
+					<&cmu CLK_I2S0_CORE>;
+			assigned-clock-rates = <0>, <12288000>;
 			clocks = <&cmu CLK_I2S0_CORE>, <&cmu CLK_I2S0_APB>;
 			clock-names = "i2s", "pclk";
 			dmas = <&pdma0 5 &pdma0 4>;
@@ -643,11 +642,10 @@
 			compatible = "nexell,nxp3220-i2s";
 			#sound-dai-cells = <0>;
 			reg = <0x20790000 0x1000>;
+			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>;
 			assigned-clocks = <&cmu CLK_SRC_I2S1_CORE>,
-					  <&cmu CLK_I2S1_CORE>,
-					  <&cmu CLK_PLL1_DIV>;
-			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>, <0>;
-			assigned-clock-rates = <0>, <12288000>, <0>;
+					<&cmu CLK_I2S1_CORE>;
+			assigned-clock-rates = <0>, <12288000>;
 			clocks = <&cmu CLK_I2S1_CORE>, <&cmu CLK_I2S1_APB>;
 			clock-names = "i2s", "pclk";
 			dmas = <&pdma1 5 &pdma1 4>;
@@ -661,11 +659,10 @@
 			compatible = "nexell,nxp3220-i2s";
 			#sound-dai-cells = <0>;
 			reg = <0x207a0000 0x1000>;
+			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>;
 			assigned-clocks = <&cmu CLK_SRC_I2S2_CORE>,
-					  <&cmu CLK_I2S2_CORE>,
-					  <&cmu CLK_PLL1_DIV>;
-			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>, <0>;
-			assigned-clock-rates = <0>, <12288000>, <0>;
+					<&cmu CLK_I2S2_CORE>;
+			assigned-clock-rates = <0>, <12288000>;
 			clocks = <&cmu CLK_I2S2_CORE>, <&cmu CLK_I2S2_APB>;
 			clock-names = "i2s", "pclk";
 			dmas = <&pdma0 7 &pdma0 6>;
@@ -679,11 +676,10 @@
 			compatible = "nexell,nxp3220-i2s";
 			#sound-dai-cells = <0>;
 			reg = <0x207b0000 0x1000>;
+			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>;
 			assigned-clocks = <&cmu CLK_SRC_I2S3_CORE>,
-					  <&cmu CLK_I2S3_CORE>,
-					  <&cmu CLK_PLL1_DIV>;
-			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>, <0>;
-			assigned-clock-rates = <0>, <12288000>, <0>;
+					<&cmu CLK_I2S3_CORE>;
+			assigned-clock-rates = <0>, <12288000>;
 			clocks = <&cmu CLK_I2S3_CORE>, <&cmu CLK_I2S3_APB>;
 			clock-names = "i2s", "pclk";
 			dmas = <&pdma1 7 &pdma1 6>;
