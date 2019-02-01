@@ -208,6 +208,7 @@ nxp3220_clk_register_composite_one(struct nexell_clk_data *ctx,
 		mux->reg = ctx->reg + comp->mux_offset;
 		mux->shift = comp->mux_shift;
 		mux->mask = BIT(comp->mux_width) - 1;
+		mux->table = comp->mux_table;
 		mux->flags = comp->mux_flags;
 		mux->lock = &ctx->lock;
 	}
