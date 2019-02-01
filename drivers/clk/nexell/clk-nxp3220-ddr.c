@@ -19,7 +19,7 @@
 
 static const struct nexell_fixed_factor_clock ddr_fixed_factor_clks[] __initconst = {
 	FFACTOR(CLK_PLL_DDR0_DIV, "pll_ddr0_div", "pll_ddr0", 1, 2, 0),
-	FFACTOR(CLK_PLL_DDR1_DIV, "pll_ddr1_div", "pll_ddr1", 1, 2, 0),
+	FFACTOR(CLK_PLL_DDR1_DIV, "pll_ddr1_div", "pll_ddr1", 1, 2, CLK_SET_RATE_PARENT),
 };
 
 PNAME(ddr_mux_p)		= { "pll_ddr0_div", "pll_ddr1_div" };
