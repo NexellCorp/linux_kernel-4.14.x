@@ -150,6 +150,7 @@ struct nexell_composite_clock {
 	/* Mux */
 	bool		has_mux;
 	unsigned long	mux_offset;
+	u32            *mux_table;
 	u8		mux_shift;
 	u8		mux_width;
 	u8		mux_flags;
@@ -190,6 +191,15 @@ struct nexell_composite_clock {
 	.mux_offset	= o,				\
 	.mux_shift	= s,				\
 	.mux_width	= w,				\
+	.mux_table	= NULL,				\
+	.mux_flags	= mf,				\
+
+#define COMP_MUX_T(o, s, w, t, mf)			\
+	.has_mux	= true,				\
+	.mux_offset	= o,				\
+	.mux_shift	= s,				\
+	.mux_width	= w,				\
+	.mux_table	= t,				\
 	.mux_flags	= mf,				\
 
 #define COMP_MUX_NONE					\
