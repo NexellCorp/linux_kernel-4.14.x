@@ -13,13 +13,15 @@ Required Properties:
 - clock-names: Must include the following entries:
  - i2s : i2s core clock name for mclk
  - pclk : i2s internal clock controller
- - pll : i2s core clock's source clock for dynamic sample rate.
+ - pll : i2s core clock's source clock for dynamic sample rate for s5pxx18 soc.
+	 It is not used in nxp3220.
 
 Optional Properties:
 - pinctrl-0: Should specify pin control groups used for this controller.
 - pinctrl-names: Should contain only one value - "default".
 - frame-bit : Set frame bit. (16/24/32/48 fs)
-- sample-rate : Set sample rate. (8000~192000hz)
+- sample-rate : Set sample rate. (8000~192000hz),
+		if set this can't dynamic sample rates
 - external-mclk-frequency : set external mclk frequency to use in master mode
 - supply-mclk-always : supply mclk ouput always (not disable mclk output).
 - supply-lrck-always : supply lrck ouput always (not disable lrck output).
