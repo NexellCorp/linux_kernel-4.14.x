@@ -645,10 +645,6 @@ static int nx_i2s_clock_setup(struct platform_device *pdev,
 	}
 
 	i2s->pll = of_clk_get_by_name(node, "pll");
-	if (IS_ERR(i2s->pll))
-		dev_warn(&pdev->dev,
-			"i2s.0x%x: Not support dynamic sample rate\n",
-			i2s->addr);
 
 	clk_prepare_enable(i2s->pclk);
 
