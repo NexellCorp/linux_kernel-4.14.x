@@ -269,7 +269,6 @@ int  nx_drm_display_setup(struct nx_drm_display *display,
 			struct device_node *node, enum nx_panel_type type);
 
 dma_addr_t nx_drm_get_dma_addr(struct drm_plane *plane);
-void nx_drm_set_dma_addr(struct drm_plane *plane, dma_addr_t addr);
 
 /*
  * Nexell drm panel specific platform drivers

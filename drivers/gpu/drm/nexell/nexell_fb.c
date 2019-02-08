@@ -20,13 +20,13 @@ static bool fb_format_bgr;
 MODULE_PARM_DESC(fb_bgr, "frame buffer BGR pixel format");
 module_param_named(fb_bgr, fb_format_bgr, bool, 0600);
 
-#ifdef CONFIG_DRM_CHECK_PRE_INIT
+#ifdef CONFIG_DRM_PRE_INIT_DRM
 #include <linux/memblock.h>
 #include <linux/of_address.h>
 
-static int fb_splash_image_copy(struct device *dev,
-				phys_addr_t logo_phys, size_t logo_size,
-				void *screen_virt, size_t screen_size)
+static int nx_drm_fb_splash_image_copy(struct device *dev,
+				       phys_addr_t logo_phys, size_t logo_size,
+				       void *screen_virt, size_t screen_size)
 {
 	int npages, i;
 	struct page **pages;
@@ -53,7 +53,6 @@ static int fb_splash_image_copy(struct device *dev,
 		(unsigned int)screen_size);
 
 	memcpy(screen_virt, logo_virt, screen_size);
-
 	kfree(pages);
 	vunmap(logo_virt);
 
@@ -63,7 +62,7 @@ static int fb_splash_image_copy(struct device *dev,
 /*
  * get previous FB base address from hw register
  */
-static dma_addr_t fb_get_splash_base(struct drm_fb_helper *fb_helper)
+static dma_addr_t nx_drm_fb_get_splash_base(struct drm_fb_helper *fb_helper)
 {
 	struct drm_crtc *crtc;
 	dma_addr_t dma_addr;
@@ -81,31 +80,14 @@ static dma_addr_t fb_get_splash_base(struct drm_fb_helper *fb_helper)
 	return 0;
 }
 
-void fb_set_splash_base(struct drm_fb_helper *fb_helper,
-			dma_addr_t screen_phys)
-{
-	struct drm_crtc *crtc;
-	int i;
-
-	for (i = 0; i < fb_helper->crtc_count; i++) {
-		crtc = fb_helper->crtc_info[i].mode_set.crtc;
-		if (crtc->primary) {
-			nx_drm_set_dma_addr(
-					crtc->primary, screen_phys);
-			return;
-		}
-	}
-}
-
-static int nx_drm_fb_pre_boot_logo(struct drm_fb_helper *fb_helper)
+static int nx_drm_fb_splash_boot_logo(struct drm_fb_helper *fb_helper)
 {
 	struct device_node *node;
 	struct drm_device *drm = fb_helper->dev;
-	struct fb_info *info = fb_helper->fbdev;
-	void *screen_base = info->screen_base;
-	int size = info->var.xres * info->var.yres *
-			(info->var.bits_per_pixel / 8);
-	dma_addr_t screen_phys = drm->mode_config.fb_base;
+	struct fb_info *fbi = fb_helper->fbdev;
+	void *screen_base = fbi->screen_base;
+	int size = fbi->var.xres * fbi->var.yres *
+			(fbi->var.bits_per_pixel / 8);
 	dma_addr_t logo_phys = 0;
 	int reserved = 0;
 	struct resource r;
@@ -137,15 +119,15 @@ static int nx_drm_fb_pre_boot_logo(struct drm_fb_helper *fb_helper)
 	if (!logo_phys) {
 		DRM_INFO("splash image: no reserved memory-region\n");
 		DRM_INFO("splash image: memroy from HW\n");
-		logo_phys = fb_get_splash_base(fb_helper);
+		logo_phys = nx_drm_fb_get_splash_base(fb_helper);
 		if (!logo_phys) {
 			DRM_ERROR("splash image: not setted memory !!!\n");
 			return -EFAULT;
 		}
 	}
 
-	fb_splash_image_copy(drm->dev, logo_phys, size, screen_base, size);
-	fb_set_splash_base(fb_helper, screen_phys);
+	nx_drm_fb_splash_image_copy(drm->dev, logo_phys, size,
+				    screen_base, size);
 
 	if (reserved) {
 		memblock_free(r.start, resource_size(&r));
@@ -155,6 +137,12 @@ static int nx_drm_fb_pre_boot_logo(struct drm_fb_helper *fb_helper)
 	}
 
 	return 0;
+}
+
+static void nx_drm_fb_splash_hotplug_event(struct drm_fb_helper *fb_helper)
+{
+	/* for FBDEV_EMULATION connection */
+	drm_fb_helper_hotplug_event(fb_helper);
 }
 #endif
 
@@ -274,7 +262,7 @@ static int nx_drm_fb_helper_probe(struct drm_fb_helper *fb_helper,
 	struct drm_framebuffer *fb;
 	unsigned int bytes_per_pixel;
 	unsigned long offset;
-	struct fb_info *info;
+	struct fb_info *fbi;
 	size_t size;
 	unsigned int flags = 0;
 	int ret;
@@ -308,28 +296,28 @@ static int nx_drm_fb_helper_probe(struct drm_fb_helper *fb_helper,
 	fb_helper->fb = &nx_fb_helper->fb->fb;
 	fb = fb_helper->fb;
 
-	info = drm_fb_helper_alloc_fbi(fb_helper);
-	if (IS_ERR(info)) {
+	fbi = drm_fb_helper_alloc_fbi(fb_helper);
+	if (IS_ERR(fbi)) {
 		DRM_ERROR("Failed to allocate framebuffer info.\n");
-		ret = PTR_ERR(info);
+		ret = PTR_ERR(fbi);
 		goto err_drm_fb_destroy;
 	}
-	info->par = fb_helper;
-	info->flags = FBINFO_FLAG_DEFAULT;
-	info->fbops = &nx_fb_ops;
+	fbi->par = fb_helper;
+	fbi->flags = FBINFO_FLAG_DEFAULT;
+	fbi->fbops = &nx_fb_ops;
 
-	drm_fb_helper_fill_fix(info, fb->pitches[0], fb->format->depth);
-	drm_fb_helper_fill_var(info, fb_helper,
+	drm_fb_helper_fill_fix(fbi, fb->pitches[0], fb->format->depth);
+	drm_fb_helper_fill_var(fbi, fb_helper,
 			sizes->fb_width, sizes->fb_height);
 
-	offset = info->var.xoffset * bytes_per_pixel;
-	offset += info->var.yoffset * fb->pitches[0];
+	offset = fbi->var.xoffset * bytes_per_pixel;
+	offset += fbi->var.yoffset * fb->pitches[0];
 
 	drm->mode_config.fb_base = (resource_size_t)nx_obj->dma_addr;
-	info->screen_base = (void __iomem *)nx_obj->cpu_addr + offset;
-	info->fix.smem_start = (unsigned long)(nx_obj->dma_addr + offset);
-	info->screen_size = size;
-	info->fix.smem_len = size;
+	fbi->screen_base = (void __iomem *)nx_obj->cpu_addr + offset;
+	fbi->fix.smem_start = (unsigned long)(nx_obj->dma_addr + offset);
+	fbi->screen_size = size;
+	fbi->fix.smem_len = size;
 
 	if (fb_helper->crtc_info &&
 		fb_helper->crtc_info->desired_mode) {
@@ -338,18 +326,18 @@ static int nx_drm_fb_helper_probe(struct drm_fb_helper *fb_helper,
 				fb_helper->crtc_info->desired_mode;
 
 		drm_display_mode_to_videomode(mode, &vm);
-		info->var.left_margin = vm.hsync_len + vm.hback_porch;
-		info->var.right_margin = vm.hfront_porch;
-		info->var.upper_margin = vm.vsync_len + vm.vback_porch;
-		info->var.lower_margin = vm.vfront_porch;
+		fbi->var.left_margin = vm.hsync_len + vm.hback_porch;
+		fbi->var.right_margin = vm.hfront_porch;
+		fbi->var.upper_margin = vm.vsync_len + vm.vback_porch;
+		fbi->var.lower_margin = vm.vfront_porch;
 		/* pico second */
-		info->var.pixclock = KHZ2PICOS(vm.pixelclock/1000);
+		fbi->var.pixclock = KHZ2PICOS(vm.pixelclock/1000);
 	}
 
-	DRM_INFO("FB counts:%d\n", info->var.yres_virtual/info->var.yres);
+	DRM_INFO("FB counts:%d\n", fbi->var.yres_virtual/fbi->var.yres);
 
-#ifdef CONFIG_DRM_CHECK_PRE_INIT
-	nx_drm_fb_pre_boot_logo(fb_helper);
+#ifdef CONFIG_DRM_PRE_INIT_DRM
+	nx_drm_fb_splash_boot_logo(fb_helper);
 #endif
 	return 0;
 
@@ -429,6 +417,10 @@ int nx_drm_fb_helper_init(struct drm_device *drm)
 	nx_drm_fb_restore_mode_config(drm, num_crtc, num_conns);
 
 	DRM_DEBUG_KMS("crtc num:%d, connector num:%d\n", num_crtc, num_conns);
+
+#ifdef CONFIG_DRM_PRE_INIT_DRM
+	nx_drm_fb_splash_hotplug_event(fb_helper);
+#endif
 
 	return 0;
 
