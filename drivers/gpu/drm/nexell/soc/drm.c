@@ -982,15 +982,3 @@ dma_addr_t nx_drm_get_dma_addr(struct drm_plane *plane)
 
 	return (dma_addr_t)addr;
 }
-
-void nx_drm_set_dma_addr(struct drm_plane *plane, dma_addr_t addr)
-{
-	struct nx_overlay *ovl;
-
-	if (!plane)
-		return;
-
-	ovl = to_nx_plane(plane)->context;
-	nx_mlc_set_rgb_address(ovl->base, ovl->id, (u32)addr);
-	nx_mlc_set_layer_dirty(ovl->base, ovl->id, true);
-}

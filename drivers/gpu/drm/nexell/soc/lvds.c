@@ -61,12 +61,16 @@ struct nx_lvds_reg {
 
 static int lvds_is_enabled(struct nx_lvds_dev *lvds)
 {
-#ifdef CONFIG_DRM_CHECK_PRE_INIT
+#ifdef CONFIG_DRM_PRE_INIT_DRM
 	struct nx_lvds_reg *reg = lvds->reg;
 
+	if (!__clk_is_enabled(lvds->vclk))
+		clk_prepare_enable(lvds->vclk);
+
 	return (readl(&reg->lvdsctrl0) & (1 << 28)) ? 1 : 0;
-#endif
+#else
 	return 0;
+#endif
 }
 
 static int lvds_set_mode(struct nx_drm_display *display,
@@ -74,9 +78,14 @@ static int lvds_set_mode(struct nx_drm_display *display,
 {
 	struct nx_lvds_dev *lvds = display->context;
 
+	pr_debug("%s: pixelclock: %ld, %s\n", __func__, display->vm.pixelclock,
+		lvds_is_enabled(lvds) ? "enabled" : "disabled");
+
 	lvds->ctx.vm = &display->vm;
 
-	clk_set_rate(lvds->vclk, display->vm.pixelclock);
+	if (!lvds_is_enabled(lvds))
+		clk_set_rate(lvds->vclk, display->vm.pixelclock);
+
 	clk_prepare_enable(lvds->vclk);
 	clk_prepare_enable(lvds->phy_clk);
 
@@ -140,6 +149,11 @@ static int lvds_enable(struct nx_drm_display *display)
 	struct nx_lvds_dev *lvds = display->context;
 	struct nx_lvds_reg *reg = lvds->reg;
 
+	pr_debug("%s\n", __func__);
+
+	if (lvds_is_enabled(lvds))
+		return 0;
+
 	/* DPCENB */
 	writel(readl(&reg->lvdsctrl0) | 1 << 28, &reg->lvdsctrl0);
 
@@ -153,6 +167,8 @@ static int lvds_disable(struct nx_drm_display *display)
 {
 	struct nx_lvds_dev *lvds = display->context;
 	struct nx_lvds_reg *reg = lvds->reg;
+
+	pr_debug("%s\n", __func__);
 
 	/* DPCENB */
 	writel(readl(&reg->lvdsctrl0) & ~(1 << 28), &reg->lvdsctrl0);
