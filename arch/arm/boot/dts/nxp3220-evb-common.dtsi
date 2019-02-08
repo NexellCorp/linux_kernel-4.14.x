@@ -40,7 +40,7 @@
 		ranges;
 
 		bl32_mem: bl32_mem@5f000000 {
-			reg = <0x5f000000 0x10000000>;
+			reg = <0x5f000000 0x1000000>;
 			no-map;
 		};
 
@@ -309,7 +309,6 @@
 	disable-wp;
 	status = "okay";
 };
-
 
 &dwc2otg {
 	status = "okay";
