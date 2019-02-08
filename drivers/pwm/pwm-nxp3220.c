@@ -317,17 +317,13 @@ static int __pwm_nexell_config(struct pwm_chip *chip, struct pwm_device *pwm,
 	return 0;
 }
 
-static int pwm_nexell_config(struct pwm_chip *chip, struct pwm_device *pwm,
-			      int duty_ns, int period_ns)
-{
-	return __pwm_nexell_config(chip, pwm, duty_ns, period_ns, false);
-}
-
 static void pwm_nexell_set_invert(struct nexell_pwm_chip *nx_pwm,
 				  unsigned int ch, bool invert)
 {
 	unsigned long flags;
 	u32 tcon;
+
+	dev_dbg(nx_pwm->chip.dev, "ch=%d, invert=%d\n", ch, invert);
 
 	spin_lock_irqsave(&nx_pwm_lock, flags);
 
@@ -357,6 +353,15 @@ static int pwm_nexell_set_polarity(struct pwm_chip *chip,
 	pwm_nexell_set_invert(nx_pwm, pwm->hwpwm, invert);
 
 	return 0;
+}
+
+static int pwm_nexell_config(struct pwm_chip *chip, struct pwm_device *pwm,
+			      int duty_ns, int period_ns)
+{
+	pwm_nexell_set_invert(to_nexell_pwm_chip(chip),
+			      pwm->hwpwm, pwm->state.polarity ? false : true);
+
+	return __pwm_nexell_config(chip, pwm, duty_ns, period_ns, false);
 }
 
 static const struct pwm_ops pwm_nexell_ops = {
