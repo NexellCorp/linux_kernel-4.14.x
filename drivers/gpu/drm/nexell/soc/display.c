@@ -122,6 +122,17 @@ static void nx_display_clock_rate(struct nx_display *dp)
 	clk_set_rate(dp->clk_x1, rate/div);
 }
 
+static int nx_display_is_enabled(struct nx_display *dp)
+{
+#ifdef CONFIG_DRM_PRE_INIT_DRM
+	nx_display_clock_enable(dp, true);
+
+	return nx_dpc_get_enable(dp->dpc_base) ? 1 : 0;
+#else
+	return 0;
+#endif
+}
+
 static void nx_display_sync_format(struct nx_display *dp)
 {
 	struct nx_dpc_reg *reg = dp->dpc_base;
@@ -229,16 +240,11 @@ int nx_display_set_mode(struct nx_display *dp)
 {
 	pr_debug("%s: crtc.%d\n", __func__, dp->module);
 
-#ifdef CONFIG_DRM_CHECK_PRE_INIT
-	if (!dp->boot_on) {
-		bool enb = nx_dpc_get_enable(dp->dpc_base) ? true : false;
-
-		pr_debug("%s: crtc.%d prepare power [%s]\n",
-			__func__, dp->module, enb ? "enabled" : "disabled");
-		if (enb)
-			return 0;
+	if (nx_display_is_enabled(dp)) {
+		pr_debug("%s: crtc.%d power prepared\n", __func__, dp->module);
+		return 0;
 	}
-#endif
+
 	nx_display_clock_rate(dp);
 	nx_display_clock_enable(dp, true);
 	nx_display_sync_format(dp);
@@ -251,23 +257,16 @@ int nx_display_set_mode(struct nx_display *dp)
 void nx_display_enable(struct nx_display *dp, bool on)
 {
 	struct nx_dpc_reg *reg = dp->dpc_base;
-	int count = 200;
-	bool enb = false;
+	int count = 5;
 
-#ifdef CONFIG_DRM_CHECK_PRE_INIT
-	enb = nx_dpc_get_enable(reg) ? true : false;
-
-	pr_debug("%s: crtc.%d %s -> %s\n", __func__, dp->module,
-		dp->boot_on ? "enabled" : "disabled", on ? "on" : "off");
-
-	if (dp->boot_on)
-		enb = false;
-
-	dp->boot_on = true;
-#endif
+	if (on && nx_display_is_enabled(dp)) {
+		nx_dpc_clear_interrupt_pending_all(reg);
+		pr_debug("%s: crtc.%d power enabled\n", __func__, dp->module);
+		return;
+	}
 
 	nx_dpc_clear_interrupt_pending_all(reg);
-	if (on && !enb)
+	if (on)
 		nx_dpc_set_reg_flush(reg);
 
 	nx_dpc_set_enable(reg, on);
@@ -281,13 +280,9 @@ void nx_display_enable(struct nx_display *dp, bool on)
 	 * output devices.
 	 */
 	while (count-- > 0) {
-		int vbl = nx_dpc_get_interrupt_pending(reg);
-
-		if (!vbl) {
-			msleep(20);
+		if (nx_dpc_get_interrupt_pending(reg))
 			break;
-		}
-		mdelay(1);
+		msleep(20);
 	}
 }
 

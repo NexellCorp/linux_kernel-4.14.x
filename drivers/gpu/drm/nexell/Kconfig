@@ -39,7 +39,7 @@ config DRM_NEXELL_GEM_SYSTEM
 	 cached memory. If this option is not selected, drm allocates buffer
 	 in CMA memory.
 
-config DRM_CHECK_PRE_INIT
+config DRM_PRE_INIT_DRM
         bool "Don't reinitialize, use bootloader's Display configuration"
         depends on DRM_NEXELL
         default n
