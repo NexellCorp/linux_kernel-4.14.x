@@ -83,12 +83,6 @@ static int lvds_set_mode(struct nx_drm_display *display,
 
 	lvds->ctx.vm = &display->vm;
 
-	if (!lvds_is_enabled(lvds))
-		clk_set_rate(lvds->vclk, display->vm.pixelclock);
-
-	clk_prepare_enable(lvds->vclk);
-	clk_prepare_enable(lvds->phy_clk);
-
 	return 0;
 }
 
@@ -104,6 +98,12 @@ static int lvds_prepare(struct nx_drm_display *display)
 
 	pr_debug("%s: format: %d, voltage level:%d output:0x%x\n",
 		 __func__, format, v_level, v_output);
+
+	if (!lvds_is_enabled(lvds))
+		clk_set_rate(lvds->vclk, display->vm.pixelclock);
+
+	clk_prepare_enable(lvds->vclk);
+	clk_prepare_enable(lvds->phy_clk);
 
 	if (lvds_is_enabled(lvds))
 		return 0;
@@ -173,8 +173,11 @@ static int lvds_disable(struct nx_drm_display *display)
 	/* DPCENB */
 	writel(readl(&reg->lvdsctrl0) & ~(1 << 28), &reg->lvdsctrl0);
 
-	clk_disable_unprepare(lvds->vclk);
-	clk_disable_unprepare(lvds->phy_clk);
+	if (!__clk_is_enabled(lvds->vclk))
+		clk_disable_unprepare(lvds->vclk);
+
+	if (!__clk_is_enabled(lvds->phy_clk))
+		clk_disable_unprepare(lvds->phy_clk);
 
 	reset_control_assert(lvds->rst);
 
