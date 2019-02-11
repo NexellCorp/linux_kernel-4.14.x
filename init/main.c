@@ -1055,6 +1055,8 @@ static int __ref kernel_init(void *unused)
 
 #ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
 	kthread_run(deferred_init_thread, NULL, "deferred_init");
+
+	pr_alert("init\n");
 #endif
 
 	if (ramdisk_execute_command) {
@@ -1078,9 +1080,6 @@ static int __ref kernel_init(void *unused)
 		panic("Requested init %s failed (error %d).",
 		      execute_command, ret);
 	}
-#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
-	pr_alert("init\n");
-#endif
 	if (!try_to_run_init_process("/sbin/init") ||
 	    !try_to_run_init_process("/etc/init") ||
 	    !try_to_run_init_process("/bin/init") ||
