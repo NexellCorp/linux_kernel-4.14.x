@@ -560,7 +560,7 @@ static int panel_lcd_parse_gpio(struct device *dev, struct lcd_context *ctx)
 
 	for (i = 0; i < ngpios; i++) {
 		enum of_gpio_flags flags;
-		int gpio, val;
+		int gpio;
 
 		gpio = of_get_named_gpio_flags(node,
 					"enable-gpios", i, &flags);
@@ -570,19 +570,15 @@ static int panel_lcd_parse_gpio(struct device *dev, struct lcd_context *ctx)
 		}
 
 		ctx->gpios_active[i] = flags;
-#ifdef CONFIG_DRM_PRE_INIT_DRM
-		/* enable at boottime */
-		val = flags == GPIO_ACTIVE_HIGH ? 1 : 0;
-#else
+#ifndef CONFIG_DRM_PRE_INIT_DRM
 		/* disable at boottime */
-		val = flags == GPIO_ACTIVE_HIGH ? 0 : 1;
-#endif
-		gpiod_direction_output(desc[i], val);
+		gpiod_direction_output(desc[i],
+				       flags == GPIO_ACTIVE_HIGH ? 0 : 1);
 
 		DRM_INFO("LCD enable-gpio.%d act %s\n",
-			gpio, flags == GPIO_ACTIVE_HIGH ?
-			"high" : "low ");
-
+			 gpio, flags == GPIO_ACTIVE_HIGH ?
+			 "high" : "low ");
+#endif
 	}
 
 	return 0;
@@ -605,16 +601,14 @@ static void panel_lcd_parse_backlight(struct device *dev,
 	if (ctx->backlight) {
 		of_property_read_u32(node,
 				"backlight-delay", &ctx->backlight_delay);
-#ifdef CONFIG_DRM_PRE_INIT_DRM
-		ctx->backlight->props.power = FB_BLANK_UNBLANK;
-#else
+#ifndef CONFIG_DRM_PRE_INIT_DRM
 		ctx->backlight->props.power = FB_BLANK_POWERDOWN;
-#endif
 		backlight_update_status(ctx->backlight);
 
 		DRM_INFO("LCD backlight %s, delay:%d\n",
 			ctx->backlight->props.power == FB_BLANK_UNBLANK ?
 			"on" : "off", ctx->backlight_delay);
+#endif
 	}
 }
 #endif
