@@ -522,10 +522,9 @@ static int nx_i2s_hw_params(struct snd_pcm_substream *substream,
 		return ret;
 
 	if (rfs && i2s->rfs != rfs) {
-		dev_warn(i2s->dev, "Check clock setting for %d Khz\n", rate);
-		dev_warn(i2s->dev, "Require %d/%d, IIS %d/%d\n",
-			i2s->sysclk_freq, rfs,
-			i2s->mclk_freq, i2s->rfs);
+		dev_dbg(i2s->dev, "Check clock setting for %d Khz\n", rate);
+		dev_dbg(i2s->dev, "Require %d/%d, IIS %d/%d\n",
+			i2s->sysclk_freq, rfs, i2s->mclk_freq, i2s->rfs);
 	}
 
 	switch (i2s->rfs) {
