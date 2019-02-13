@@ -98,6 +98,12 @@
 		};
 	};
 
+	snd_null_codec:snd_null_codec@0 {
+		 #sound-dai-cells = <0>;
+		compatible = "nexell,snd-null-codec";
+		status = "okay";
+	};
+
 	sound0: sound0 {
 		compatible = "simple-audio-card";
 		simple-audio-card,name = "nxp3220 Audio Card ALC5623 0";
@@ -140,12 +146,6 @@
 		};
 	};
 
-	snd_null_codec0:snd_null_codec@0 {
-		 #sound-dai-cells = <0>;
-		compatible = "nexell,snd-null-codec";
-		status = "okay";
-	};
-
 	sound2: sound2 {
 		compatible = "simple-audio-card";
 		simple-audio-card,name = "nxp3220 blutooth hs sco";
@@ -162,15 +162,9 @@
 			};
 
 			sndcodec2: codec {
-				sound-dai = <&snd_null_codec0>;
+				sound-dai = <&snd_null_codec>;
 			};
 		};
-	};
-
-	snd_null_codec1:snd_null_codec@1 {
-		 #sound-dai-cells = <0>;
-		compatible = "nexell,snd-null-codec";
-		status = "okay";
 	};
 
 	/* PDM Reference IIS */
@@ -190,7 +184,7 @@
 			};
 
 			sndcodec3: codec {
-				sound-dai = <&snd_null_codec1>;
+				sound-dai = <&snd_null_codec>;
 			};
 		};
 	};
