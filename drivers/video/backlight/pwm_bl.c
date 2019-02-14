@@ -462,7 +462,15 @@ static struct platform_driver pwm_backlight_driver = {
 	.shutdown	= pwm_backlight_shutdown,
 };
 
+#ifdef CONFIG_DEFERRED_UP_BL
+static int __init pwm_bl_init(void)
+{
+	return platform_driver_register(&pwm_backlight_driver);
+}
+early_device_initcall(pwm_bl_init)
+#else
 module_platform_driver(pwm_backlight_driver);
+#endif
 
 MODULE_DESCRIPTION("PWM based Backlight Driver");
 MODULE_LICENSE("GPL");

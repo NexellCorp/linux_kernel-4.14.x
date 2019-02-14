@@ -604,7 +604,15 @@ static struct platform_driver pwm_nexell_driver = {
 	.probe		= pwm_nexell_probe,
 	.remove		= pwm_nexell_remove,
 };
+#ifdef CONFIG_DEFERRED_UP_PWM
+static int __init pwm_nxp3220_init(void)
+{
+	return platform_driver_register(&pwm_nexell_driver);
+}
+early_device_initcall(pwm_nxp3220_init)
+#else
 module_platform_driver(pwm_nexell_driver);
+#endif
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Bon-gyu, KOO <freestyle@nexell.co.kr>");

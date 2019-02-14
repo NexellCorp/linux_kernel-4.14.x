@@ -4907,7 +4907,11 @@ static void __exit cfq_exit(void)
 	kmem_cache_destroy(cfq_pool);
 }
 
+#ifdef CONFIG_DEFERRED_UP_BLOCK
+early_device_initcall(cfq_init);
+#else
 module_init(cfq_init);
+#endif
 module_exit(cfq_exit);
 
 MODULE_AUTHOR("Jens Axboe");

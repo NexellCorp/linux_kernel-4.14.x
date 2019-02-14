@@ -165,7 +165,11 @@ static void __exit crc32c_mod_fini(void)
 	crypto_unregister_shash(&alg);
 }
 
+#ifdef CONFIG_DEFERRED_UP_CRC32
+early_device_initcall(crc32c_mod_init);
+#else
 module_init(crc32c_mod_init);
+#endif
 module_exit(crc32c_mod_fini);
 
 MODULE_AUTHOR("Clay Haapala <chaapala@cisco.com>");

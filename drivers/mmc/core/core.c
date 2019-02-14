@@ -2852,7 +2852,11 @@ static void __exit mmc_exit(void)
 	mmc_unregister_bus();
 }
 
+#ifdef CONFIG_DEFERRED_UP_MMC
+arch_initcall(mmc_init);
+#else
 subsys_initcall(mmc_init);
+#endif
 module_exit(mmc_exit);
 
 MODULE_LICENSE("GPL");
