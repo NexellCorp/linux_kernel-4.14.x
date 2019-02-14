@@ -480,7 +480,11 @@ static void __exit nx_drm_exit(void)
 	}
 }
 
+#ifdef CONFIG_DEFERRED_UP_DRM
+early_device_initcall(nx_drm_init);
+#else
 module_init(nx_drm_init);
+#endif
 module_exit(nx_drm_exit);
 
 MODULE_AUTHOR("jhkim <jhkim@nexell.co.kr>");

@@ -115,7 +115,11 @@ static void __exit noop_exit(void)
 	elv_unregister(&elevator_noop);
 }
 
+#ifdef CONFIG_DEFERRED_UP_BLOCK
+early_device_initcall(noop_init);
+#else
 module_init(noop_init);
+#endif
 module_exit(noop_exit);
 
 

@@ -270,7 +270,11 @@ static int __init aio_setup(void)
 
 	return 0;
 }
+#ifdef CONFIG_DEFERRED_UP_FS
+early_device_initcall(aio_setup);
+#else
 __initcall(aio_setup);
+#endif
 
 static void put_aio_ring_file(struct kioctx *ctx)
 {

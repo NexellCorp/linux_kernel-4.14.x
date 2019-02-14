@@ -1393,7 +1393,8 @@ out_fail_sysfs:
 out_fail_pernet:
 	return err;
 }
-#ifdef CONFIG_DEFERRED_WIRELESS
+#if defined(CONFIG_DEFERRED_WIRELESS) || \
+	defined(CONFIG_DEFERRED_UP_WIRELESS)
 deferred_0_initcall(cfg80211_init);
 #else
 subsys_initcall(cfg80211_init);

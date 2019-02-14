@@ -671,7 +671,11 @@ static void __exit deadline_exit(void)
 	elv_unregister(&mq_deadline);
 }
 
+#ifdef CONFIG_DEFERRED_UP_BLOCK
+early_device_initcall(deadline_init);
+#else
 module_init(deadline_init);
+#endif
 module_exit(deadline_exit);
 
 MODULE_AUTHOR("Jens Axboe");

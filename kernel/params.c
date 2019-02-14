@@ -951,7 +951,8 @@ static int __init param_sysfs_init(void)
 	module_sysfs_initialized = 1;
 
 	version_sysfs_builtin();
-#ifndef CONFIG_DEFERRED_PARAM_SYSFS
+#if !defined(CONFIG_DEFERRED_PARAM_SYSFS) && \
+	!defined(CONFIG_DEFERRED_UP_PARAM_SYSFS)
 	param_sysfs_builtin();
 #endif
 
@@ -959,14 +960,15 @@ static int __init param_sysfs_init(void)
 }
 subsys_initcall(param_sysfs_init);
 
-#ifdef CONFIG_DEFERRED_PARAM_SYSFS
+#if defined(CONFIG_DEFERRED_PARAM_SYSFS) || \
+	defined(CONFIG_DEFERRED_UP_PARAM_SYSFS)
 static int __init param_sysfs_init_split(void)
 {
 	param_sysfs_builtin();
 
 	return 0;
 }
-deferred_module_init(param_sysfs_init_split);
+deferred_0_initcall(param_sysfs_init_split);
 #endif
 
 #endif /* CONFIG_SYSFS */

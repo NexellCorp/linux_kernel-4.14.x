@@ -3546,7 +3546,11 @@ static void __exit dw_mci_exit(void)
 {
 }
 
+#ifdef CONFIG_DEFERRED_UP_MMC
+early_device_initcall(dw_mci_init);
+#else
 module_init(dw_mci_init);
+#endif
 module_exit(dw_mci_exit);
 
 MODULE_DESCRIPTION("DW Multimedia Card Interface driver");

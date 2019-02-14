@@ -638,4 +638,8 @@ static int __init init_devpts_fs(void)
 	}
 	return err;
 }
+#ifdef CONFIG_DEFERRED_UP_FS
+early_device_initcall(init_devpts_fs);
+#else
 module_init(init_devpts_fs)
+#endif

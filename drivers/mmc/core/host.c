@@ -34,7 +34,8 @@
 
 #define cls_dev_to_mmc_host(d)	container_of(d, struct mmc_host, class_dev)
 
-#ifdef CONFIG_DEFERRED_NEXELL_MMC
+#if defined(CONFIG_DEFERRED_NEXELL_MMC) || \
+	defined(CONFIG_DEFERRED_UP_NEXELL_MMC)
 extern int ready_to_run_deferred;
 #endif
 
@@ -221,7 +222,8 @@ int mmc_of_parse(struct mmc_host *host)
 	/* f_max is obtained from the optional "max-frequency" property */
 	device_property_read_u32(dev, "max-frequency", &host->f_max);
 
-#ifdef CONFIG_DEFERRED_NEXELL_MMC
+#if defined(CONFIG_DEFERRED_NEXELL_MMC) || \
+	defined(CONFIG_DEFERRED_UP_NEXELL_MMC)
 	if (device_property_read_bool(dev, "deferred-probe"))
 		if (!ready_to_run_deferred)
 			return -EPROBE_DEFER;

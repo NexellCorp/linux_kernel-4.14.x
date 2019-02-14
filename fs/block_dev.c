@@ -450,7 +450,11 @@ static __init int blkdev_init(void)
 		return -ENOMEM;
 	return 0;
 }
+#ifdef CONFIG_DEFERRED_UP_FS
+early_device_initcall(blkdev_init);
+#else
 module_init(blkdev_init);
+#endif
 
 int __sync_blockdev(struct block_device *bdev, int wait)
 {

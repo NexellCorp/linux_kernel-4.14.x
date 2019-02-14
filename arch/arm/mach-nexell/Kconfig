@@ -152,4 +152,60 @@ config DEFERRED_WIRELESS
 	bool "deferred initcall wireless"
 	default y if DEFERRED_LEVEL=1
 
+config DEFERRED_UP_BLUETOOTH
+	bool "deferred initcall level up bluetooth"
+	default y if DEFERRED_LEVEL=2
+
+config DEFERRED_UP_NXE2000
+	bool "deferred initcall level up nxe2000"
+	default y if DEFERRED_LEVEL=2
+
+config DEFERRED_UP_NEXELL_MMC
+	bool "deferred initcall level up nexell mmc"
+	default y if DEFERRED_LEVEL=2
+
+config DEFERRED_UP_PARAM_SYSFS
+	bool "deferred initcall level up param sysfs"
+	default y if DEFERRED_LEVEL=2
+
+config DEFERRED_UP_WIRELESS
+	bool "deferred initcall level up wireless"
+	default y if DEFERRED_LEVEL=2
+
+config DEFERRED_UP_BLOCK
+	bool "deferred initcall level up BLOCK"
+	default y if DEFERRED_LEVEL=2
+
+config DEFERRED_UP_CRC32
+	bool "deferred initcall level up crc32"
+	default y if DEFERRED_LEVEL=2
+
+config DEFERRED_UP_DMA
+	bool "deferred initcall level up DMA"
+	default y if DEFERRED_LEVEL=2
+
+config DEFERRED_UP_DRM
+	bool "deferred initcall level up DRM"
+	default y if DEFERRED_LEVEL=2
+
+config DEFERRED_UP_MMC
+	bool "deferred initcall level up MMC"
+	default y if DEFERRED_LEVEL=2
+
+config DEFERRED_UP_PWM
+	bool "initcall initcall level up PWM"
+	default y if DEFERRED_LEVEL=2
+
+config DEFERRED_UP_SERIAL
+	bool "initcall initcall level up serial"
+	default y if DEFERRED_LEVEL=2
+
+config DEFERRED_UP_BL
+	bool "initcall initcall level up backlight"
+	default y if DEFERRED_LEVEL=2
+
+config DEFERRED_UP_FS
+	bool "initcall initcall level up FileSystem"
+	default y if DEFERRED_LEVEL=2
+
 endmenu
