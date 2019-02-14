@@ -2482,4 +2482,8 @@ static int __init throtl_init(void)
 	return blkcg_policy_register(&blkcg_policy_throtl);
 }
 
+#ifdef CONFIG_DEFERRED_UP_BLOCK
+early_device_initcall(throtl_init);
+#else
 module_init(throtl_init);
+#endif

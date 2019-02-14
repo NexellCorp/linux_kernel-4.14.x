@@ -767,7 +767,15 @@ static struct platform_driver dw8250_platform_driver = {
 	.remove			= dw8250_remove,
 };
 
+#ifdef CONFIG_DEFERRED_UP_SERIAL
+static int __init dw8250_platform_driver_init(void)
+{
+	return platform_driver_register(&dw8250_platform_driver);
+}
+fs_initcall(dw8250_platform_driver_init)
+#else
 module_platform_driver(dw8250_platform_driver);
+#endif
 
 MODULE_AUTHOR("Jamie Iles");
 MODULE_LICENSE("GPL");

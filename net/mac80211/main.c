@@ -1280,7 +1280,8 @@ static void __exit ieee80211_exit(void)
 	rcu_barrier();
 }
 
-#ifdef CONFIG_DEFERRED_WIRELESS
+#if defined(CONFIG_DEFERRED_WIRELESS) || \
+	defined(CONFIG_DEFERRED_UP_WIRELESS)
 deferred_0_initcall(ieee80211_init);
 #else
 subsys_initcall(ieee80211_init);
