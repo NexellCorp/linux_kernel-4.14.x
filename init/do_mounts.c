@@ -587,7 +587,7 @@ void __init prepare_namespace(void)
 			saved_root_name);
 		while (driver_probe_done() != 0 ||
 			(ROOT_DEV = name_to_dev_t(saved_root_name)) == 0)
-#ifdef QUICKBOOT_DEFERRED_INIT
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
 			msleep(1);
 #else
 			msleep(5);
