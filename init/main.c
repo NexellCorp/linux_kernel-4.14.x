@@ -912,9 +912,10 @@ static void __init do_initcall_level(int level)
 static void __init do_initcalls(void)
 {
 	int level;
-
 #ifdef CONFIG_LATE_INIT_TO_DEFER
-	for (level = 0; level < ARRAY_SIZE(initcall_levels) - 2; level++)
+	int d = CONFIG_DEFERRED_LEVEL;
+
+	for (level = 0; level < ARRAY_SIZE(initcall_levels) - d - 1; level++)
 		do_initcall_level(level);
 #else
 	for (level = 0; level < ARRAY_SIZE(initcall_levels) - 1; level++)
@@ -1183,6 +1184,9 @@ int ready_to_run_deferred = 0;
 void do_deferred_initcalls(void)
 {
 	int level;
+#ifdef CONFIG_LATE_INIT_TO_DEFER
+	int d = CONFIG_DEFERRED_LEVEL;
+#endif
 
 	if (ready_to_run_deferred) {
 		printk("do_deferred_initcalls() has already run\n");
@@ -1198,7 +1202,7 @@ void do_deferred_initcalls(void)
 		do_deferred_initcall_level(level);
 
 #ifdef CONFIG_LATE_INIT_TO_DEFER
-	for (level = ARRAY_SIZE(initcall_levels) - 2;
+	for (level = ARRAY_SIZE(initcall_levels) - d - 1;
 			level < ARRAY_SIZE(initcall_levels) - 1; level++)
 		do_initcall_level(level);
 #endif
