@@ -1407,4 +1407,8 @@ static __init int dio_init(void)
 	dio_cache = KMEM_CACHE(dio, SLAB_PANIC);
 	return 0;
 }
+#ifdef CONFIG_DEFERRED_UP_FS
+early_device_initcall(dio_init);
+#else
 module_init(dio_init)
+#endif

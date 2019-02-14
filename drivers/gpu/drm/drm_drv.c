@@ -1000,5 +1000,9 @@ error:
 	return ret;
 }
 
+#ifdef CONFIG_DEFERRED_UP_MMC
+early_device_initcall(drm_core_init);
+#else
 module_init(drm_core_init);
+#endif
 module_exit(drm_core_exit);

@@ -2713,6 +2713,10 @@ static void __exit journal_exit(void)
 }
 
 MODULE_LICENSE("GPL");
+#ifdef CONFIG_DEFERRED_UP_FS
+early_device_initcall(journal_init);
+#else
 module_init(journal_init);
+#endif
 module_exit(journal_exit);
 

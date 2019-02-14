@@ -107,7 +107,15 @@ static struct platform_driver dw_mci_pltfm_driver = {
 	},
 };
 
+#ifdef CONFIG_DEFERRED_UP_MMC
+static int __init dw_mmc_pltfm_init(void)
+{
+	return platform_driver_register(&dw_mci_pltfm_driver);
+}
+subsys_initcall(dw_mmc_pltfm_init);
+#else
 module_platform_driver(dw_mci_pltfm_driver);
+#endif
 
 MODULE_DESCRIPTION("DW Multimedia Card Interface driver");
 MODULE_AUTHOR("NXP Semiconductor VietNam");

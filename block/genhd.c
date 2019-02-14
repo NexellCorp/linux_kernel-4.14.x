@@ -1328,7 +1328,11 @@ static int __init proc_genhd_init(void)
 	proc_create("partitions", 0, NULL, &proc_partitions_operations);
 	return 0;
 }
+#ifdef CONFIG_DEFERRED_UP_BLOCK
+early_device_initcall(proc_genhd_init);
+#else
 module_init(proc_genhd_init);
+#endif
 #endif /* CONFIG_PROC_FS */
 
 dev_t blk_lookup_devt(const char *name, int partno)
