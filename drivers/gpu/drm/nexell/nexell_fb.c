@@ -17,8 +17,12 @@
 #define PREFERRED_BPP		32
 
 static bool fb_format_bgr;
+static bool fb_format_argb;
+
 MODULE_PARM_DESC(fb_bgr, "frame buffer BGR pixel format");
 module_param_named(fb_bgr, fb_format_bgr, bool, 0600);
+MODULE_PARM_DESC(fb_argb, "frame buffer ARGB pixel format");
+module_param_named(fb_argb, fb_format_argb, bool, 0600);
 
 #ifdef CONFIG_DRM_PRE_INIT_DRM
 #include <linux/memblock.h>
@@ -222,7 +226,8 @@ static struct nx_drm_fb *nx_drm_fb_alloc(
 	return nx_fb;
 }
 
-static uint32_t nx_drm_fb_mode_format(uint32_t bpp, uint32_t depth, bool bgr)
+static uint32_t nx_drm_fb_mode_format(uint32_t bpp, uint32_t depth,
+				      bool bgr, bool argb)
 {
 	uint32_t fmt;
 
@@ -240,7 +245,7 @@ static uint32_t nx_drm_fb_mode_format(uint32_t bpp, uint32_t depth, bool bgr)
 		fmt = bgr ? DRM_FORMAT_BGR888 : DRM_FORMAT_RGB888;
 		break;
 	case 32:
-		if (depth == 24)
+		if ((!argb) && (depth == 24))
 			fmt = bgr ? DRM_FORMAT_XBGR8888 : DRM_FORMAT_XRGB8888;
 		else
 			fmt = bgr ? DRM_FORMAT_ABGR8888 : DRM_FORMAT_ARGB8888;
@@ -279,7 +284,7 @@ static int nx_drm_fb_helper_probe(struct drm_fb_helper *fb_helper,
 	mode_cmd.height = sizes->surface_height;
 	mode_cmd.pitches[0] = sizes->surface_width * bytes_per_pixel;
 	mode_cmd.pixel_format = nx_drm_fb_mode_format(sizes->surface_bpp,
-		sizes->surface_depth, fb_format_bgr);
+		sizes->surface_depth, fb_format_bgr, fb_format_argb);
 
 	/* for double buffer */
 	size = mode_cmd.pitches[0] * mode_cmd.height;
