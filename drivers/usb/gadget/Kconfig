@@ -508,6 +508,21 @@ choice
 	  controller, and the relevant drivers for each function declared
 	  by the device.
 
+config USB_CONFIGFS_F_IAP
+	tristate "Apple Carplay (IAP)"
+	depends on USB_CONFIGFS
+	depends on NET
+	select USB_U_ETHER
+	help
+	  NCM is an advanced protocol for Ethernet encapsulation, allows
+	  grouping of several ethernet frames into one USB transfer and
+	  different alignment possibilities.
+
+config USB_F_IAP
+	tristate "USB_F_IAP"
+	default m
+	depends on USB_CONFIGFS_F_IAP
+
 source "drivers/usb/gadget/legacy/Kconfig"
 
 endchoice
