@@ -482,6 +482,9 @@ config USB_CONFIGFS_F_TCM
 	  Both protocols can work on USB2.0 and USB3.0.
 	  UAS utilizes the USB 3.0 feature called streams support.
 
+config USB_F_IAP
+	tristate
+
 choice
 	tristate "USB Gadget precomposed configurations"
 	default USB_ETH
@@ -507,6 +510,17 @@ choice
 	  both the device instantiation as a child for a USB gadget
 	  controller, and the relevant drivers for each function declared
 	  by the device.
+
+config USB_CONFIGFS_F_IAP
+	bool "Apple Carplay (IAP)"
+	depends on USB_CONFIGFS
+	depends on NET
+	select USB_U_ETHER
+	select USB_F_IAP
+	help
+	  NCM is an advanced protocol for Ethernet encapsulation, allows
+	  grouping of several ethernet frames into one USB transfer and
+	  different alignment possibilities.
 
 source "drivers/usb/gadget/legacy/Kconfig"
 
