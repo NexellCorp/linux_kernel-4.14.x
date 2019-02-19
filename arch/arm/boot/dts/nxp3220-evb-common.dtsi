@@ -98,8 +98,14 @@
 		};
 	};
 
-	snd_null_codec:snd_null_codec@0 {
-		 #sound-dai-cells = <0>;
+	snd_pdm_ref:snd_ref_pdm@0 {
+		#sound-dai-cells = <0>;
+		compatible = "nexell,snd-null-codec";
+		status = "okay";
+	};
+
+	snd_bt_codec:snd_bt_codec@0 {
+		#sound-dai-cells = <0>;
 		compatible = "nexell,snd-null-codec";
 		status = "okay";
 	};
@@ -162,7 +168,7 @@
 			};
 
 			sndcodec2: codec {
-				sound-dai = <&snd_null_codec>;
+				sound-dai = <&snd_bt_codec>;
 			};
 		};
 	};
@@ -184,7 +190,7 @@
 			};
 
 			sndcodec3: codec {
-				sound-dai = <&snd_null_codec>;
+				sound-dai = <&snd_pdm_ref>;
 			};
 		};
 	};
@@ -494,15 +500,18 @@
 
 &i2s0 {
 	frame-bit = <32>;
-	sample-rate = <48000>;
 	supply-mclk-always;
 	status = "okay";
 };
 
 &i2s1 {
 	frame-bit = <32>;
-	sample-rate = <48000>;
 	supply-mclk-always;
+	status = "okay";
+};
+
+/* BT slave */
+&i2s2 {
 	status = "okay";
 };
 
