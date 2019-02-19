@@ -86,7 +86,7 @@
 	i2c_gpio1: i2c@1 {
 		compatible = "i2c-gpio";
 		gpios = <&gpio_d 28 0 /* sda */
-		    &gpio_d 29 0 /* scl */>;
+			&gpio_d 29 0 /* scl */>;
 		i2c-gpio,delay-us = <2>;
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -96,6 +96,15 @@
 			compatible = "realtek,alc5623";
 			reg = <0x1a>;
 		};
+	};
+
+	i2c_gpio2: i2c@2 {
+		compatible = "i2c-gpio";
+		gpios = <&gpio_b 29 0 /* sda */
+			&gpio_b 30 0 /* scl */>;
+		i2c-gpio,delay-us = <2>;
+		#address-cells = <1>;
+		#size-cells = <0>;
 	};
 
 	snd_pdm_ref:snd_ref_pdm@0 {
@@ -458,7 +467,7 @@
 	}; /* nxe1500@33 */
 }; /* &i2c_0 */
 
-&i2c_1 {
+&i2c_gpio2 {
 	status = "okay";
 	#address-cells = <1>;
 	#size-cells = <0>;
