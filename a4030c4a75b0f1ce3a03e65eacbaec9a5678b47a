@@ -1,0 +1,90 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1ed1bef3_930cba7f",
+        "filename": "drivers/usb/gadget/function/f_iap.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-02-19T06:39:22Z",
+      "side": 1,
+      "message": "remove empty line",
+      "revId": "a4030c4a75b0f1ce3a03e65eacbaec9a5678b47a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "73f76872_9d35a4bf",
+        "filename": "drivers/usb/gadget/function/f_iap.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-02-19T06:39:22Z",
+      "side": 1,
+      "message": "remove empty lines",
+      "range": {
+        "startLine": 20,
+        "startChar": 0,
+        "endLine": 21,
+        "endChar": 0
+      },
+      "revId": "a4030c4a75b0f1ce3a03e65eacbaec9a5678b47a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "42f1636b_6a2c3c76",
+        "filename": "drivers/usb/gadget/function/u_ether.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-02-19T06:39:22Z",
+      "side": 1,
+      "message": "remove extern",
+      "range": {
+        "startLine": 95,
+        "startChar": 0,
+        "endLine": 95,
+        "endChar": 6
+      },
+      "revId": "a4030c4a75b0f1ce3a03e65eacbaec9a5678b47a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d1875efc_fc035199",
+        "filename": "drivers/usb/gadget/function/u_ether.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-02-19T06:39:22Z",
+      "side": 1,
+      "message": "remove extern",
+      "range": {
+        "startLine": 96,
+        "startChar": 0,
+        "endLine": 96,
+        "endChar": 6
+      },
+      "revId": "a4030c4a75b0f1ce3a03e65eacbaec9a5678b47a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
