@@ -308,6 +308,7 @@
 	status = "okay";
 	pinctrl-0 = <&otg_vbus_en>;
 	pinctrl-names = "default";
+	nouse_idcon = <1>;
 };
 
 &ehci {
@@ -489,6 +490,23 @@
 			linux,input-type = <EV_KEY>;
 			linux,code = <KEY_3>;
 		};
+	};
+};
+
+&i2c_2 { /* ipod */
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+
+	rate = <400000>;
+	retry-delay = <500>;
+	retry-cnt = <10>;
+
+	ipod: ipod@10 {
+		#sound-dai-cells = <0>;
+		compatible = "fms,ipod";
+		reg = <0x10>;
+		rst-gpios = <&gpio_d 9 0>;
 	};
 };
 
