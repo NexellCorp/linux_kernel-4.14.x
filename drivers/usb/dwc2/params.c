@@ -151,6 +151,7 @@ static void dwc2_set_nxp3220_params(struct dwc2_hsotg *hsotg)
 	p->ahbcfg = GAHBCFG_HBSTLEN_INCR16 <<
 		GAHBCFG_HBSTLEN_SHIFT;
 	p->dma_desc_enable = true; /* enable ddma for gadget, hcd */
+	p->g_dma_desc = false;
 	p->host_channels = 16;
 	p->host_rx_fifo_size = 1024;
 	p->host_nperio_tx_fifo_size = 384;
