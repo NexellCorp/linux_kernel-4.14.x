@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "66a950ae_067664a4",
+        "filename": "drivers/usb/dwc2/params.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 314,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-02-20T00:02:35Z",
+      "side": 1,
+      "message": "Explain why you disabled dma",
+      "revId": "bf46e3cbab5c37a6cfb6ea298e23336b559b4ec9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
