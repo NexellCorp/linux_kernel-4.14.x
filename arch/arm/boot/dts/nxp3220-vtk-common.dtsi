@@ -346,6 +346,14 @@
 	status = "okay";
 };
 
+&nand {
+	nand-ecc-strength = <4>;
+	nand-ecc-step-size = <512>;
+	nand-timing-mode = <3>;
+
+	wp-gpio = <&gpio_c 16 GPIO_ACTIVE_LOW>;
+};
+
 &pinctrl_0 {
 	key_3: key@3 {
 		nexell,pins = "alive-3";
