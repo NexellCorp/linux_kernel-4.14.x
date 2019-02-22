@@ -424,6 +424,30 @@
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
 
+	nand_data: nand-data {
+		nexell,pins = "gpiob-9", "gpiob-10", "gpiob-11", "gpiob-12",
+			      "gpiob-13", "gpiob-14", "gpiob-15", "gpiob-16",
+			      "gpiob-17", "gpiob-18", "gpiob-21", "gpiob-22",
+			      "gpiob-23", "gpiob-24";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	nand_cs0: nand-cs0 {
+		nexell,pins = "gpiob-19";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	nand_cs1: nand-cs1 {
+		nexell,pins = "gpiob-20";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
 	otg_vbus_en: otg-vbus-en {
 		nexell,pins = "gpioc-15";
 		nexell,pin-function = <NX_PIN_FUNC2>;
