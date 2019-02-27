@@ -26,3 +26,7 @@
 	deferred-probe;
 	status = "okay";
 };
+
+&spi_0 {
+	status = "okay";
+};
