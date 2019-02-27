@@ -649,7 +649,7 @@
 	status = "okay";
 	interface_type = <NX_CAPTURE_INTERFACE_PARALLEL>;
 	pinctrl-names = "default";
-	pinctrl-0 = <&vid_data_clk &vid_sync &tp2825_reset>;
+	pinctrl-0 = <&vid1_vclk &vid1_sync &vid1_data_8 &tp2825_reset>;
 	gpios = <&gpio_c 6 0>;
 	data_order = <NX_VIN_CBY0CRY1>;
 	port = <1>;
