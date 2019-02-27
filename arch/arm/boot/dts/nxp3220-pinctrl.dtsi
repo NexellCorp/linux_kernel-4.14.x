@@ -621,18 +621,104 @@
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
 
-	vid_data_clk: vid-data-clk {
-		nexell,pins = "gpioa-0", "gpioa-1", "gpioa-2", "gpioa-3",
-			      "gpioa-4", "gpioa-5", "gpioa-6", "gpioa-7",
-			      "gpioa-8", "gpioa-9", "gpioa-10", "gpioa-13";
+	vid0_vfield: vid0-vfield {
+		nexell,pins = "gpioe-14";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	vid0_vmclk: vid0-vmclk {
+		nexell,pins = "gpioe-15";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	vid0_vde: vid0-vde {
+		nexell,pins = "gpioe-11";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	vid0_vclk: vid0-vclk {
+		nexell,pins = "gpioe-10";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	vid0_sync: vid0-sync {
+		nexell,pins = "gpioe-12", "gpioe-13";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	vid0_data_8: vid0-data-8 {
+		nexell,pins = "gpioe-2", "gpioe-3", "gpioe-4", "gpioe-5",
+			      "gpioe-6", "gpioe-7", "gpioe-8", "gpioe-9";
+		nexell,pin-function = <NX_PIN_FUNC1>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	vid0_data_16: vid0-data-16 {
+		nexell,pins = "gpioa-2", "gpioa-3", "gpioa-4", "gpioa-5",
+			      "gpioa-6", "gpioa-7", "gpioa-8", "gpioa-9";
+		nexell,pin-function = <NX_PIN_FUNC4>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	vid1_vfield: vid1-vfield {
+		nexell,pins = "gpioa-0";
 		nexell,pin-function = <NX_PIN_FUNC3>;
 		nexell,pin-pull = <NX_PIN_PULL_NONE>;
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
 
-	vid_sync: vid-sync {
+	vid1_vmclk: vid1-vmclk {
+		nexell,pins = "gpioa-1";
+		nexell,pin-function = <NX_PIN_FUNC3>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	vid1_vde: vid1-vde {
+		nexell,pins = "gpioa-13";
+		nexell,pin-function = <NX_PIN_FUNC3>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	vid1_vclk: vid1-vclk {
+		nexell,pins = "gpioa-10";
+		nexell,pin-function = <NX_PIN_FUNC3>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	vid1_sync: vid1-sync {
 		nexell,pins = "gpioa-11", "gpioa-12";
 		nexell,pin-function = <NX_PIN_FUNC3>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	vid1_data_8: vid1-data-8 {
+		nexell,pins = "gpioa-2", "gpioa-3", "gpioa-4", "gpioa-5",
+			      "gpioa-6", "gpioa-7", "gpioa-8", "gpioa-9";
+		nexell,pin-function = <NX_PIN_FUNC3>;
+		nexell,pin-pull = <NX_PIN_PULL_NONE>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	vid1_data_16: vid1-data-16 {
+		nexell,pins = "gpioe-2", "gpioe-3", "gpioe-4", "gpioe-5",
+			      "gpioe-6", "gpioe-7", "gpioe-8", "gpioe-9";
+		nexell,pin-function = <NX_PIN_FUNC2>;
 		nexell,pin-pull = <NX_PIN_PULL_NONE>;
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
