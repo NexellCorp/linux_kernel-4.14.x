@@ -34,6 +34,8 @@
 #define RX_BUSY		0
 #define TX_BUSY		1
 
+#define TO_RO_MODE	0
+
 struct dw_spi_nx {
 	struct dw_spi		dws;
 	struct clk		*clk;
@@ -374,6 +376,7 @@ static int nx_dw_spi_dma_init(struct dw_spi *dws)
 	return 0;
 }
 
+#if TO_RO_MODE
 static void nx_spi_cs_control(u32 command)
 {
 	/* Dummy callback */
@@ -396,6 +399,7 @@ static struct dw_spi_chip nx_spi_chip = {
 	.cs_control = nx_spi_cs_control,
 	.prefare_transfer = nx_spi_prefare_transfer,
 };
+#endif
 
 static int nx_dw_spi_probe(struct platform_device *pdev)
 {
@@ -486,9 +490,10 @@ static int nx_dw_spi_probe(struct platform_device *pdev)
 				   BIT(0), 0x1);
 		dws->slave = true;
 	}
-
+#if TO_RO_MODE
 	/* set chip info to support TR/RO/TO mode */
 	dws->chip_info = &nx_spi_chip;
+#endif
 
 	ret = dw_spi_add_host(&pdev->dev, dws);
 	if (ret)
