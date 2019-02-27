@@ -1,0 +1,130 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "972af308_2642c19e",
+        "filename": "drivers/spi/spi-dw-nexell.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-02-27T05:38:44Z",
+      "side": 1,
+      "message": "remove this",
+      "range": {
+        "startLine": 37,
+        "startChar": 0,
+        "endLine": 37,
+        "endChar": 20
+      },
+      "revId": "07b60b99d09d02938194e7c6550c92b34e9b8497",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "445fb4fe_74aa84b8",
+        "filename": "drivers/spi/spi-dw-nexell.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 379,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-02-27T05:38:44Z",
+      "side": 1,
+      "message": "change to -\u003e #ifdef SUPPORT_TO_RO_MODE",
+      "range": {
+        "startLine": 379,
+        "startChar": 0,
+        "endLine": 379,
+        "endChar": 14
+      },
+      "revId": "07b60b99d09d02938194e7c6550c92b34e9b8497",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f5d86460_1c917717",
+        "filename": "drivers/spi/spi-dw-nexell.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 493,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-02-27T05:38:44Z",
+      "side": 1,
+      "message": "change to -\u003e #ifdef SUPPORT_TO_RO_MODE",
+      "range": {
+        "startLine": 493,
+        "startChar": 4,
+        "endLine": 493,
+        "endChar": 14
+      },
+      "revId": "07b60b99d09d02938194e7c6550c92b34e9b8497",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "771d1b29_3a981de4",
+        "filename": "drivers/spi/spi-dw.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-02-27T05:38:44Z",
+      "side": 1,
+      "message": "remove empty line",
+      "revId": "07b60b99d09d02938194e7c6550c92b34e9b8497",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2745f3b1_e708833f",
+        "filename": "drivers/spi/spi-dw.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-02-27T05:38:44Z",
+      "side": 1,
+      "message": "is it need?",
+      "range": {
+        "startLine": 48,
+        "startChar": 12,
+        "endLine": 48,
+        "endChar": 17
+      },
+      "revId": "07b60b99d09d02938194e7c6550c92b34e9b8497",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4253ff97_1d5e61af",
+        "filename": "drivers/spi/spi-dw.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 210,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-02-27T05:38:44Z",
+      "side": 1,
+      "message": "is it need ?",
+      "revId": "07b60b99d09d02938194e7c6550c92b34e9b8497",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
