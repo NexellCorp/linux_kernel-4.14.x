@@ -584,6 +584,20 @@
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
 
+	spi0_wp: spi0-wp {
+		nexell,pins = "gpioc-1";
+		nexell,pin-function = <NX_PIN_FUNC0>;
+		nexell,pin-pull = <NX_PIN_PULL_UP>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	spi0_hold: spi0-hold {
+		nexell,pins = "gpioc-2";
+		nexell,pin-function = <NX_PIN_FUNC0>;
+		nexell,pin-pull = <NX_PIN_PULL_UP>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
 	tp2825_reset: tp2825_reset {
 		nexell,pins = "gpioc-6";
 		nexell,pin-function = <0>;
@@ -665,3 +679,29 @@
 	status = "okay";
 };
 
+&spi_0 {
+	status = "okay";
+	pinctrl-0 = <&spi0_bus>, <&spi0_wp>, <&spi0_hold>;
+	cs-gpios = <&gpio_c 4 0>;
+
+	flash: m25p80 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "m25p80", "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <1000000>;
+		m25p,fast-read;
+		spi-cpol;
+		spi-cpha;
+
+		partition@0 {
+			label = "part0";
+			reg = <0x0 0x10000>;
+		};
+
+		partition@10000 {
+			label = "part1";
+			reg = <0x10000 0x10000>;
+		};
+	};
+};
