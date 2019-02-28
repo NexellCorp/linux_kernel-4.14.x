@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "363e248e_886cfa77",
+        "filename": "Documentation/devicetree/bindings/mtd/nxp3220_nand.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-02-28T06:46:22Z",
+      "side": 1,
+      "message": "ignore this: refer to Documentation/devicetree/bindings/mtd/nand.txt",
+      "parentUuid": "af4010c5_7d1a10fd",
+      "range": {
+        "startLine": 61,
+        "startChar": 1,
+        "endLine": 61,
+        "endChar": 18
+      },
+      "revId": "07f3d0358444b24214789d12d79219e55671f602",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "dcb642e6_17dcc3a3",
         "filename": "Documentation/devicetree/bindings/mtd/nxp3220_nand.txt",
         "patchSetId": 1
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "0d21ae9f_ce7e827e",
+        "filename": "Documentation/devicetree/bindings/mtd/nxp3220_nand.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-02-28T06:46:22Z",
+      "side": 1,
+      "message": "ignore this: refer to Documentation/devicetree/bindings/mtd/nand.txt",
+      "parentUuid": "dcb642e6_17dcc3a3",
+      "range": {
+        "startLine": 64,
+        "startChar": 1,
+        "endLine": 64,
+        "endChar": 18
+      },
+      "revId": "07f3d0358444b24214789d12d79219e55671f602",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "3d994e1f_041c1839",
         "filename": "Documentation/devicetree/bindings/mtd/nxp3220_nand.txt",
         "patchSetId": 1
@@ -59,6 +107,30 @@
       "writtenOn": "2019-02-28T06:36:31Z",
       "side": 1,
       "message": "explain it, please",
+      "range": {
+        "startLine": 65,
+        "startChar": 1,
+        "endLine": 65,
+        "endChar": 19
+      },
+      "revId": "07f3d0358444b24214789d12d79219e55671f602",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "59c02d62_cdaaa751",
+        "filename": "Documentation/devicetree/bindings/mtd/nxp3220_nand.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-02-28T06:46:22Z",
+      "side": 1,
+      "message": "ignore this: refer to Documentation/devicetree/bindings/mtd/nand.txt",
+      "parentUuid": "3d994e1f_041c1839",
       "range": {
         "startLine": 65,
         "startChar": 1,
