@@ -103,7 +103,7 @@ void nx_mlc_set_enable(struct nx_mlc_reg *reg, bool enb)
 {
 	u32 val = readl(&reg->mlccontrolt) & ~((1 << 1) | (1 << 3));
 
-	writel(val | (1 << 1), &reg->mlccontrolt);
+	writel(val | ((enb ? 1 : 0) << 1), &reg->mlccontrolt);
 }
 
 void nx_mlc_set_dirty(struct nx_mlc_reg *reg)
