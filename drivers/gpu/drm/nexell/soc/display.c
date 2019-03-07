@@ -426,6 +426,9 @@ static int nx_overlay_rgb_set_format(struct nx_overlay *ovl,
 		pr_debug("%s: BGR plane format:0x%x\n", __func__, format);
 	}
 
+	if (ovl->color.alphablend < MAX_ALPHA_VALUE)
+		alpha = true;
+
 	nx_mlc_set_layer_lock_size(reg, id, lock_size);
 	nx_mlc_set_layer_alpha(reg, id, ovl->color.alphablend, alpha);
 	nx_mlc_set_rgb_color_inv(reg, id, ovl->color.invertcolor, false);
@@ -675,10 +678,10 @@ void nx_overlay_set_color(struct nx_overlay *ovl,
 	case NX_COLOR_ALPHA:
 		if (color <= 0)
 			color = 0;
-		if (color >= 15)
-			color = 15;
+		if (color >= MAX_ALPHA_VALUE)
+			color = MAX_ALPHA_VALUE;
 
-		ovl->color.alpha = (on ? color : 15);
+		ovl->color.alpha = (on ? color : MAX_ALPHA_VALUE);
 		nx_mlc_set_layer_alpha(reg, id, (u32)color, on);
 		break;
 

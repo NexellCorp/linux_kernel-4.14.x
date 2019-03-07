@@ -135,6 +135,8 @@ enum nx_mlc_priority_vid {
 	NX_MLC_PRIORITY_VIDEO_4TH = 3
 };
 
+#define	MAX_ALPHA_VALUE		255 /* 0: transparency, 255: opacity */
+
 /* Nexell multiple layer (MLC) specific functions */
 void nx_mlc_set_clock_pclk_mode(struct nx_mlc_reg *reg, enum nx_pclk_mode mode);
 void nx_mlc_set_clock_bclk_mode(struct nx_mlc_reg *reg, enum nx_bclk_mode mode);
