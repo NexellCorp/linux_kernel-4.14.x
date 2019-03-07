@@ -93,14 +93,16 @@ struct nx_overlay {
 	unsigned int h_filter;
 	unsigned int v_filter;
 	union {
+		/* RGB */
 		struct {
+			int alphablend; /* 0: transparency, 255: opacity */
 			u32 transcolor;
 			u32 invertcolor;
-			u32 alphablend;
 			u32 colorkey;
 		};
+		/* VIDEO */
 		struct {
-			int alpha; /* def= 15, 0 <= Range <= 16 */
+			int alpha; /* def= 255, 0 <= Range <= 255 */
 			int bright; /* def= 0, -128 <= Range <= 128*/
 			int contrast; /* def= 0, 0 <= Range <= 8 */
 			double hue; /* def= 0, 0 <= Range <= 360 */

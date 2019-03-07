@@ -119,20 +119,23 @@ void nx_mlc_set_layer_alpha(struct nx_mlc_reg *reg,
 	u32 val;
 
 	if (layer == 0 || layer == 1) {
+		if (alpha >= MAX_ALPHA_VALUE)
+			enb = false;
+
 		val = readl(&reg->mlcrgblayer[layer].mlccontrol);
 		val &= ~((1 << 2) | (1 << 4));
 		val |= ((enb ? 1 : 0) << 2);
 		writel(val, &reg->mlcrgblayer[layer].mlccontrol);
 
-		val = readl(&reg->mlcrgblayer[layer].mlctpcolor) & ~(0xf << 28);
-		val |= alpha << 28;
+		val = readl(&reg->mlcrgblayer[layer].mlctpcolor) & ~(0xff << 24);
+		val |= alpha << 24;
 		writel(val, &reg->mlcrgblayer[layer].mlctpcolor);
 	} else if (layer == 3) {
 		val = readl(&reg->mlcvideolayer.mlccontrol);
 		val &= ~((1 << 2) | (1 << 4));
 		val |= ((enb ? 1 : 0) << 2);
 		writel(val, &reg->mlcvideolayer.mlccontrol);
-		writel(alpha << 28, &reg->mlcvideolayer.mlctpcolor);
+		writel(alpha << 24, &reg->mlcvideolayer.mlctpcolor);
 	}
 }
 
