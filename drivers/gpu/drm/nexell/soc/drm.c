@@ -757,7 +757,8 @@ static void nx_display_plane_create_props(struct drm_device *drm,
 			color->rgb.transcolor, ovl->color.transcolor);
 
 		color->rgb.alphablend =
-		drm_property_create_range(drm, 0, "alphablend", 0, 0xffffffff);
+		drm_property_create_range(drm, 0, "alphablend",
+			0, MAX_ALPHA_VALUE);
 		drm_object_attach_property(&plane->base,
 			color->rgb.alphablend, ovl->color.alphablend);
 	}
@@ -801,7 +802,10 @@ static struct nx_overlay *nx_display_plane_create(
 	ovl->id = id;
 	ovl->bgr_mode = bgr_mode;
 	ovl->type |= yuv ? NX_PLANE_TYPE_VIDEO : 0;
-	ovl->color.alpha = yuv ? 15 : 0;
+
+	/* default alpha opacity */
+	ovl->color.alpha = MAX_ALPHA_VALUE;
+	ovl->color.alphablend = MAX_ALPHA_VALUE;
 
 	snprintf(ovl->name, sizeof(ovl->name),
 		"%d-%s.%d", dp->module, yuv ? "vid" : "rgb", id);
