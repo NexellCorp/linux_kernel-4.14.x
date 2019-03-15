@@ -43,13 +43,6 @@
 			reg = <0x5f000000 0x1000000>;
 			no-map;
 		};
-
-		vpu_cma: region_vpu_cma {
-			compatible = "shared-dma-pool";
-			reusable;
-			size = <0x8000000>;
-			/* linux,cma-default; */
-		};
 	};
 
 	backlight: pwm-backlight {
@@ -677,7 +670,6 @@
 };
 
 &vpu {
-	memory-region = <&vpu_cma>;
 	status = "okay";
 };
 
