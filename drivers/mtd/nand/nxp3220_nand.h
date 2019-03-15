@@ -31,6 +31,8 @@
 #define NFC_DATA_BYPASS		(0x7c)
 #define NFC_SRAM		(0x100)
 
+#define NFC_SEED		(0x576A)
+
 struct nfc_cmd_time {
 	u32 cmd_setup;
 	u32 cmd_width;
