@@ -31,6 +31,22 @@
 #define NFC_DATA_BYPASS		(0x7c)
 #define NFC_SRAM		(0x100)
 
+struct nfc_cmd_time {
+	u32 cmd_setup;
+	u32 cmd_width;
+	u32 cmd_hold;
+	u32 rhw;
+
+	u32 rd_setup;
+	u32 rd_width;
+	u32 rd_hold;
+
+	u32 wr_setup;
+	u32 wr_width;
+	u32 wr_hold;
+	u32 whr;
+};
+
 struct nxp3220_nfc {
 	void __iomem *regs;
 	struct nand_chip chip;
@@ -43,6 +59,7 @@ struct nxp3220_nfc {
 	int wp_gpio;
 	int timing_force;
 	u32 timing_mode;
+	struct nfc_cmd_time time;	/* calculated values */
 	int sectsize; /* data + meta + ecc + pad */
 	int bchmode;
 	dma_addr_t dmaaddr;
