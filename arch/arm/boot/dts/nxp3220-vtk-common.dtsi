@@ -393,6 +393,18 @@
 			nexell,pin-strength = <NX_PIN_STR1>;
 		};
 	};
+
+	nand_data: nand-data {
+		nexell,pin-strength = <NX_PIN_STR3>;
+	};
+
+	nand_cs0: nand-cs0 {
+		nexell,pin-strength = <NX_PIN_STR2>;
+	};
+
+	nand_cs1: nand-cs1 {
+		nexell,pin-strength = <NX_PIN_STR2>;
+	};
 };
 
 &pwm {
