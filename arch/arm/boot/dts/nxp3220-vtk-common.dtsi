@@ -461,6 +461,18 @@
 	PWR_PIN_INPUT(GMAC, gpiod-9);
 };
 
+&nand_data {
+	nexell,pin-strength = <NX_PIN_STR3>;
+};
+
+&nand_cs0 {
+	nexell,pin-strength = <NX_PIN_STR2>;
+};
+
+&nand_cs1 {
+	nexell,pin-strength = <NX_PIN_STR2>;
+};
+
 &peri0_pwr_pin {
 	/* Retention configuration all INPUT except gpioa-24(BOOT10) */
 	PWR_PIN_DEF(PERI0, gpioa-24);
