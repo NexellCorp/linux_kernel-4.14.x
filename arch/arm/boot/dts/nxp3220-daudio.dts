@@ -10,6 +10,10 @@
 
 / {
 	compatible = "nexell,nxp3220-daudio", "nexell,nxp3220";
+
+	sound3: sound3 {
+		status = "disabled";
+	};
 };
 
 &dwmmc_0 {
