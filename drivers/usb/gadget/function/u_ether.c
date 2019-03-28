@@ -732,7 +732,8 @@ static struct device_type gadget_type = {
 	.name	= "gadget",
 };
 
-#if defined(CONFIG_USB_F_IAP) || defined(CONFIG_USB_CONFIGFS_F_IAP)
+#if defined(CONFIG_USB_F_IAP) || defined(CONFIG_USB_CONFIGFS_F_IAP) || \
+    defined(CONFIG_USB_F_IAP_MODULE) || defined(CONFIG_USB_CONFIGFS_F_IAP_MODULE)
 struct net_device *g_regnetdev;
 
 static ssize_t regnet_show(struct device *dev,
@@ -832,7 +833,8 @@ struct eth_dev *gether_setup_name(struct usb_gadget *g,
 {
 	struct eth_dev		*dev;
 	struct net_device	*net;
-#if !defined(CONFIG_USB_F_IAP) && !defined(CONFIG_USB_CONFIGFS_F_IAP)
+#if !defined(CONFIG_USB_F_IAP) && !defined(CONFIG_USB_CONFIGFS_F_IAP) && \
+    !defined(CONFIG_USB_F_IAP_MODULE) && !defined(CONFIG_USB_CONFIGFS_F_IAP_MODULE)
 	int			status;
 #endif
 
@@ -872,14 +874,16 @@ struct eth_dev *gether_setup_name(struct usb_gadget *g,
 	net->min_mtu = ETH_HLEN;
 	net->max_mtu = GETHER_MAX_ETH_FRAME_LEN;
 
-#if defined(CONFIG_USB_F_IAP) || defined(CONFIG_USB_CONFIGFS_F_IAP)
+#if defined(CONFIG_USB_F_IAP) || defined(CONFIG_USB_CONFIGFS_F_IAP) || \
+    defined(CONFIG_USB_F_IAP_MODULE) || defined(CONFIG_USB_CONFIGFS_F_IAP_MODULE)
 	g_regnetdev = net;
 #endif
 
 	dev->gadget = g;
 	SET_NETDEV_DEV(net, &g->dev);
 	SET_NETDEV_DEVTYPE(net, &gadget_type);
-#if !defined(CONFIG_USB_F_IAP) && !defined(CONFIG_USB_CONFIGFS_F_IAP)
+#if !defined(CONFIG_USB_F_IAP) && !defined(CONFIG_USB_CONFIGFS_F_IAP) && \
+    !defined(CONFIG_USB_F_IAP_MODULE) && !defined(CONFIG_USB_CONFIGFS_F_IAP_MODULE)
 	status = register_netdev(net);
 	if (status < 0) {
 		dev_dbg(&g->dev, "register_netdev failed, %d\n", status);
@@ -896,7 +900,8 @@ struct eth_dev *gether_setup_name(struct usb_gadget *g,
 		 *  - tx queueing enabled if open *and* carrier is "on"
 		 */
 		netif_carrier_off(net);
-#if !defined(CONFIG_USB_F_IAP) && !defined(CONFIG_USB_CONFIGFS_F_IAP)
+#if !defined(CONFIG_USB_F_IAP) && !defined(CONFIG_USB_CONFIGFS_F_IAP) && \
+    !defined(CONFIG_USB_F_IAP_MODULE) && !defined(CONFIG_USB_CONFIGFS_F_IAP_MODULE)
 	}
 #endif
 	return dev;
@@ -1112,7 +1117,8 @@ void gether_cleanup(struct eth_dev *dev)
 	unregister_netdev(dev->net);
 	flush_work(&dev->work);
 	free_netdev(dev->net);
-#if defined(CONFIG_USB_F_IAP) || defined(CONFIG_USB_CONFIGFS_F_IAP)
+#if defined(CONFIG_USB_F_IAP) || defined(CONFIG_USB_CONFIGFS_F_IAP) || \
+    defined(CONFIG_USB_F_IAP_MODULE) || defined(CONFIG_USB_CONFIGFS_F_IAP_MODULE)
 	g_regnetdev = NULL;
 #endif
 }
