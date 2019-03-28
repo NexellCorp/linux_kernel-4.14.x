@@ -2774,6 +2774,9 @@ int spi_nor_scan(struct spi_nor *nor, const char *name,
 			params.hwcaps.mask |= SNOR_HWCAPS_READ_FAST;
 		else
 			params.hwcaps.mask &= ~SNOR_HWCAPS_READ_FAST;
+
+		if (of_property_read_bool(np, "disable-4byte-address"))
+			mtd->flags  |= SPI_NOR_4B_OPCODES;
 	} else {
 		/* If we weren't instantiated by DT, default to fast-read */
 		params.hwcaps.mask |= SNOR_HWCAPS_READ_FAST;
@@ -2802,7 +2805,8 @@ int spi_nor_scan(struct spi_nor *nor, const char *name,
 		/* enable 4-byte addressing if the device exceeds 16MiB */
 		nor->addr_width = 4;
 		if (JEDEC_MFR(info) == SNOR_MFR_SPANSION ||
-		    info->flags & SPI_NOR_4B_OPCODES)
+		    info->flags & SPI_NOR_4B_OPCODES ||
+		    mtd->flags & SPI_NOR_4B_OPCODES)
 			spi_nor_set_4byte_opcodes(nor, info);
 		else
 			set_4byte(nor, info, 1);
