@@ -760,7 +760,8 @@ static int set_config(struct usb_composite_dev *cdev,
 	int			result = -EINVAL;
 	unsigned		power = gadget_is_otg(gadget) ? 8 : 100;
 	int			tmp;
-#if defined(CONFIG_USB_F_IAP) || defined(CONFIG_USB_CONFIGFS_F_IAP)
+#if defined(CONFIG_USB_F_IAP) || defined(CONFIG_USB_CONFIGFS_F_IAP) || \
+    defined(CONFIG_USB_F_IAP_MODULE) || defined(CONFIG_USB_CONFIGFS_F_IAP_MODULE)
 	int			value;
 #endif
 
@@ -825,7 +826,8 @@ static int set_config(struct usb_composite_dev *cdev,
 			set_bit(addr, f->endpoints);
 		}
 
-#if defined(CONFIG_USB_F_IAP) || defined(CONFIG_USB_CONFIGFS_F_IAP)
+#if defined(CONFIG_USB_F_IAP) || defined(CONFIG_USB_CONFIGFS_F_IAP) || \
+    defined(CONFIG_USB_F_IAP_MODULE) || defined(CONFIG_USB_CONFIGFS_F_IAP_MODULE)
 		value = f->get_alt ? f->get_alt(f, tmp) : 0;
 #endif
 		result = f->set_alt(f, tmp, 0);
@@ -836,7 +838,8 @@ static int set_config(struct usb_composite_dev *cdev,
 			reset_config(cdev);
 			goto done;
 		}
-#if defined(CONFIG_USB_F_IAP) || defined(CONFIG_USB_CONFIGFS_F_IAP)
+#if defined(CONFIG_USB_F_IAP) || defined(CONFIG_USB_CONFIGFS_F_IAP) || \
+    defined(CONFIG_USB_F_IAP_MODULE) || defined(CONFIG_USB_CONFIGFS_F_IAP_MODULE)
 		if (value == 1) {
 			result = f->set_alt(f, tmp, 1);
 			if (result < 0) {
