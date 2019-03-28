@@ -684,18 +684,14 @@
 		compatible = "m25p80", "jedec,spi-nor";
 		reg = <0>;
 		spi-max-frequency = <1000000>;
+		disable-4byte-address;
 		m25p,fast-read;
 		spi-cpol;
 		spi-cpha;
 
 		partition@0 {
 			label = "part0";
-			reg = <0x0 0x10000>;
-		};
-
-		partition@10000 {
-			label = "part1";
-			reg = <0x10000 0x10000>;
+			reg = <0x500000 0x7b00000>;
 		};
 	};
 };
