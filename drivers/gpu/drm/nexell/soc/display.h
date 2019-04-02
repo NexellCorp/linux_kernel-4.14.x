@@ -116,6 +116,7 @@ struct nx_overlay {
 };
 
 struct nx_display {
+	struct device *dev;
 	struct drm_crtc *crtc;
 	void __iomem *mlc_base;
 	void __iomem *dpc_base;

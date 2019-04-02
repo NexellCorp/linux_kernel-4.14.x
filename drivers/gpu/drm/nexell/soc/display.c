@@ -170,7 +170,7 @@ static void nx_display_sync_format(struct nx_display *dp)
 			emb_sync, dpp->yc_order);
 	nx_dpc_set_dither(reg, r_dither, g_dither, b_dither);
 
-	pr_debug("%s: crtc.%d: %s, %s\n",
+	dev_dbg(dp->dev, "%s: crtc.%d: %s, %s\n",
 		__func__, dp->module, RGB_MODE(format) ? "RGB" : "YUV",
 		INTERLACE(vm->flags) ? "INTERACE" : "PROGRESSIVE");
 }
@@ -193,7 +193,7 @@ static void nx_display_sync_delay(struct nx_display *dp)
 
 	nx_dpc_set_delay(reg, rgb_pvd, hs_cp1, vs_frm, de_cp2);
 
-	pr_debug("%s: crtc.%d: delay RGB:%d, HS:%d, VS:%d, DE:%d\n",
+	dev_dbg(dp->dev, "%s: crtc.%d: delay RGB:%d, HS:%d, VS:%d, DE:%d\n",
 		__func__, dp->module, rgb_pvd, hs_cp1, vs_frm, de_cp2);
 }
 
@@ -224,24 +224,28 @@ static void nx_display_sync_mode(struct nx_display *dp)
 			vso, veo, field_pol, hs_pol, vs_pol,
 			esw, efp, ebp, eso, eeo);
 
-	pr_debug("%s: crtc.%d: x:%4d, hfp:%3d, hbp:%3d, hsw:%3d, hi:%d\n",
+	dev_dbg(dp->dev,
+		"%s: crtc.%d: x:%4d, hfp:%3d, hbp:%3d, hsw:%3d, hi:%d\n",
 		 __func__, dp->module, vm->hactive, vm->hfront_porch,
 		 vm->hback_porch, vm->hsync_len, hs_pol);
-	pr_debug("%s: crtc.%d: y:%4d, vfp:%3d, vbp:%3d, vsw:%3d, vi:%d\n",
+	dev_dbg(dp->dev,
+		"%s: crtc.%d: y:%4d, vfp:%3d, vbp:%3d, vsw:%3d, vi:%d\n",
 		 __func__, dp->module, vm->vactive/div, vm->vfront_porch,
 		 vm->vback_porch, vm->vsync_len, vs_pol);
-	pr_debug("%s: crtc.%d: offset vs:%d, ve:%d, es:%d, ee:%d\n",
+	dev_dbg(dp->dev, "%s: crtc.%d: offset vs:%d, ve:%d, es:%d, ee:%d\n",
 		__func__, dp->module, vso, veo, eso, eeo);
-	pr_debug("%s: crtc.%d: even   ef:%d, eb:%d, es:%d]\n",
+	dev_dbg(dp->dev, "%s: crtc.%d: even   ef:%d, eb:%d, es:%d]\n",
 		__func__, dp->module, efp, ebp, esw);
 }
 
 int nx_display_set_mode(struct nx_display *dp)
 {
-	pr_debug("%s: crtc.%d\n", __func__, dp->module);
+	dev_dbg(dp->dev, "%s: crtc.%d\n", __func__, dp->module);
 
 	if (nx_display_is_enabled(dp)) {
-		pr_debug("%s: crtc.%d power prepared\n", __func__, dp->module);
+		dev_dbg(dp->dev,
+			"%s: crtc.%d power prepared\n", __func__,
+			dp->module);
 		return 0;
 	}
 
@@ -261,7 +265,9 @@ void nx_display_enable(struct nx_display *dp, bool on)
 
 	if (on && nx_display_is_enabled(dp)) {
 		nx_dpc_clear_interrupt_pending_all(reg);
-		pr_debug("%s: crtc.%d power enabled\n", __func__, dp->module);
+		dev_dbg(dp->dev,
+			"%s: crtc.%d power enabled\n", __func__,
+			dp->module);
 		return;
 	}
 
@@ -290,7 +296,8 @@ void nx_display_irq_on(struct nx_display *dp, bool on)
 {
 	struct nx_dpc_reg *reg = dp->dpc_base;
 
-	pr_debug("%s: crtc.%d, %s\n", __func__, dp->module, on ? "on" : "off");
+	dev_dbg(dp->dev, "%s: crtc.%d, %s\n",
+		__func__, dp->module, on ? "on" : "off");
 
 	nx_dpc_clear_interrupt_pending_all(reg);
 	nx_dpc_set_interrupt_enable_all(reg, on);
@@ -318,14 +325,15 @@ void nx_display_set_format(struct nx_display *dp, int width, int height)
 		prior = NX_MLC_PRIORITY_VIDEO_3RD;
 		break;
 	default:
-		pr_err("Invalid video priority (0~3),(%d)\n", prior);
+		dev_err(dp->dev,
+			"Invalid video priority (0~3),(%d)\n", prior);
 		return;
 	}
 
 	dp->width = width;
 	dp->height = height;
 
-	pr_debug("%s: crtc.%d, %d by %d, priority %d, bg 0x%x\n",
+	dev_dbg(dp->dev, "%s: crtc.%d, %d by %d, priority %d, bg 0x%x\n",
 		__func__, dp->module, width, height, prior, bgcolor);
 
 	nx_mlc_set_screen_size(reg, width, height);
@@ -339,7 +347,8 @@ void nx_display_set_backcolor(struct nx_display *dp)
 	struct nx_mlc_reg *reg = dp->mlc_base;
 	unsigned int bgcolor = dp->back_color;
 
-	pr_debug("%s: crtc.%d, bg:0x%x\n", __func__, dp->module, bgcolor);
+	dev_dbg(dp->dev, "%s: crtc.%d, bg:0x%x\n",
+		__func__, dp->module, bgcolor);
 
 	nx_mlc_set_background(reg, bgcolor & 0x00FFFFFF);
 	nx_mlc_set_dirty(reg);
@@ -347,12 +356,12 @@ void nx_display_set_backcolor(struct nx_display *dp)
 
 void nx_display_ovl_enable(struct nx_display *dp)
 {
-	struct nx_overlay *ovl;
 	struct nx_mlc_reg *reg = dp->mlc_base;
 	struct videomode *vm = &dp->vm;
+	struct nx_overlay *ovl;
 	int lock_size = 16;
 
-	pr_debug("%s: crtc.%d, %dx%d\n",
+	dev_dbg(dp->dev, "%s: crtc.%d, %dx%d\n",
 		__func__, dp->module, dp->width, dp->height);
 
 	nx_mlc_set_field_enable(reg, INTERLACE(vm->flags));
@@ -368,7 +377,7 @@ void nx_display_ovl_enable(struct nx_display *dp)
 		if (ovl->enable) {
 			nx_mlc_set_layer_enable(reg, ovl->id, true);
 			nx_mlc_set_layer_dirty(reg, ovl->id, true);
-			pr_debug("%s: %s on\n", __func__, ovl->name);
+			dev_dbg(dp->dev, "%s: %s on\n", __func__, ovl->name);
 		}
 	}
 
@@ -380,7 +389,7 @@ void nx_display_ovl_disable(struct nx_display *dp)
 	struct nx_mlc_reg *reg = dp->mlc_base;
 	struct nx_overlay *ovl;
 
-	pr_debug("%s: crtc.%d, %dx%d\n",
+	dev_dbg(dp->dev, "%s: crtc.%d, %dx%d\n",
 		__func__, dp->module, dp->width, dp->height);
 
 	list_for_each_entry(ovl, &dp->overlay_list, list) {
@@ -404,7 +413,7 @@ static int nx_overlay_rgb_set_format(struct nx_overlay *ovl,
 	int lock_size = 16;
 	bool alpha = false;
 
-	pr_debug("%s: %s, fmt:0x%x, pixel:%d\n",
+	dev_dbg(ovl->dp->dev, "%s: %s, fmt:0x%x, pixel:%d\n",
 		 __func__, ovl->name, format, pixelbyte);
 
 	ovl->format = format;
@@ -423,7 +432,8 @@ static int nx_overlay_rgb_set_format(struct nx_overlay *ovl,
 
 	if (ovl->bgr_mode) {
 		format |= 1<<31;
-		pr_debug("%s: BGR plane format:0x%x\n", __func__, format);
+		dev_dbg(ovl->dp->dev,
+			"%s: BGR plane format:0x%x\n", __func__, format);
 	}
 
 	if (ovl->color.alphablend < MAX_ALPHA_VALUE)
@@ -467,7 +477,8 @@ static int nx_overlay_rgb_set_pos(struct nx_overlay *ovl,
 	if (ey > RGB_RECTANGLE_MAX)
 		ey = RGB_RECTANGLE_MAX;
 
-	pr_debug("%s: %s, (%d, %d, %d, %d) to (%d, %d, %d, %d)\n",
+	dev_dbg(ovl->dp->dev,
+		"%s: %s, (%d, %d, %d, %d) to (%d, %d, %d, %d)\n",
 		 __func__, ovl->name,
 		src_x, src_y, src_w, src_h, sx, sy, ex, ey);
 
@@ -482,7 +493,7 @@ static void nx_overlay_rgb_enb(struct nx_overlay *ovl, bool on)
 	struct nx_mlc_reg *reg = ovl->base;
 	int id = ovl->id;
 
-	pr_debug("%s: %s, %s (%d)\n", __func__,
+	dev_dbg(ovl->dp->dev, "%s: %s, %s (%d)\n", __func__,
 		ovl->name, on ? "on" : "off", ovl->enable);
 
 	nx_mlc_set_layer_enable(reg, id, on);
@@ -505,7 +516,8 @@ static int nx_overlay_yuv_set_format(struct nx_overlay *ovl,
 	ovl->format = format;
 	format &= 0xffffff;
 
-	pr_debug("%s: %s, format: 0x%x\n", __func__, ovl->name, format);
+	dev_dbg(ovl->dp->dev,
+		"%s: %s, format: 0x%x\n", __func__, ovl->name, format);
 
 	nx_mlc_set_layer_lock_size(reg, NX_PLANE_VIDEO_LAYER, lock_size);
 	nx_mlc_set_vid_format(reg, format);
@@ -549,7 +561,8 @@ static int nx_overlay_yuv_set_pos(struct nx_overlay *ovl,
 	if (ey > VID_FILTER_MAX)
 		ey = VID_FILTER_MAX;
 
-	pr_debug("%s: %s, (%d, %d, %d, %d) to (%d, %d, %d, %d, %d, %d)\n",
+	dev_dbg(ovl->dp->dev,
+		"%s: %s, (%d, %d, %d, %d) to (%d, %d, %d, %d, %d, %d)\n",
 		 __func__, ovl->name, src_x, src_y, src_w, src_h,
 		 sx, sy, ex, ey, dst_w, dst_h);
 
@@ -574,7 +587,8 @@ static void nx_overlay_yuv_enb(struct nx_overlay *ovl, bool on)
 	struct nx_mlc_reg *reg = ovl->base;
 	int hl, hc, vl, vc;
 
-	pr_debug("%s: %s, %s\n", __func__, ovl->name, on ? "on" : "off");
+	dev_dbg(ovl->dp->dev,
+		"%s: %s, %s\n", __func__, ovl->name, on ? "on" : "off");
 
 	if (on) {
 		nx_mlc_set_vid_line_buffer_power(reg, true);
@@ -617,11 +631,12 @@ void nx_overlay_set_priority(struct nx_overlay *ovl,
 		priority = NX_MLC_PRIORITY_VIDEO_4TH;
 		break;
 	default:
-		pr_err("Failed, not support video priority(0~3),(%d)\n",
-		    priority);
+		dev_err(dp->dev,
+			"Failed, not support video priority(0~3),(%d)\n",
+			priority);
 		return;
 	}
-	pr_debug("%s: crtc.%d, priority:%d\n",
+	dev_dbg(dp->dev, "%s: crtc.%d, priority:%d\n",
 		__func__, ovl->dp->module, priority);
 
 	dp->video_priority = priority;
@@ -670,7 +685,7 @@ void nx_overlay_set_color(struct nx_overlay *ovl,
 	struct nx_mlc_reg *reg = ovl->base;
 	int id = ovl->id;
 
-	pr_debug("%s: %s, type:%d color:0x%x, pixel %d, %s\n",
+	dev_dbg(ovl->dp->dev, "%s: %s, type:%d color:0x%x, pixel %d, %s\n",
 		__func__, ovl->name, type, color, ovl->pixelbyte,
 		on ? "on" : "off");
 
@@ -734,9 +749,11 @@ void nx_overlay_set_addr_rgb(struct nx_overlay *ovl,
 	if (align)
 		phys = ALIGN(phys, align);
 
-	pr_debug("%s: %s, pa:0x%x(0x%x), hs:%d, vs:%d, l:%d, t:%d\n",
+	dev_dbg(ovl->dp->dev,
+		"%s: %s, pa:0x%x(0x%x), hs:%d, vs:%d, l:%d, t:%d\n",
 		__func__, ovl->name, phys, addr, pixelbyte, stride, cl, ct);
-	pr_debug("%s: %s, pa:0x%x -> 0x%x aligned %d\n",
+	dev_dbg(ovl->dp->dev,
+		"%s: %s, pa:0x%x -> 0x%x aligned %d\n",
 		__func__, ovl->name, (addr + (cl * pixelbyte) + (ct * stride)),
 		phys, align);
 
@@ -760,14 +777,15 @@ void nx_overlay_set_addr_yuv(struct nx_overlay *ovl,
 
 	/* yuyv */
 	if (planes == 1) {
-		if (cl%2)
-			pr_warn("Clip X must be aligned with 2 for YUYV\n");
+		if (cl % 2)
+			dev_warn(ovl->dp->dev,
+				"Clip X must be aligned with 2 for YUYV\n");
 
 		lu_a += (cl * 2 + 1) + (ct * lu_s);
 		nx_mlc_set_vid_address_yuyv(reg, lu_a, lu_s);
 		nx_mlc_set_layer_dirty(reg, NX_PLANE_VIDEO_LAYER, true);
 
-		pr_debug("%s: %s, lu:0x%x,%d : %d,%d\n",
+		dev_dbg(ovl->dp->dev, "%s: %s, lu:0x%x,%d : %d,%d\n",
 			__func__, ovl->name, lu_a, lu_s, cl, ct);
 
 		return;
@@ -803,7 +821,8 @@ void nx_overlay_set_addr_yuv(struct nx_overlay *ovl,
 		cr_a = cr_a + xo + (yo * cr_s);
 	}
 
-	pr_debug("%s: %s, lu:0x%x,%d, cb:0x%x,%d, cr:0x%x,%d : %d,%d\n",
+	dev_dbg(ovl->dp->dev,
+		"%s: %s, lu:0x%x,%d, cb:0x%x,%d, cr:0x%x,%d : %d,%d\n",
 		__func__, ovl->name, lu_a, lu_s, cb_a, cb_s, cr_a, cr_s,
 		cl, ct);
 
