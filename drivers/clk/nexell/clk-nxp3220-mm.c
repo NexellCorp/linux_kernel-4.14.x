@@ -37,8 +37,8 @@ static const struct nexell_div_clock mm_div_clks[] __initconst = {
 	       MM_DPC_X2 + 0x60, 0, CLK_DIVIDER_ROUND_CLOSEST),
 	DIV_MM_F(CLK_MM_DIV_DPC_X1, "div_mm_dpc_x1", "div_mm_dpc_x2",
 	       MM_DPC_X2 + 0x64, 0, CLK_DIVIDER_ROUND_CLOSEST),
-	DIV_MM(CLK_MM_DIV_LVDS_VCLK, "div_mm_lvds_vclk", "src_lvds0_vclk",
-	       MM_LVDS_VCLK + 0x60),
+	DIV_MM_F(CLK_MM_DIV_LVDS_VCLK, "div_mm_lvds_vclk", "src_lvds0_vclk",
+	       MM_LVDS_VCLK + 0x60, 0, CLK_DIVIDER_ROUND_CLOSEST),
 	DIV_MM(CLK_MM_DIV_CODA960_CORE, "div_mm_coda960_core",
 	       "src_coda960_0_core", MM_CODA960_CORE + 0x60),
 };
