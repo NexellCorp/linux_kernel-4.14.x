@@ -465,6 +465,7 @@ int nx_drm_crtc_init(struct drm_device *drm, struct drm_crtc *crtc, int pipe)
 	if (!dp)
 		return -ENOMEM;
 
+	dp->dev = drm->dev;
 	dp->module = pipe;
 	dp->crtc = crtc;
 
