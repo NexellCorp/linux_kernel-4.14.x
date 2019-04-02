@@ -223,6 +223,7 @@ void *nx_drm_display_lvds_get(struct device *dev,
 	lvds->format = LVDS_FORMAT_VESA;
 	lvds->voltage_level = DEF_VOLTAGE_LEVEL;
 	lvds->voltage_output = DEF_VOLTAGE_OFFSET;
+	lvds->ctx.dpp.out_format = NX_DPC_FORMAT_RGB666;
 
 	if (!of_property_read_u32(node, "format", &format))
 		lvds->format = format;
