@@ -85,7 +85,7 @@ void *nx_drm_display_rgb_get(struct device *dev,
 	rgb->ctx.mpu_lcd = rgb->mpu_lcd;
 
 	/* default out format: RGB888:3 */
-	rgb->ctx.dpp.out_format = 3;
+	rgb->ctx.dpp.out_format = NX_DPC_FORMAT_RGB888;
 
 	display->context = rgb;
 	display->ops = &rgb_ops;
