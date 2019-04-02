@@ -125,8 +125,8 @@ static struct dma_buf *__drm_gem_prime_export(struct drm_device *drm,
 #endif
 
 static struct drm_driver nx_drm_driver = {
-	.driver_features = DRIVER_MODESET |
-		DRIVER_GEM | DRIVER_PRIME | DRIVER_ATOMIC,
+	.driver_features = DRIVER_MODESET | DRIVER_GEM |
+			DRIVER_PRIME | DRIVER_ATOMIC | DRIVER_RENDER,
 	.lastclose = nx_drm_lastclose,
 	.prime_handle_to_fd = drm_gem_prime_handle_to_fd,
 	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
