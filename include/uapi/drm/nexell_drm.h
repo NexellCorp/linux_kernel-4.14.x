@@ -89,21 +89,98 @@ enum nx_gem_type {
 	NEXELL_BO_MAX,
 };
 
+/**
+ * A structure to G2D command.
+ */
+enum nx_g2d_cmd_type {
+	NX_G2D_CMD_SRC_CTRL,
+	NX_G2D_CMD_SRC_ADDR,
+	NX_G2D_CMD_SRC_STRIDE,
+	NX_G2D_CMD_SRC_BLKSIZE,
+	NX_G2D_CMD_SOLID_COLOR,
+	NX_G2D_CMD_SIZE,
+	NX_G2D_CMD_DST_CTRL,
+	NX_G2D_CMD_DST_ADDR,
+	NX_G2D_CMD_DST_STRIDE,
+	NX_G2D_CMD_DST_BLKSIZE,
+	NX_G2D_CMD_BLEND_COLOR,
+	NX_G2D_CMD_BLEND_EQUAT_ALPHA,
+	NX_G2D_CMD_RUN,
+	NX_G2D_CMD_NR,
+};
+
+/**
+ * A structure to g2d buffer
+ *
+ * @handle: a handle to gem object created.
+ * @offset: memory start offset from gem object handle.
+ * @flags: flag value including memory type.
+ */
+struct nx_g2d_buf {
+	__u32 handle;
+	__u32 offset;
+	unsigned int type;
+};
+
+#define	NX_G2D_BUF_TYPE_GEM	(1 << 0)
+#define	NX_G2D_BUF_TYPE_CPU	(1 << 1)
+
+/**
+ * A structure to g2d ioctl command argument
+ *
+ * @cmd: g2d command array
+ * @cmd_nr: g2d command count
+ * @cmd_mask: mask to indicate valid command.
+ * @src: source buffer info.
+ * @dst: destination buffer info.
+ */
+#define	NX_G2D_CMD_MAX_SIZE	16
+
+struct nx_g2d_cmd {
+	__u32 cmd[NX_G2D_CMD_MAX_SIZE];
+	__u32 cmd_nr;
+	__u64 cmd_mask;
+	struct nx_g2d_buf src;
+	struct nx_g2d_buf dst;
+	__u32 flags;
+	/* returned a handle to g2d command */
+	__u32 id;
+};
+
+struct nx_g2d_ver {
+	int major;
+	int minor;
+};
+
 /*
- * nexell private ioctl
+ * Nexell GEM ioctl
  */
 #define DRM_NX_GEM_CREATE		0x00
 /* Reserved 0x03 ~ 0x05 for nx specific gem ioctl */
 #define DRM_NX_GEM_GET			0x04
 #define DRM_NX_GEM_SYNC			0x05
 
-#define DRM_IOCTL_NX_GEM_CREATE	DRM_IOWR(DRM_COMMAND_BASE + \
-		DRM_NX_GEM_CREATE, struct nx_gem_create)
+/*
+ * Nexell G2D ioctl
+ */
+#define DRM_NX_G2D_GET_VER		0x10
+#define DRM_NX_G2D_DMA_EXEC		0x11
+#define DRM_NX_G2D_DMA_SYNC		0x12
 
-#define DRM_IOCTL_NX_GEM_SYNC	DRM_IOWR(DRM_COMMAND_BASE + \
-		DRM_NX_GEM_SYNC, struct nx_gem_create)
+#define NX_IOWR(c, t)	DRM_IOWR(DRM_COMMAND_BASE + c, t)
 
-#define DRM_IOCTL_NX_GEM_GET	DRM_IOWR(DRM_COMMAND_BASE + \
-		DRM_NX_GEM_GET,	struct nx_gem_info)
+#define DRM_IOCTL_NX_GEM_CREATE \
+		NX_IOWR(DRM_NX_GEM_CREATE, struct nx_gem_create)
+#define DRM_IOCTL_NX_GEM_SYNC \
+		NX_IOWR(DRM_NX_GEM_SYNC, struct nx_gem_create)
+#define DRM_IOCTL_NX_GEM_GET \
+		NX_IOWR(DRM_NX_GEM_GET, struct nx_gem_info)
+
+#define DRM_IOCTL_NX_G2D_GET_VER \
+		NX_IOWR(DRM_NX_G2D_GET_VER, struct nx_g2d_ver)
+#define DRM_IOCTL_NX_G2D_DMA_EXEC \
+		NX_IOWR(DRM_NX_G2D_DMA_EXEC, struct nx_g2d_cmd)
+#define DRM_IOCTL_NX_G2D_DMA_SYNC \
+		NX_IOWR(DRM_NX_G2D_DMA_SYNC, struct nx_g2d_cmd)
 
 #endif
