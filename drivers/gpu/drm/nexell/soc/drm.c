@@ -654,13 +654,9 @@ static void nx_display_plane_set_color(struct drm_plane *plane,
 				       unsigned int color)
 {
 	struct nx_overlay *ovl = to_nx_plane(plane)->context;
-	struct drm_crtc *crtc = ovl->dp->crtc;
 
-	if (type == NX_COLOR_COLORKEY) {
-		/* change to primary plane and set transfarency color */
-		ovl = to_nx_plane(crtc->primary)->context;
+	if (type == NX_COLOR_COLORKEY)
 		type = NX_COLOR_TRANS;
-	}
 
 	nx_overlay_set_color(ovl, type, color, true, true);
 }
@@ -681,7 +677,7 @@ static int nx_display_plane_set_property(struct drm_plane *plane,
 
 	DRM_DEBUG_KMS("%s : %s 0x%llx\n", ovl->name, property->name, val);
 
-	if (property == color->yuv.colorkey) {
+	if (property == color->rgb.colorkey) {
 		ovl->color.colorkey = val;
 		nx_display_plane_set_color(plane, NX_COLOR_COLORKEY, val);
 	}
@@ -715,7 +711,7 @@ static int nx_display_plane_get_property(struct drm_plane *plane,
 
 	DRM_DEBUG_KMS("%s : %s\n", ovl->name, property->name);
 
-	if (property == color->yuv.colorkey)
+	if (property == color->rgb.colorkey)
 		*val = ovl->color.colorkey;
 
 	if (property == color->rgb.transcolor)
@@ -743,15 +739,13 @@ static void nx_display_plane_create_props(struct drm_device *drm,
 	DRM_DEBUG_KMS("crtc.%d plane.%d (%s)\n",
 		ovl->dp->module, ovl->id, ovl->name);
 
-	/* YUV */
-	if (is_video_plane(ovl->type)) {
+	/* RGB */
+	if (!is_video_plane(ovl->type)) {
 		ovl->color.colorkey = dp->color_key;
-		color->yuv.colorkey =
+		color->rgb.colorkey =
 		drm_property_create_range(drm, 0, "colorkey", 0, 0xffffffff);
 		drm_object_attach_property(&plane->base,
-			color->yuv.colorkey, ovl->color.colorkey);
-	/* RGB */
-	} else {
+			color->rgb.colorkey, ovl->color.colorkey);
 		color->rgb.transcolor =
 		drm_property_create_range(drm, 0, "transcolor", 0, 0xffffffff);
 		drm_object_attach_property(&plane->base,
