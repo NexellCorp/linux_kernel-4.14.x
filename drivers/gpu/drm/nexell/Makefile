@@ -8,8 +8,8 @@ nexell_drm-y += soc/drm.o soc/display.o soc/low.o
 
 nexell_drm-$(CONFIG_DRM_NEXELL_RGB)	+= soc/rgb.o
 nexell_drm-$(CONFIG_DRM_NEXELL_LVDS) 	+= soc/lvds.o
-nexell_drm-$(CONFIG_DRM_NEXELL_G2D) 	+= soc/g2d.o
 
 nexell_drm-$(CONFIG_DRM_NEXELL_RGB)	+= nexell_lcd.o
 nexell_drm-$(CONFIG_DRM_NEXELL_LVDS)	+= nexell_lcd.o
+nexell_drm-$(CONFIG_DRM_NEXELL_G2D) 	+= nxp3220_g2d.o
 obj-$(CONFIG_DRM_NEXELL)		+= nexell_drm.o

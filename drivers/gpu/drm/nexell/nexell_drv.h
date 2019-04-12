@@ -300,7 +300,7 @@ extern struct platform_driver panel_lcd_driver;
 extern struct platform_driver drm_g2d_driver;
 
 #ifdef CONFIG_DRM_NEXELL_G2D
-#include "soc/g2d.h"
+#include "nxp3220_g2d.h"
 #endif
 
 #endif
