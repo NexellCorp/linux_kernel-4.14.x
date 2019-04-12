@@ -474,6 +474,15 @@
 			status = "disabled";
 		};
 
+		g2d: g2d@25090000 {
+			compatible = "nexell,nxp3220-drm-g2d";
+			reg = <0x25090000 0x100>;
+			interrupts = <GIC_SPI 26 IRQ_TYPE_NONE>; /* 2:AXIM, 26 */
+			clocks = <&cmu_mm CLK_MM_G2D_AXI>;
+			clock-names = "axi";
+			status = "disabled";
+		};
+
 		gmac0: ethernet@26100000 {
 			compatible = "nexell,nxp3220-dwmac";
 			reg = <0x26100000 0x8000>;
