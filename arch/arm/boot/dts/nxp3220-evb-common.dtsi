@@ -323,6 +323,10 @@
 	status = "okay";
 };
 
+&g2d {
+	status = "okay";
+};
+
 &gmac0 {
 	status = "okay";
 
