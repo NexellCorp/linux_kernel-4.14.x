@@ -211,7 +211,7 @@ static uint32_t nx_nandc_get_ready(void __iomem *regs)
 	return readl(regs + NFC_STATUS) & BIT_MASK;
 }
 
-static void nx_nandc_set_randseed(void __iomem *regs, int seed)
+static void __maybe_unused nx_nandc_set_randseed(void __iomem *regs, int seed)
 {
 	const u32 BIT_SIZE  = 16;
 	const u32 BIT_POS   = 0;
@@ -719,7 +719,6 @@ static int nand_hw_ecc_read_oob(struct mtd_info *mtd, struct nand_chip *chip,
 	int eccsize = chip->ecc.size;
 	uint8_t *bufpoi = chip->oob_poi;
 	int i, toread, sndrnd = 0, pos;
-	struct nxp3220_nfc *nfc = nand_get_controller_data(chip);
 
 	chip->cmdfunc(mtd, NAND_CMD_READ0, chip->ecc.size, page);
 	for (i = 0; i < chip->ecc.steps; i++) {
@@ -756,7 +755,6 @@ static int nand_hw_ecc_write_oob(struct mtd_info *mtd,
 	int eccsize = chip->ecc.size, length = mtd->oobsize;
 	int i, len, pos, status = 0, sndcmd = 0, steps = chip->ecc.steps;
 	const uint8_t *bufpoi = chip->oob_poi;
-	struct nxp3220_nfc *nfc = nand_get_controller_data(chip);
 
 	/*
 	 * data-ecc-data-ecc ... ecc-oob
