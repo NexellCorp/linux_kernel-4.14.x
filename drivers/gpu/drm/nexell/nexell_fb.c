@@ -75,8 +75,7 @@ static dma_addr_t nx_drm_fb_get_splash_base(struct drm_fb_helper *fb_helper)
 	for (i = 0; i < fb_helper->crtc_count; i++) {
 		crtc = fb_helper->crtc_info[i].mode_set.crtc;
 		if (crtc->primary) {
-			dma_addr =
-				nx_drm_get_dma_addr(crtc->primary);
+			dma_addr = nx_drm_get_dma_addr(crtc->primary);
 			if (dma_addr)
 				return dma_addr;
 		}
