@@ -1025,7 +1025,7 @@ static inline void mark_readonly(void)
 #else
 #define DEFERRED_LOG(msg)	/* nothing */
 #endif
-void do_deferred_initcalls(void);
+void __ref do_deferred_initcalls(void);
 
 static int deferred_init_thread(void *nothing)
 {
@@ -1181,7 +1181,7 @@ static void __init do_deferred_initcall_level(int level)
 int ready_to_run_deferred = 0;
 
 /* call deferred init routines */
-void do_deferred_initcalls(void)
+void __ref do_deferred_initcalls(void)
 {
 	int level;
 #ifdef CONFIG_LATE_INIT_TO_DEFER
