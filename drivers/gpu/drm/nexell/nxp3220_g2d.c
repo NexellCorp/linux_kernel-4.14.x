@@ -18,9 +18,9 @@
 #include <drm/drmP.h>
 #include <drm/nexell_drm.h>
 
-#include "../nexell_drv.h"
-#include "../nexell_gem.h"
-#include "g2d.h"
+#include "nexell_drv.h"
+#include "nexell_gem.h"
+#include "nxp3220_g2d.h"
 
 struct nx_g2d_reg {
 	u32 axi_parm;
