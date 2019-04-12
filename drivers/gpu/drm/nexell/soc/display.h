@@ -65,10 +65,8 @@ struct nx_overlay_prop {
 		struct {
 			struct drm_property *transcolor;
 			struct drm_property *alphablend;
-		} rgb;
-		struct {
 			struct drm_property *colorkey;
-		} yuv;
+		} rgb;
 	} color;
 	struct drm_property *priority;
 };
