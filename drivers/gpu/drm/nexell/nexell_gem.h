@@ -39,41 +39,44 @@ static inline struct drm_gem_object *to_gem_obj(struct nx_gem_object *nx_obj)
  * framebuffer with gem
  */
 struct nx_gem_object *nx_drm_fb_gem(struct drm_framebuffer *fb,
-			unsigned int plane);
+				    unsigned int plane);
 
 /*
  * struct nx_gem_object elements
  */
 struct nx_gem_object *nx_drm_gem_create(struct drm_device *drm,
-			size_t size, unsigned int flags);
+					size_t size, unsigned int flags);
 void nx_drm_gem_destroy(struct nx_gem_object *nx_obj);
 
 /*
  * struct drm_driver elements
  */
 int nx_drm_gem_dumb_create(struct drm_file *file_priv,
-			struct drm_device *dev,
-			struct drm_mode_create_dumb *args);
+			   struct drm_device *dev,
+			   struct drm_mode_create_dumb *args);
 int nx_drm_gem_dumb_map_offset(struct drm_file *file_priv,
-			struct drm_device *dev, uint32_t handle,
-			uint64_t *offset);
+			       struct drm_device *dev, uint32_t handle,
+			       uint64_t *offset);
 void nx_drm_gem_free_object(struct drm_gem_object *obj);
 
 struct dma_buf *nx_drm_gem_prime_export(struct drm_device *drm,
-			struct drm_gem_object *obj,
-			int flags);
+					struct drm_gem_object *obj,
+					int flags);
 struct drm_gem_object *nx_drm_gem_prime_import(struct drm_device *drm,
-			struct dma_buf *dma_buf);
+					       struct dma_buf *dma_buf);
 int nx_drm_gem_prime_mmap(struct drm_gem_object *obj,
-			struct vm_area_struct *vma);
+			  struct vm_area_struct *vma);
 void *nx_drm_gem_prime_vmap(struct drm_gem_object *obj);
 void nx_drm_gem_prime_vunmap(struct drm_gem_object *obj, void *vaddr);
 
 struct sg_table *nx_drm_gem_prime_get_sg_table(struct drm_gem_object *obj);
 struct drm_gem_object *nx_drm_gem_prime_import_sg_table(
-			struct drm_device *dev,
-			struct dma_buf_attachment *attach,
-			struct sg_table *sgt);
+				struct drm_device *dev,
+				struct dma_buf_attachment *attach,
+				struct sg_table *sgt);
+
+dma_addr_t nx_drm_gem_get_dma_addr(struct drm_device *drm, unsigned int handle,
+				    struct drm_file *file_priv);
 
 /* struct file_operations elements */
 int nx_drm_gem_fops_mmap(struct file *filp, struct vm_area_struct *vma);
@@ -82,11 +85,11 @@ int nx_drm_gem_fops_mmap(struct file *filp, struct vm_area_struct *vma);
  * struct drm_ioctl_desc
  */
 int nx_drm_gem_create_ioctl(struct drm_device *drm, void *data,
-			struct drm_file *file_priv);
+			    struct drm_file *file_priv);
 int nx_drm_gem_sync_ioctl(struct drm_device *drm, void *data,
-			struct drm_file *file_priv);
+			  struct drm_file *file_priv);
 int nx_drm_gem_get_ioctl(struct drm_device *drm, void *data,
-			struct drm_file *file_priv);
+			 struct drm_file *file_priv);
 
 /*
  * gem fence
