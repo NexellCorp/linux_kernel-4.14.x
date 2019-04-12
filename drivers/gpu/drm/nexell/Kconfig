@@ -18,7 +18,7 @@ config DRM_NEXELL
 
 config DRM_CHECK_AUTHENTICATION
         bool "Check Authentication for modesetting driver"
-        depends on DRM
+        depends on DRM_NEXELL
         default y
         help
          Choose this option if you need check authentication
@@ -46,6 +46,14 @@ config DRM_PRE_INIT_DRM
         help
 	 Select this option if display contents should be inherited as set by
 	 the bootloader.
+
+config DRM_NEXELL_G2D
+        bool "Graphic 2D Accelator"
+        depends on DRM_NEXELL && ARCH_NXP3220_COMMON
+        default y
+        help
+	 Choose this option if you want to use NXP3220 Graphic 2D Accelator(G2D)
+         for DRM.
 
 config DRM_NEXELL_RGB
 	bool "RGB LCD support"
