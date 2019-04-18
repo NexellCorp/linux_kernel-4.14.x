@@ -788,6 +788,9 @@ static int nx_i2s_parse_dt(struct platform_device *pdev,
 	i2s->supply_mclk_always =
 		of_property_read_bool(node, "supply-mclk-always");
 
+	if (i2s->supply_lrck_always)
+		i2s->supply_mclk_always = 1;
+
 	return 0;
 }
 
