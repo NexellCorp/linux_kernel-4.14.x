@@ -67,6 +67,86 @@
 		};
 	};
 
+	nx_busqos {
+		compatible = "nexell,nxp3220-busqos";
+		reg = <0x21042000 0x5000>;
+
+		PORT_USB_HSIF {
+			ar_fc_mode = <0>;
+			aw_fc_mode = <0>;
+			ar_fc_enable = <1>;
+			aw_fc_enable = <1>;
+
+			ar_fc_target_latency = <1>;
+			aw_fc_target_latency = <1>;
+
+			ar_max_qos = <0xf>;
+			ar_min_qos = <0x0>;
+			aw_max_qos = <0xf>;
+			aw_min_qos = <0x0>;
+		};
+
+		PORT_DMA {
+			ar_fc_mode = <0>;
+			aw_fc_mode = <0>;
+			ar_fc_enable = <0>;
+			aw_fc_enable = <0>;
+
+			ar_fc_target_latency = <0>;
+			aw_fc_target_latency = <0>;
+
+			ar_max_qos = <0x0>;
+			ar_min_qos = <0x0>;
+			aw_max_qos = <0x0>;
+			aw_min_qos = <0x0>;
+		};
+
+		PORT_CPU {
+			ar_fc_mode = <0>;
+			aw_fc_mode = <0>;
+			ar_fc_enable = <0>;
+			aw_fc_enable = <0>;
+
+			ar_fc_target_latency = <0>;
+			aw_fc_target_latency = <0>;
+
+			ar_max_qos = <0x0>;
+			ar_min_qos = <0x0>;
+			aw_max_qos = <0x0>;
+			aw_min_qos = <0x0>;
+		};
+
+		PORT_DISPLAY {
+			ar_fc_mode = <0>;
+			aw_fc_mode = <0>;
+			ar_fc_enable = <0>;
+			aw_fc_enable = <0>;
+
+			ar_fc_target_latency = <0>;
+			aw_fc_target_latency = <0>;
+
+			ar_max_qos = <0x0>;
+			ar_min_qos = <0x0>;
+			aw_max_qos = <0x0>;
+			aw_min_qos = <0x0>;
+		};
+
+		PORT_ETC {
+			ar_fc_mode = <0>;
+			aw_fc_mode = <0>;
+			ar_fc_enable = <0>;
+			aw_fc_enable = <0>;
+
+			ar_fc_target_latency = <0>;
+			aw_fc_target_latency = <0>;
+
+			ar_max_qos = <0x0>;
+			ar_min_qos = <0x0>;
+			aw_max_qos = <0x0>;
+			aw_min_qos = <0x0>;
+		};
+	};
+
 	cpu0_opp_table: opp_table0 {
 		compatible = "operating-points-v2";
 		opp-shared;
