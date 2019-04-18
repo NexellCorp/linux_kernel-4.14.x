@@ -184,4 +184,12 @@ config DA8XX_MSTPRI
 	  configuration. Allows to adjust the priorities of all master
 	  peripherals.
 
+config NEXELL_NIC_QOS
+	bool "Nexell NIC GPV Bus QoS Driver"
+	default y
+	depends on ARCH_NXP3220_COMMON
+	depends on OF
+	help
+	  Support for Nexell NIC GPV Bus QoS.
+
 endmenu
