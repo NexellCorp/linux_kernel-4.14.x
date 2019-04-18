@@ -136,6 +136,93 @@
 		status = "disabled";
 	};
 
+	nx_nic_qos: nx-nic-qos  {
+		compatible = "syscon", "simple-mfd";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		usb_hsif: usb-hsif {
+			compatible = "nexell,nxp3220-nic-busqos", "syscon";
+			reg = <0x21042000 0x200>;
+
+			ar-fc-mode = <0>;
+			aw-fc-mode = <0>;
+			ar-fc-enable = <1>;
+			aw-fc-enable = <1>;
+			ar-fc-target-latency = <1>;
+			aw-fc-target-latency = <1>;
+			ar-max-qos = <0xf>;
+			ar-min-qos = <0x0>;
+			aw-max-qos = <0xf>;
+			aw-min-qos = <0x0>;
+		};
+
+		dma: dma {
+			compatible = "nexell,nxp3220-nic-busqos", "syscon";
+			reg = <0x21043000 0x200>;
+
+			ar-fc-mode = <0>;
+			aw-fc-mode = <0>;
+			ar-fc-enable = <0>;
+			aw-fc-enable = <0>;
+			ar-fc-target-latency = <0>;
+			aw-fc-target-latency = <0>;
+			ar-max-qos = <0x0>;
+			ar-min-qos = <0x0>;
+			aw-max-qos = <0x0>;
+			aw-min-qos = <0x0>;
+		};
+
+		cpu: cpu {
+			compatible = "nexell,nxp3220-nic-busqos", "syscon";
+			reg = <0x21044000 0x200>;
+
+			ar-fc-mode = <0>;
+			aw-fc-mode = <0>;
+			ar-fc-enable = <0>;
+			aw-fc-enable = <0>;
+			ar-fc-target-latency = <0>;
+			aw-fc-target-latency = <0>;
+			ar-max-qos = <0x0>;
+			ar-min-qos = <0x0>;
+			aw-max-qos = <0x0>;
+			aw-min-qos = <0x0>;
+		};
+
+		display: display {
+			compatible = "nexell,nxp3220-nic-busqos", "syscon";
+			reg = <0x21045000 0x200>;
+
+			ar-fc-mode = <1>;
+			aw-fc-mode = <1>;
+			ar-fc-enable = <1>;
+			aw-fc-enable = <1>;
+			ar-fc-target-latency = <1>;
+			aw-fc-target-latency = <1>;
+			ar-max-qos = <0xf>;
+			ar-min-qos = <0xf>;
+			aw-max-qos = <0xf>;
+			aw-min-qos = <0xf>;
+		};
+
+		etc: etc {
+			compatible = "nexell,nxp3220-nic-busqos", "syscon";
+			reg = <0x21046000 0x200>;
+
+			ar-fc-mode = <0>;
+			aw-fc-mode = <0>;
+			ar-fc-enable = <0>;
+			aw-fc-enable = <0>;
+			ar-fc-target-latency = <0>;
+			aw-fc-target-latency = <0>;
+			ar-max-qos = <0x0>;
+			ar-min-qos = <0x0>;
+			aw-max-qos = <0x0>;
+			aw-min-qos = <0x0>;
+		};
+	};
+
 	soc: soc {
 		compatible = "simple-bus";
 		#address-cells = <1>;
