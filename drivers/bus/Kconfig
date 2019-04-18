@@ -192,4 +192,11 @@ config NEXELL_AXIM_QOS
 	help
 	  Support for Nexell AXIM Bus QoS.
 
+config NEXELL_NIC400_QOS
+	bool "Nexell NIC400 Bus QoS Driver"
+	depends on ARCH_NXP3220_COMMON
+	depends on OF
+	help
+	  Support for Nexell NIC400 Bus QoS.
+
 endmenu
