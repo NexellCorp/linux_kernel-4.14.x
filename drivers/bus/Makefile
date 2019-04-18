@@ -26,3 +26,4 @@ obj-$(CONFIG_VEXPRESS_CONFIG)	+= vexpress-config.o
 
 obj-$(CONFIG_DA8XX_MSTPRI)	+= da8xx-mstpri.o
 obj-$(CONFIG_NEXELL_AXIM_QOS)	+= nexell-axim-qos.o
+obj-$(CONFIG_NEXELL_NIC400_QOS)	+= nexell-nic400-qos.o
