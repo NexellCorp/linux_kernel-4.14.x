@@ -302,17 +302,6 @@
 			assigned-clock-rates = <1354752000>;
 		};
 
-		adc: adc@20600000 {
-			compatible = "nexell,nxp3220-adc";
-			reg = <0x20600000 0x1000>;
-			interrupts = <GIC_SPI 0 IRQ_TYPE_NONE>;
-			clocks = <&cmu CLK_ADC0_APB>;
-			clock-names = "adc";
-			sample_rate = <200000>;
-			#io-channel-cells = <1>;
-			status = "disabled";
-		};
-
 		cmu: clock-controller@27000000 {
 			compatible = "nexell,nxp3220-cmu";
 			reg = <0x27000000 0x8000>,
@@ -411,6 +400,49 @@
 			compatible = "nexell,nxp3220-cmu-usb";
 			reg = <0x24000000 0x400>;
 			#clock-cells = <1>;
+		};
+
+		nic400_qos: nic400_qos  {
+			compatible = "simple-bus";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges;
+
+			cpu: cpu {
+				compatible = "nexell,nxp3220-nic400-qos", "syscon";
+				reg = <0x21044000 0x200>;
+			};
+
+			display: display {
+				compatible = "nexell,nxp3220-nic400-qos", "syscon";
+				reg = <0x21045000 0x200>;
+			};
+
+			dma: dma {
+				compatible = "nexell,nxp3220-nic400-qos", "syscon";
+				reg = <0x21043000 0x200>;
+			};
+
+			usb_hsif: usb-hsif {
+				compatible = "nexell,nxp3220-nic400-qos", "syscon";
+				reg = <0x21042000 0x200>;
+			};
+
+			etc: etc {
+				compatible = "nexell,nxp3220-nic400-qos", "syscon";
+				reg = <0x21046000 0x200>;
+			};
+		};
+
+		adc: adc@20600000 {
+			compatible = "nexell,nxp3220-adc";
+			reg = <0x20600000 0x1000>;
+			interrupts = <GIC_SPI 0 IRQ_TYPE_NONE>;
+			clocks = <&cmu CLK_ADC0_APB>;
+			clock-names = "adc";
+			sample_rate = <200000>;
+			#io-channel-cells = <1>;
+			status = "disabled";
 		};
 
 		deinterlacer: deinterlacer@0x250c0000 {
