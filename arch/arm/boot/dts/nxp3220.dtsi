@@ -1087,6 +1087,9 @@
 			compatible = "nexell,nxp3220-vip";
 			reg = <0x25100000 0x1000>;
 			interrupts = <GIC_SPI 124 IRQ_TYPE_NONE>;
+			assigned-clocks = <&cmu_mm CLK_MM_VIP_AXI>,
+				<&cmu_mm CLK_MM_VIP_APB>;
+			assigned-clock-rates = <333333334>, <166666667>;
 			clock-names = "vip_axi", "vip_apb";
 			clocks = <&cmu_mm CLK_MM_VIP_AXI>,
 			       <&cmu_mm CLK_MM_VIP_APB>;
