@@ -635,10 +635,6 @@
 };
 
 &vip {
-	assigned-clocks = <&cmu_mm CLK_MM_VIP_AXI>,
-			<&cmu_mm CLK_MM_VIP_APB>;
-	assigned-clock-rates = <300000000>,
-			<150000000>;
 	status = "okay";
 };
 
