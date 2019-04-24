@@ -1093,6 +1093,8 @@
 			clock-names = "vip_axi", "vip_apb";
 			clocks = <&cmu_mm CLK_MM_VIP_AXI>,
 			       <&cmu_mm CLK_MM_VIP_APB>;
+			reset-names = "vip-reset";
+			resets = <&cmu_mm CLK_RESET_MM_VIP_AXI>;
 			module = <0>;
 			status = "disabled";
 		};
