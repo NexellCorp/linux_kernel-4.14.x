@@ -33,7 +33,6 @@ struct nx_mem_fmt_map {
 };
 
 bool nx_vip_is_valid(u32 module);
-int nx_vip_reset(u32 module);
 int nx_vip_clock_enable(u32 module, bool enable);
 int nx_vip_padout_clock_enable(u32 module, bool enable);
 int nx_vip_register_irq_entry(u32 module, struct nx_v4l2_irq_entry *e);

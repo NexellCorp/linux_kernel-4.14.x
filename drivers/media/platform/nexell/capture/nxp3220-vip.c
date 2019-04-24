@@ -9,6 +9,7 @@
 #include <linux/slab.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
+#include <linux/reset.h>
 #include <linux/platform_device.h>
 #include <linux/io.h>
 #include <linux/clk.h>
@@ -23,6 +24,8 @@
 
 #define NX_VIP_DEV_NAME		"nx-vip"
 
+#define MAX_RESET_NUM	8
+
 /* if defined, when vip enabled, register of VIP are dumped */
 /*	#define DUMP_REGISTER	*/
 
@@ -34,6 +37,9 @@ struct nx_vip {
 	struct clk *clk_apb;
 	struct clk *clk_padout0;
 	struct clk *clk_padout1;
+
+	struct reset_control *resets[MAX_RESET_NUM];
+	int resets_num;
 
 	atomic_t running_bitmap;
 
@@ -57,6 +63,8 @@ static int nx_vip_parse_dt(struct platform_device *pdev, struct nx_vip *me)
 	struct device *dev = &pdev->dev;
 	struct device_node *np = dev->of_node;
 	struct resource res;
+	const char *reset_name[MAX_RESET_NUM];
+	int i, size;
 
 	ret = of_address_to_resource(np, 0, &res);
 	if (ret) {
@@ -101,9 +109,18 @@ static int nx_vip_parse_dt(struct platform_device *pdev, struct nx_vip *me)
 	me->clk_padout0 = devm_clk_get(dev, "vip_padout0");
 	if (IS_ERR(me->clk_padout0))
 		me->clk_padout0 = NULL;
+
 	me->clk_padout1 = devm_clk_get(dev, "vip_padout1");
 	if (IS_ERR(me->clk_padout1))
 		me->clk_padout1 = NULL;
+
+	size = of_property_read_string_array(np, "reset-names",
+			reset_name, MAX_RESET_NUM);
+	for (i = 0; size > i; i++) {
+		me->resets[i] = of_reset_control_get(np, reset_name[i]);
+		pr_debug("reset name : [%d] %s\n", i, reset_name[i]);
+	}
+	me->resets_num = size;
 
 	return 0;
 }
@@ -171,6 +188,24 @@ bool nx_vip_is_valid(u32 module)
 	return false;
 }
 EXPORT_SYMBOL_GPL(nx_vip_is_valid);
+
+static void nx_vip_reset(struct nx_vip *me)
+{
+	int count;
+	int i;
+	bool reset;
+
+	count = me->resets_num;
+
+	for (i = 0; i < count; i++) {
+		reset = reset_control_status(me->resets[i]);
+		if (reset)
+			reset_control_assert(me->resets[i]);
+	}
+
+	for (i = 0; i < count; i++)
+		reset_control_deassert(me->resets[i]);
+}
 
 int nx_vip_clock_enable(u32 module, bool enable)
 {
@@ -518,6 +553,7 @@ static int nx_vip_probe(struct platform_device *pdev)
 	INIT_LIST_HEAD(&me->irq_entry_list);
 	spin_lock_init(&me->lock);
 
+	nx_vip_reset(me);
 	nx_vip_clock_enable(me->module, true);
 	snprintf(me->irq_name, sizeof(me->irq_name), "nx-vip%d", me->module);
 	ret = devm_request_irq(&pdev->dev, me->irq, &vip_irq_handler,
