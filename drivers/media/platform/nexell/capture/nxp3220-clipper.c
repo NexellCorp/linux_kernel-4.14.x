@@ -1845,6 +1845,7 @@ static int nx_clipper_suspend(struct device *dev)
 			}
 		}
 #endif
+		nx_vip_reset(me->module);
 		nx_vip_clock_enable(me->module, false);
 	}
 
@@ -1858,6 +1859,7 @@ static int nx_clipper_resume(struct device *dev)
 	me = dev_get_drvdata(dev);
 	if (me) {
 		nx_vip_clock_enable(me->module, true);
+		nx_vip_reset(me->module);
 #ifdef CONFIG_VIDEO_NXP3220_CLIPPER
 		if (NX_ATOMIC_READ(&me->state) & STATE_MEM_RUNNING) {
 			struct v4l2_subdev *remote;
