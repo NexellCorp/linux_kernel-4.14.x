@@ -226,6 +226,7 @@ void nx_vip_set_decimator_addr(u32 module_index, u32 format,
 void nx_vip_get_deci_source(u32 module_index, u32 *p_src_width,
 			    u32 *p_src_height);
 int nx_vip_smoke_test(u32 module_index);
+void nx_vip_clear_input_fifo(u32 module_index);
 void nx_vip_dump_register(u32 module_index);
 
 #endif

@@ -9,6 +9,7 @@
 #include <linux/slab.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
+#include <linux/reset.h>
 #include <linux/platform_device.h>
 #include <linux/io.h>
 #include <linux/clk.h>
@@ -34,6 +35,9 @@ struct nx_vip {
 	struct clk *clk_apb;
 	struct clk *clk_padout0;
 	struct clk *clk_padout1;
+
+	struct reset_control *rst;
+	int resets_num;
 
 	atomic_t running_bitmap;
 
@@ -101,9 +105,16 @@ static int nx_vip_parse_dt(struct platform_device *pdev, struct nx_vip *me)
 	me->clk_padout0 = devm_clk_get(dev, "vip_padout0");
 	if (IS_ERR(me->clk_padout0))
 		me->clk_padout0 = NULL;
+
 	me->clk_padout1 = devm_clk_get(dev, "vip_padout1");
 	if (IS_ERR(me->clk_padout1))
 		me->clk_padout1 = NULL;
+
+	me->rst = devm_reset_control_get(dev, "vip-reset");
+	if (IS_ERR(me->rst)) {
+		dev_err(dev, "failed to get reset control\n");
+		return -ENODEV;
+	}
 
 	return 0;
 }
@@ -171,6 +182,27 @@ bool nx_vip_is_valid(u32 module)
 	return false;
 }
 EXPORT_SYMBOL_GPL(nx_vip_is_valid);
+
+int nx_vip_reset(u32 module)
+{
+        struct nx_vip *me;
+        int ret = 0;
+
+        if (module >= NUMBER_OF_VIP_MODULE) {
+                pr_err("[nx vip] invalid module num %d\n", module);
+                return -ENODEV;
+        }
+        me = _nx_vip_object[module];
+
+        if (reset_control_status(me->rst))
+		reset_control_assert(me->rst);
+
+	reset_control_deassert(me->rst);
+        nx_vip_clear_input_fifo(module);
+
+        return ret;
+}
+EXPORT_SYMBOL_GPL(nx_vip_reset);
 
 int nx_vip_clock_enable(u32 module, bool enable)
 {
@@ -518,6 +550,7 @@ static int nx_vip_probe(struct platform_device *pdev)
 	INIT_LIST_HEAD(&me->irq_entry_list);
 	spin_lock_init(&me->lock);
 
+	nx_vip_reset(me->module);
 	nx_vip_clock_enable(me->module, true);
 	snprintf(me->irq_name, sizeof(me->irq_name), "nx-vip%d", me->module);
 	ret = devm_request_irq(&pdev->dev, me->irq, &vip_irq_handler,
