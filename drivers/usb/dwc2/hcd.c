@@ -3386,6 +3386,32 @@ static ssize_t sel_dr_mode_store(struct device *dev,
 
 DEVICE_ATTR(sel_dr_mode, S_IRUGO|S_IWUSR, sel_dr_mode_show, sel_dr_mode_store);
 
+static int dwc2_sysfs_create_compat_s5pxx18(struct device *dev,
+					    const struct device_attribute *attr)
+{
+	struct kobject *kobj;
+	int ret = -ENOMEM;
+
+	/* create object : /sys/devices/platform/c0000000.soc */
+        kobj = kobject_create_and_add("c0000000.soc", &platform_bus.kobj);
+        if (!kobj) {
+                dev_err(dev, "Failed s5pxx18 compatible usb object !!!\n");
+                return ret;
+        }
+
+	/*
+	 * Link /sys/devices/platform/c0000000.soc/c0040000.dwc2otg to
+	 * /sys/devices/platform/soc/240c0000.dwc2otg
+	 */
+	ret = sysfs_create_link(kobj, &dev->kobj, "c0040000.dwc2otg");
+	if (ret) {
+		dev_err(dev, "Failed s5pxx18 compatible usb link !!!\n");
+		return ret;
+	}
+
+	return 0;
+}
+
 static ssize_t h_ddma_en_show(struct device *dev,
 				   struct device_attribute *attr, char *buf)
 {
@@ -5502,8 +5528,11 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg)
 				    "nexell,nxp3220-dwc2otg")) {
 		device_property_read_u32(hsotg->dev, "nouse_idcon",
 					 &hsotg->nouse_idcon);
-		if (hsotg->nouse_idcon)
+		if (hsotg->nouse_idcon) {
 			device_create_file(hsotg->dev, &dev_attr_sel_dr_mode);
+			dwc2_sysfs_create_compat_s5pxx18(hsotg->dev,
+							 &dev_attr_sel_dr_mode);
+		}
 		device_create_file(hsotg->dev, &dev_attr_h_ddma_en);
 	}
 
