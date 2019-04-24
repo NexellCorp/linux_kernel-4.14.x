@@ -42,7 +42,7 @@
 
 #define NX_CLIPPER_DEV_NAME	"nx-clipper"
 
-/*	#define DEBUG_SYNC	*/
+/* #define DEBUG_SYNC */
 #ifdef DEBUG_SYNC
 #include <linux/timer.h>
 
@@ -1587,6 +1587,7 @@ static int init_v4l2_subdev(struct nx_clipper *me)
 
 static struct camera_sensor_info {
 	char name[V4L2_SUBDEV_NAME_SIZE];
+	int interlaced;
 } camera_sensor_info[NUMBER_OF_VIP_MODULE];
 
 static ssize_t camera_sensor_show_common(struct device *dev,
@@ -1599,8 +1600,11 @@ static ssize_t camera_sensor_show_common(struct device *dev,
 	if (!strlen(camera_sensor_info[module].name))
 		return scnprintf(*buf, PAGE_SIZE, "no exist");
 	else
-		return scnprintf(*buf, PAGE_SIZE, "name:%s",
-				 camera_sensor_info[module].name);
+		return scnprintf(*buf, PAGE_SIZE,
+				"is_mipi:%d,interlaced:%d,name:%s",
+				0,
+				camera_sensor_info[module].interlaced,
+				camera_sensor_info[module].name);
 }
 
 static ssize_t camera_sensor_show0(struct device *dev,
@@ -1648,6 +1652,8 @@ static int create_sysfs_for_camera_sensor(struct nx_clipper *me,
 		info->board_info.type,
 		i2c_adapter_id(me->sensor_info.i2c_adapter),
 		info->board_info.addr);
+
+	camera_sensor_info[me->module].interlaced = me->interlace;
 
 	strlcpy(camera_sensor_info[me->module].name, sensor_name,
 		V4L2_SUBDEV_NAME_SIZE);
