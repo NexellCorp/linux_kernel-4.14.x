@@ -1248,7 +1248,7 @@ struct nx_gem_object *nx_drm_gem_create(struct drm_device *drm,
 	struct nx_gem_object *nx_obj;
 	int ret;
 
-#ifndef DRM_NEXELL_GEM_SYSTEM
+#ifndef CONFIG_DRM_NEXELL_GEM_SYSTEM
 	flags = NEXELL_BO_DMA;
 #endif
 
