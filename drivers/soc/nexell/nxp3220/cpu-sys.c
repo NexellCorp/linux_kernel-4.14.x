@@ -304,10 +304,10 @@ static ssize_t sys_ids_show(struct device *pdev, struct device_attribute *attr,
 	core_inte = ((uid[1] >> 26) & 0x3f);
 
 	s += snprintf(s, 7, "%02x:%02x ", cpu_ids, core_ids);
-	len = snprintf(NULL, 0, "cpu: %2d.%02d mV, ", cpu_inte, cpu_frac);
-	s += snprintf(s, len + 1, "cpu: %2d.%02d mV, ", cpu_inte, cpu_frac);
-	len = snprintf(NULL, 0, "core: %2d.%02d mV\n", core_inte, core_frac);
-	s += snprintf(s, len + 1, "core: %2d.%02d mV\n", core_inte, core_frac);
+	len = snprintf(NULL, 0, "cpu: %2d.%02d mA, ", cpu_inte, cpu_frac);
+	s += snprintf(s, len + 1, "cpu: %2d.%02d mA, ", cpu_inte, cpu_frac);
+	len = snprintf(NULL, 0, "core: %2d.%02d mA\n", core_inte, core_frac);
+	s += snprintf(s, len + 1, "core: %2d.%02d mA\n", core_inte, core_frac);
 
 	if (s != buf)
 		*(s-1) = '\n';

@@ -1263,7 +1263,7 @@ static int tzio_mmap(struct file *file, struct vm_area_struct *vma)
 
 static int tzio_release(struct inode *inode, struct file *filp)
 {
-	tzlog_print(TZLOG_ERROR,
+	tzlog_print(TZLOG_INFO,
 		    "tzdaemon has been crashed,start notify secure os\n");
 	tzio_file_closed(filp);
 	scm_tzdaemon_dead(0);

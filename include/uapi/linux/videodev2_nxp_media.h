@@ -1,19 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright (C) 2016  Nexell Co., Ltd.
- * Author: Seonghee, Kim <kshblue@nexell.co.kr>
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * Nexell VPU driver
+ * Copyright (c) 2019 Sungwon Jo <doriya@nexell.co.kr>
  */
 
 #ifndef _VIDEODEV2_NXP_MEDIA_H
@@ -22,7 +10,6 @@
 /*
  * F O R M A T S
  */
-
 
 /* compressed formats */
 #define V4L2_PIX_FMT_DIV3			v4l2_fourcc('D', 'I', 'V', '3')
@@ -49,12 +36,9 @@
 /* 24  YUV444 planar */
 #define V4L2_PIX_FMT_YUV444M	v4l2_fourcc('Y', 'M', '2', '4')
 
-
-
 /*
  * C O N T R O L S
  */
-
 
 /* Video Codec */
 #define V4L2_CID_NXP_VPU_BASE			(V4L2_CTRL_CLASS_MPEG | 0x3000)

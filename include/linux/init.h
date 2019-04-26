@@ -173,6 +173,12 @@ extern bool initcall_debug;
 	static initcall_t __initcall_##fn##id __used \
 	__attribute__((__section__(".initcall" #id ".init"))) = fn;
 
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+#define __define_deferred_initcall(fn, id) \
+	static initcall_t __deferred_initcall_##fn##id __used \
+	__attribute__((__section__(".deferred_initcall" #id ".init"))) = fn;
+#endif
+
 /*
  * Early initcalls run before initializing SMP.
  *
@@ -200,10 +206,22 @@ extern bool initcall_debug;
 #define fs_initcall(fn)			__define_initcall(fn, 5)
 #define fs_initcall_sync(fn)		__define_initcall(fn, 5s)
 #define rootfs_initcall(fn)		__define_initcall(fn, rootfs)
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+#define early_device_initcall(fn)	__define_initcall(fn, 6)
+#define device_initcall(fn)		__define_initcall(fn, 7)
+#define device_initcall_sync(fn)	__define_initcall(fn, 7s)
+#define late_initcall(fn)		__define_initcall(fn, 8)
+#define late_initcall_sync(fn)		__define_initcall(fn, 8s)
+
+#define deferred_0_initcall(fn)		__define_deferred_initcall(fn, 0);
+#define deferred_1_initcall(fn)		__define_deferred_initcall(fn, 1);
+#define deferred_2_initcall(fn)		__define_deferred_initcall(fn, 2);
+#else
 #define device_initcall(fn)		__define_initcall(fn, 6)
 #define device_initcall_sync(fn)	__define_initcall(fn, 6s)
 #define late_initcall(fn)		__define_initcall(fn, 7)
 #define late_initcall_sync(fn)		__define_initcall(fn, 7s)
+#endif /* CONFIG_QUICKBOOT_DEFERRED_INIT */
 
 #define __initcall(fn) device_initcall(fn)
 

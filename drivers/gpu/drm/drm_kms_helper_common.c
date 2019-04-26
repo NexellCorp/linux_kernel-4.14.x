@@ -56,5 +56,9 @@ static void __exit drm_kms_helper_exit(void)
 	drm_dp_aux_dev_exit();
 }
 
+#ifdef CONFIG_DEFERRED_UP_DRM
+early_device_initcall(drm_kms_helper_init);
+#else
 module_init(drm_kms_helper_init);
+#endif
 module_exit(drm_kms_helper_exit);

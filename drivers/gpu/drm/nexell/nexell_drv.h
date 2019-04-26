@@ -269,12 +269,39 @@ int  nx_drm_display_setup(struct nx_drm_display *display,
 			struct device_node *node, enum nx_panel_type type);
 
 dma_addr_t nx_drm_get_dma_addr(struct drm_plane *plane);
-void nx_drm_set_dma_addr(struct drm_plane *plane, dma_addr_t addr);
 
 /*
- * Nexell drm panel specific platform drivers
+ * Nexell drm sub drivers
+ */
+struct nx_drm_subdrv {
+	struct list_head list;
+	struct device *dev;
+	struct drm_device *drm;
+	void *driver_data;
+	int (*probe)(struct drm_device *drm, struct device *dev);
+	void (*remove)(struct drm_device *drm, struct device *dev);
+	int (*open)(struct drm_device *drm, struct device *dev,
+			struct drm_file *file);
+	void (*close)(struct drm_device *drm, struct device *dev,
+			struct drm_file *file);
+};
+
+int nx_drm_subdrv_register(struct nx_drm_subdrv *subdrv, struct device *dev);
+int nx_drm_subdrv_unregister(struct nx_drm_subdrv *subdrv);
+int nx_drm_subdrv_probe(struct drm_device *drm);
+int nx_drm_subdrv_remove(struct drm_device *drm);
+int nx_drm_subdrv_open(struct drm_device *drm, struct drm_file *file);
+void nx_drm_subdrv_close(struct drm_device *drm, struct drm_file *file);
+
+/*
+ * Nexell drm specific platform drivers
  */
 extern struct platform_driver panel_lcd_driver;
+extern struct platform_driver drm_g2d_driver;
+
+#ifdef CONFIG_DRM_NEXELL_G2D
+#include "nxp3220_g2d.h"
+#endif
 
 #endif
 

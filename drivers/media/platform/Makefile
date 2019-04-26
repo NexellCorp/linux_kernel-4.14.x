@@ -69,7 +69,7 @@ obj-$(CONFIG_VIDEO_AM437X_VPFE)		+= am437x/
 
 obj-$(CONFIG_VIDEO_XILINX)		+= xilinx/
 
-obj-$(CONFIG_VIDEO_NEXELL_CODEC)	+= nxp-vpu/
+obj-$(CONFIG_VIDEO_NEXELL_CODEC)	+= nx-vpu/
 
 obj-$(CONFIG_VIDEO_RCAR_VIN)		+= rcar-vin/
 

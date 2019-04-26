@@ -65,10 +65,8 @@ struct nx_overlay_prop {
 		struct {
 			struct drm_property *transcolor;
 			struct drm_property *alphablend;
-		} rgb;
-		struct {
 			struct drm_property *colorkey;
-		} yuv;
+		} rgb;
 	} color;
 	struct drm_property *priority;
 };
@@ -93,14 +91,16 @@ struct nx_overlay {
 	unsigned int h_filter;
 	unsigned int v_filter;
 	union {
+		/* RGB */
 		struct {
+			int alphablend; /* 0: transparency, 15: opacity */
 			u32 transcolor;
 			u32 invertcolor;
-			u32 alphablend;
 			u32 colorkey;
 		};
+		/* VIDEO */
 		struct {
-			int alpha; /* def= 15, 0 <= Range <= 16 */
+			int alpha; /* def= 255, 0 <= Range <= 15 */
 			int bright; /* def= 0, -128 <= Range <= 128*/
 			int contrast; /* def= 0, 0 <= Range <= 8 */
 			double hue; /* def= 0, 0 <= Range <= 360 */
@@ -114,6 +114,7 @@ struct nx_overlay {
 };
 
 struct nx_display {
+	struct device *dev;
 	struct drm_crtc *crtc;
 	void __iomem *mlc_base;
 	void __iomem *dpc_base;
@@ -163,18 +164,19 @@ void nx_overlay_set_color(struct nx_overlay *ovl,
 			enum nx_overlay_color type, unsigned int color,
 			bool on, bool adjust);
 int nx_overlay_set_format(struct nx_overlay *ovl,
-			unsigned int format, int pixelbyte);
+			unsigned int format, int pixelbyte, bool sync);
 int nx_overlay_set_position(struct nx_overlay *ovl,
 			int sx, int sy, int sw, int sh,
-			int dx, int dy, int dw, int dh);
+			int dx, int dy, int dw, int dh, bool sync);
 void nx_overlay_set_priority(struct nx_overlay *ovl, int priority);
 void nx_overlay_enable(struct nx_overlay *ovl, bool on);
 void nx_overlay_set_addr_rgb(struct nx_overlay *ovl,
 			unsigned int paddr, unsigned int pixelbyte,
-			unsigned int stride, int align);
+			unsigned int stride, int align, bool sync);
 void nx_overlay_set_addr_yuv(struct nx_overlay *ovl,
 			unsigned int lu_a, unsigned int lu_s,
 			unsigned int cb_a, unsigned int cb_s,
-			unsigned int cr_a, unsigned int cr_s, int planes);
+			unsigned int cr_a, unsigned int cr_s, int planes,
+			bool sync);
 
 #endif

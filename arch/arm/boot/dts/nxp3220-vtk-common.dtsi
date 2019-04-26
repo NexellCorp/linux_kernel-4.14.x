@@ -20,6 +20,17 @@
 		reg = <0x40000000 0x20000000>;
 	};
 
+	reserved-memory {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		bl32_mem: bl32_mem@5f000000 {
+			reg = <0x5f000000 0x1000000>;
+			no-map;
+		};
+	};
+
 	gpio_keys {
 		compatible = "gpio-keys";
 		#address-cells = <1>;
@@ -335,6 +346,14 @@
 	status = "okay";
 };
 
+&nand {
+	nand-ecc-strength = <4>;
+	nand-ecc-step-size = <512>;
+	nand-timing-mode = <3>;
+
+	wp-gpio = <&gpio_c 16 GPIO_ACTIVE_LOW>;
+};
+
 &pinctrl_0 {
 	key_3: key@3 {
 		nexell,pins = "alive-3";
@@ -440,6 +459,18 @@
 	PWR_PIN_INPUT(GMAC, gpiod-7);
 	PWR_PIN_INPUT(GMAC, gpiod-8);
 	PWR_PIN_INPUT(GMAC, gpiod-9);
+};
+
+&nand_data {
+	nexell,pin-strength = <NX_PIN_STR3>;
+};
+
+&nand_cs0 {
+	nexell,pin-strength = <NX_PIN_STR2>;
+};
+
+&nand_cs1 {
+	nexell,pin-strength = <NX_PIN_STR2>;
 };
 
 &peri0_pwr_pin {

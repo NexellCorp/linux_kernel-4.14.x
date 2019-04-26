@@ -583,11 +583,17 @@ void __init prepare_namespace(void)
 
 	/* wait for any asynchronous scanning to complete */
 	if ((ROOT_DEV == 0) && root_wait) {
+#ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
+		while (driver_probe_done() != 0 ||
+			(ROOT_DEV = name_to_dev_t(saved_root_name)) == 0)
+			msleep(1);
+#else
 		printk(KERN_INFO "Waiting for root device %s...\n",
 			saved_root_name);
 		while (driver_probe_done() != 0 ||
 			(ROOT_DEV = name_to_dev_t(saved_root_name)) == 0)
 			msleep(5);
+#endif
 		async_synchronize_full();
 	}
 

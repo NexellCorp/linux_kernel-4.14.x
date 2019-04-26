@@ -143,6 +143,7 @@ struct dw_spi {
 	bool			slave;
 
 	struct dw_spi_chip	*chip_info;
+	struct chip_data *chip;
 	/* Bus interface info */
 	void			*priv;
 #ifdef CONFIG_DEBUG_FS

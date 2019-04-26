@@ -118,6 +118,8 @@ struct nx_i2s_data {
 	int sample_rate; /* fix sample rate range */
 	int frame_bit; /* fix frame bit range */
 	int external_frequency; /* when use external clock in master mode */
+	int supply_mclk_always;
+	int supply_lrck_always;
 
 	/* susepnd */
 	u32 iis_con;
@@ -190,7 +192,7 @@ static void nx_i2s_trx_stop(struct nx_i2s_data *i2s, int stream)
 	else
 		con &= ~CON_RXDMA_ACT;
 
-	if (!(con & CON_DMA_MASK))
+	if (!i2s->supply_lrck_always && !(con & CON_DMA_MASK))
 		con &= ~CON_IIS_ACT;
 
 	writel(con, &reg->con);
@@ -320,6 +322,9 @@ static void nx_i2s_clk_enable(struct nx_i2s_data *i2s)
 
 static void nx_i2s_clk_disable(struct nx_i2s_data *i2s)
 {
+	if (i2s->supply_mclk_always)
+		return;
+
 	if (!__clk_is_enabled(i2s->clk))
 		return;
 
@@ -517,10 +522,9 @@ static int nx_i2s_hw_params(struct snd_pcm_substream *substream,
 		return ret;
 
 	if (rfs && i2s->rfs != rfs) {
-		dev_warn(i2s->dev, "Check clock setting for %d Khz\n", rate);
-		dev_warn(i2s->dev, "Require %d/%d, IIS %d/%d\n",
-			i2s->sysclk_freq, rfs,
-			i2s->mclk_freq, i2s->rfs);
+		dev_dbg(i2s->dev, "Check clock setting for %d Khz\n", rate);
+		dev_dbg(i2s->dev, "Require %d/%d, IIS %d/%d\n",
+			i2s->sysclk_freq, rfs, i2s->mclk_freq, i2s->rfs);
 	}
 
 	switch (i2s->rfs) {
@@ -613,7 +617,7 @@ static int nx_i2s_resume(struct snd_soc_dai *dai)
 	writel(i2s->iis_mod, &reg->mod);
 	writel(i2s->iis_con, &reg->con);
 
-	if (i2s_is_active(i2s->base))
+	if (i2s_is_active(i2s->base) || i2s->supply_mclk_always)
 		clk_prepare_enable(i2s->clk);
 
 	return 0;
@@ -623,6 +627,7 @@ static int nx_i2s_clock_setup(struct platform_device *pdev,
 			struct nx_i2s_data *i2s)
 {
 	struct device_node *node = pdev->dev.of_node;
+	struct i2s_reg *reg = i2s->base;
 
 	i2s->clk = of_clk_get_by_name(node, "i2s");
 	if (IS_ERR(i2s->clk)) {
@@ -639,16 +644,17 @@ static int nx_i2s_clock_setup(struct platform_device *pdev,
 	}
 
 	i2s->pll = of_clk_get_by_name(node, "pll");
-	if (IS_ERR(i2s->pll))
-		dev_warn(&pdev->dev,
-			"i2s.0x%x: Not support dynamic sample rate\n",
-			i2s->addr);
 
 	clk_prepare_enable(i2s->pclk);
 
+	if (i2s->supply_lrck_always)
+		writel(readl(&reg->con) | CON_IIS_ACT, &reg->con);
+
 	dev_info(&pdev->dev,
-		"i2s.0x%x: iis %lu hz [pclk:%lu hz]\n",
-		i2s->addr, clk_get_rate(i2s->clk), clk_get_rate(i2s->pclk));
+		"i2s.0x%x: iis %lu hz [pclk:%lu hz] mclk:%s, lrck:%s\n",
+		i2s->addr, clk_get_rate(i2s->clk), clk_get_rate(i2s->pclk),
+		i2s->supply_mclk_always ? "always" : "runtime",
+		i2s->supply_lrck_always ? "always" : "runtime");
 
 	return 0;
 }
@@ -777,6 +783,13 @@ static int nx_i2s_parse_dt(struct platform_device *pdev,
 	of_property_read_u32(node, "sample-rate", &i2s->sample_rate);
 	of_property_read_u32(node, "external-mclk-frequency",
 		&i2s->external_frequency);
+	i2s->supply_lrck_always =
+		of_property_read_bool(node, "supply-lrck-always");
+	i2s->supply_mclk_always =
+		of_property_read_bool(node, "supply-mclk-always");
+
+	if (i2s->supply_lrck_always)
+		i2s->supply_mclk_always = 1;
 
 	return 0;
 }
@@ -875,7 +888,15 @@ static struct platform_driver nx_i2s_driver = {
 	},
 };
 
+#ifdef CONFIG_DEFERRED_SOUND_I2S
+static int __init nx_i2s_driver_init(void)
+{
+	return platform_driver_register(&nx_i2s_driver);
+}
+deferred_module_init(nx_i2s_driver_init)
+#else
 module_platform_driver(nx_i2s_driver);
+#endif
 
 MODULE_AUTHOR("jhkim <jhkim@nexell.co.kr>");
 MODULE_DESCRIPTION("Sound I2S driver for Nexell sound");

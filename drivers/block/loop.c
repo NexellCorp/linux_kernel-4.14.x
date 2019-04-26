@@ -2105,7 +2105,11 @@ static void __exit loop_exit(void)
 	misc_deregister(&loop_misc);
 }
 
+#ifdef CONFIG_DEFERRED_BLOCK_LOOP
+deferred_module_init(loop_init);
+#else
 module_init(loop_init);
+#endif
 module_exit(loop_exit);
 
 #ifndef MODULE

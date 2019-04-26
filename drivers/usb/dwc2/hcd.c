@@ -3325,6 +3325,145 @@ void dwc2_hcd_queue_transactions(struct dwc2_hsotg *hsotg,
 	}
 }
 
+static ssize_t sel_dr_mode_show(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct dwc2_hsotg *hsotg = dev_get_drvdata(dev);
+
+	if (hsotg->dr_mode == USB_DR_MODE_HOST)
+		return sprintf(buf, "%s", "host\n");
+	else if (hsotg->dr_mode == USB_DR_MODE_PERIPHERAL)
+		return sprintf(buf, "%s", "device\n");
+	else
+		return sprintf(buf, "%s", "otg\n");
+}
+
+static ssize_t sel_dr_mode_store(struct device *dev,
+				   struct device_attribute *attr,
+				   const char *buf, size_t count)
+{
+	struct dwc2_hsotg *hsotg = dev_get_drvdata(dev);
+	unsigned long flags;
+
+	if (!strncmp(buf, "host", 4)) {
+		hsotg->dr_mode = USB_DR_MODE_HOST;
+		dwc2_core_reset_and_force_dr_mode(hsotg);
+		dev_dbg(hsotg->dev, "set dr mode to host\n");
+
+		/* A-Device connector (Host Mode) */
+		dev_dbg(hsotg->dev, "connId A\n");
+		hsotg->op_state = OTG_STATE_A_HOST;
+
+		/* Initialize the Core for Host mode */
+		dwc2_core_init(hsotg, false);
+		dwc2_enable_global_interrupts(hsotg);
+		dwc2_hcd_start(hsotg);
+	} else if (!strncmp(buf, "device", 5)) {
+		hsotg->dr_mode = USB_DR_MODE_PERIPHERAL;
+		dwc2_core_reset_and_force_dr_mode(hsotg);
+		if (hsotg->bus_suspended) {
+			dev_info(hsotg->dev,
+				 "Do port resume before switching to device mode\n");
+			dwc2_port_resume(hsotg);
+		}
+		hsotg->op_state = OTG_STATE_B_PERIPHERAL;
+		dwc2_core_init(hsotg, false);
+		dwc2_enable_global_interrupts(hsotg);
+		spin_lock_irqsave(&hsotg->lock, flags);
+		dwc2_hsotg_disconnect(hsotg);
+		dwc2_hsotg_core_init_disconnected(hsotg, false);
+		dwc2_hsotg_core_connect(hsotg);
+		spin_unlock_irqrestore(&hsotg->lock, flags);
+		dev_dbg(hsotg->dev, " set dr mode to device\n");
+	} else {
+		hsotg->dr_mode = USB_DR_MODE_OTG;
+		dwc2_core_reset_and_force_dr_mode(hsotg);
+		dev_dbg(hsotg->dev, " set dr mode to otg\n");
+	}
+
+	return count;
+}
+
+DEVICE_ATTR(sel_dr_mode, S_IRUGO|S_IWUSR, sel_dr_mode_show, sel_dr_mode_store);
+
+static int dwc2_sysfs_create_compat_s5pxx18(struct device *dev,
+					    const struct device_attribute *attr)
+{
+	struct kobject *kobj;
+	int ret = -ENOMEM;
+
+	/* create object : /sys/devices/platform/c0000000.soc */
+        kobj = kobject_create_and_add("c0000000.soc", &platform_bus.kobj);
+        if (!kobj) {
+                dev_err(dev, "Failed s5pxx18 compatible usb object !!!\n");
+                return ret;
+        }
+
+	/*
+	 * Link /sys/devices/platform/c0000000.soc/c0040000.dwc2otg to
+	 * /sys/devices/platform/soc/240c0000.dwc2otg
+	 */
+	ret = sysfs_create_link(kobj, &dev->kobj, "c0040000.dwc2otg");
+	if (ret) {
+		dev_err(dev, "Failed s5pxx18 compatible usb link !!!\n");
+		return ret;
+	}
+
+	return 0;
+}
+
+static ssize_t h_ddma_en_show(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct dwc2_hsotg *hsotg = dev_get_drvdata(dev);
+
+	if (hsotg->params.dma_desc_enable)
+		return sprintf(buf, "%d\n", 1);
+	else
+		return sprintf(buf, "%d\n", 0);
+}
+
+static ssize_t h_ddma_en_store(struct device *dev,
+				   struct device_attribute *attr,
+				   const char *buf, size_t count)
+{
+	struct dwc2_hsotg *hsotg = dev_get_drvdata(dev);
+
+	if (dwc2_is_device_mode(hsotg)) {
+		if (!strncmp(buf, "1", 1))
+			hsotg->params.dma_desc_enable = true;
+		else if (!strncmp(buf, "0", 1))
+			hsotg->params.dma_desc_enable = false;
+		else
+			dev_err(hsotg->dev, "invaild argument\n");
+	} else {
+		if (!hsotg->params.dma_desc_enable &&
+		    !strncmp(buf, "1", 1)) {
+			dwc2_hcd_disconnect(hsotg, true);
+
+			hsotg->params.dma_desc_enable = true;
+			/* Initialize the Core for Host mode */
+			dwc2_core_init(hsotg, false);
+			dwc2_enable_global_interrupts(hsotg);
+			dwc2_hcd_start(hsotg);
+		} else if (hsotg->params.dma_desc_enable &&
+			   !strncmp(buf, "0", 1)) {
+			dwc2_hcd_disconnect(hsotg, true);
+
+			hsotg->params.dma_desc_enable = false;
+			/* Initialize the Core for Host mode */
+			dwc2_core_init(hsotg, false);
+			dwc2_enable_global_interrupts(hsotg);
+			dwc2_hcd_start(hsotg);
+		} else
+			dev_err(hsotg->dev, "invaild argument\n");
+	}
+
+	return count;
+}
+
+DEVICE_ATTR(h_ddma_en, S_IRUGO|S_IWUSR, h_ddma_en_show, h_ddma_en_store);
+
 static void dwc2_conn_id_status_change(struct work_struct *work)
 {
 	struct dwc2_hsotg *hsotg = container_of(work, struct dwc2_hsotg,
@@ -5384,6 +5523,18 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg)
 	dwc2_hcd_dump_state(hsotg);
 
 	dwc2_enable_global_interrupts(hsotg);
+
+	if (of_device_is_compatible(hsotg->dev->of_node,
+				    "nexell,nxp3220-dwc2otg")) {
+		device_property_read_u32(hsotg->dev, "nouse_idcon",
+					 &hsotg->nouse_idcon);
+		if (hsotg->nouse_idcon) {
+			device_create_file(hsotg->dev, &dev_attr_sel_dr_mode);
+			dwc2_sysfs_create_compat_s5pxx18(hsotg->dev,
+							 &dev_attr_sel_dr_mode);
+		}
+		device_create_file(hsotg->dev, &dev_attr_h_ddma_en);
+	}
 
 	return 0;
 

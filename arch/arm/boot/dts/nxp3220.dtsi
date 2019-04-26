@@ -102,6 +102,7 @@
 		opp-7 {
 			opp-hz = /bits/ 64 <800000000>;
 			opp-microvolt = <1000000>;
+			opp-suspend;
 		};
 	};
 
@@ -111,6 +112,8 @@
 	};
 
 	timer {
+		status = "disabled";
+
 		compatible = "arm,armv7-timer";
 		interrupt-parent = <&gic>;
 		interrupts = <GIC_PPI 13 (GIC_CPU_MASK_SIMPLE(2) |
@@ -226,7 +229,7 @@
 
 		pll_ddr1: pll-ddr1 {
 			compatible = "nexell,pll2651", "syscon";
-			reg = <0x23070000 0x60>;
+			reg = <0x23080000 0x60>;
 
 			#clock-cells = <1>;
 			clocks = <&oscclk>;
@@ -251,24 +254,13 @@
 			#clock-cells = <1>;
 			#reset-cells = <1>;
 
-			clock-names = "oscclk",
-				"pll0",
-				"pll1",
-				"div_cpu_pll",
-				"div_pll_ddr0",
-				"div_pll_ddr1";
-			clocks = <&oscclk>,
-			       <&pll_0>,
-			       <&pll_1>,
-			       <&cmu_cpu CLK_CPU_DIV_PLL>,
-			       <&cmu_ddr CLK_DDR_DIV_PLL_DDR0>,
-			       <&cmu_ddr CLK_DDR_DIV_PLL_DDR1>;
-
 			assigned-clocks = <&pll_0 0>,
 					  <&cmu CLK_SRC_SYS0_AXI>,
 					  <&cmu CLK_SYS_DIV_SYS0_AXI>,
+					  <&cmu CLK_SRC_TIMER0_APB>,
 					  <&cmu CLK_SRC_TIMER0_TCLK0>,
 					  <&cmu CLK_SRC_TIMER0_TCLK1>,
+					  <&cmu CLK_SRC_TIMER0_TCLK2>,
 					  <&cmu CLK_SRC_I2C0_APB>,
 					  <&cmu CLK_SRC_USB0_AHB>,
 					  <&cmu CLK_SRC_SPI0_APB>,
@@ -278,12 +270,16 @@
 					  <&cmu CLK_SRC_UART0_APB>,
 					  <&cmu CLK_SYS_DIV_SYS0_HSIF_APB>,
 					  <&cmu CLK_SYS_DIV_SYS0_HSIF_AXI>,
-					  <&cmu CLK_SYS_DIV_I2C0_APB>;
+					  <&cmu CLK_SYS_DIV_I2C0_APB>,
+					  <&cmu CLK_PLL1_DIV>;		/* for audio 48 khz */
+
 			assigned-clock-parents = <0>,		/* PLL_0 */
 						 <&pll_0 0>,	/* SRC_SYS0_AXI */
 						 <0>,		/* SYS_DIV_SYS0_AXI */
+						 <&pll_0 0>,	/* SRC_TIMER0_APB */
 						 <&pll_0 0>,	/* SRC_TIMER0_TCLK0 */
 						 <&pll_0 0>,	/* SRC_TIMER0_TCLK1 */
+						 <&pll_0 0>,	/* SRC_TIMER0_TCLK2 */
 						 <&pll_0 0>,	/* SRC_I2C0_APB */
 						 <&pll_0 0>,	/* SRC_USB0_AHB */
 						 <&pll_0 0>,	/* SRC_SPI0_APB */
@@ -293,12 +289,16 @@
 						 <&pll_0 0>,	/* SRC_UART0_APB */
 						 <0>,		/* SYS_DIV_SYS0_HSIF_APB */
 						 <0>,		/* SYS_DIV_SYS0_HSIF_AXI */
-						 <0>;		/* SYS_DIV_I2C0_APB */
+						 <0>,		/* SYS_DIV_I2C0_APB */
+					         <0>;		/* CLK_PLL1_DIV */
+
 			assigned-clock-rates = <1000000000>,	/* PLL_0 */
 					       <333333334>,     /* SRC_SYS0_AXI */
 					       <333333334>,     /* SYS_DIV_SYS0_AXI */
+					       <100000000>,     /* SRC_TIMER0_APB */
 					       <0>,             /* SRC_TIMER0_TCLK0 */
 					       <0>,             /* SRC_TIMER0_TCLK1 */
+					       <0>,             /* SRC_TIMER0_TCLK2 */
 					       <0>,             /* SRC_I2C0_APB */
 					       <250000000>,     /* SRC_USB0_AHB */
 					       <0>,             /* SRC_SPI0_APB */
@@ -308,36 +308,29 @@
 					       <0>,             /* SRC_UART0_APB */
 					       <125000000>,     /* SYS_DIV_SYS0_HSIF_APB */
 					       <250000000>,     /* SYS_DIV_SYS0_HSIF_AXI */
-					       <100000000>;	/* SYS_DIV_I2C0_APB */
+					       <100000000>,	/* SYS_DIV_I2C0_APB */
+					       <614400000>;	/* CLK_PLL1_DIV: 48 khz */
 		};
 
 		cmu_cpu: clock-controller@22000000 {
 			compatible = "nexell,nxp3220-cmu-cpu";
 			reg = <0x22000000 0x800>;
 			#clock-cells = <1>;
-
-			clock-names = "pll_cpu";
-			clocks = <&pll_cpu>;
 		};
 
 		cmu_ddr: clock-controller@23000000 {
 			compatible = "nexell,nxp3220-cmu-ddr";
 			reg = <0x23000000 0x1000>;
 			#clock-cells = <1>;
-
-			clock-names = "pll_ddr0",
-				"pll_ddr1";
-			clocks = <&pll_ddr0>,
-			         <&pll_ddr1>;
+			assigned-clocks = <&cmu_ddr CLK_PLL_DDR1_DIV>;  /* for audio 44.1 khz */
+			assigned-clock-parents = <0>;		/* CLK_PLL_DDR1_DIV */
+			assigned-clock-rates = <677376000>;	/* CLK_PLL_DDR1_DIV: 44.1 Khz */
 		};
 
 		cmu_usb: clock-controller@24000000 {
 			compatible = "nexell,nxp3220-cmu-usb";
 			reg = <0x24000000 0x400>;
 			#clock-cells = <1>;
-
-			clock-names = "src_usb0_ahb";
-			clocks = <&cmu CLK_SRC_USB0_AHB>;
 		};
 
 		cmu_mm: clock-controller@25000000 {
@@ -345,20 +338,6 @@
 			reg = <0x25000000 0x1000>;
 			#clock-cells = <1>;
 			#reset-cells = <1>;
-
-			clk-names = "src_mm0_axi",
-				"src_vip0_padout0",
-				"src_vip0_padout1",
-				"src_dpc0_x2",
-				"src_lvds0_vclk",
-				"src_coda960_0_core";
-			clocks = <&cmu CLK_SRC_MM0_AXI>,
-			       <&cmu CLK_SRC_VIP0_PADOUT0>,
-			       <&cmu CLK_SRC_VIP0_PADOUT1>,
-			       <&cmu CLK_SRC_DPC0_X2>,
-			       <&cmu CLK_SRC_LVDS0_VCLK>,
-			       <&cmu CLK_SRC_CODA960_0_CORE>;
-
 			assigned-clocks = <&cmu_mm CLK_MM_DIV_AXI>,
 					  <&cmu_mm CLK_MM_DIV_APB>;
 			assigned-clock-rates = <333333334>, <166666667>;
@@ -492,6 +471,15 @@
 			clocks = <&cmu_usb CLK_USB_USB20HOST>;
 			phys = <&usb2phy 1>, <&usb2phy 2>;
 			phy-names = "usb0", "usb1";
+			status = "disabled";
+		};
+
+		g2d: g2d@25090000 {
+			compatible = "nexell,nxp3220-drm-g2d";
+			reg = <0x25090000 0x100>;
+			interrupts = <GIC_SPI 26 IRQ_TYPE_NONE>; /* 2:AXIM, 26 */
+			clocks = <&cmu_mm CLK_MM_G2D_AXI>;
+			clock-names = "axi";
 			status = "disabled";
 		};
 
@@ -646,11 +634,10 @@
 			compatible = "nexell,nxp3220-i2s";
 			#sound-dai-cells = <0>;
 			reg = <0x20780000 0x1000>;
+			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>;
 			assigned-clocks = <&cmu CLK_SRC_I2S0_CORE>,
-					  <&cmu CLK_I2S0_CORE>,
-					  <&cmu CLK_PLL1_DIV>;
-			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>, <0>;
-			assigned-clock-rates = <0>, <12288000>, <0>;
+					<&cmu CLK_I2S0_CORE>;
+			assigned-clock-rates = <0>, <12288000>;
 			clocks = <&cmu CLK_I2S0_CORE>, <&cmu CLK_I2S0_APB>;
 			clock-names = "i2s", "pclk";
 			dmas = <&pdma0 5 &pdma0 4>;
@@ -664,11 +651,10 @@
 			compatible = "nexell,nxp3220-i2s";
 			#sound-dai-cells = <0>;
 			reg = <0x20790000 0x1000>;
+			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>;
 			assigned-clocks = <&cmu CLK_SRC_I2S1_CORE>,
-					  <&cmu CLK_I2S0_CORE>,
-					  <&cmu CLK_PLL1_DIV>;
-			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>, <0>;
-			assigned-clock-rates = <0>, <12288000>, <0>;
+					<&cmu CLK_I2S1_CORE>;
+			assigned-clock-rates = <0>, <12288000>;
 			clocks = <&cmu CLK_I2S1_CORE>, <&cmu CLK_I2S1_APB>;
 			clock-names = "i2s", "pclk";
 			dmas = <&pdma1 5 &pdma1 4>;
@@ -682,11 +668,10 @@
 			compatible = "nexell,nxp3220-i2s";
 			#sound-dai-cells = <0>;
 			reg = <0x207a0000 0x1000>;
+			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>;
 			assigned-clocks = <&cmu CLK_SRC_I2S2_CORE>,
-					  <&cmu CLK_I2S0_CORE>,
-					  <&cmu CLK_PLL1_DIV>;
-			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>, <0>;
-			assigned-clock-rates = <0>, <12288000>, <0>;
+					<&cmu CLK_I2S2_CORE>;
+			assigned-clock-rates = <0>, <12288000>;
 			clocks = <&cmu CLK_I2S2_CORE>, <&cmu CLK_I2S2_APB>;
 			clock-names = "i2s", "pclk";
 			dmas = <&pdma0 7 &pdma0 6>;
@@ -700,11 +685,10 @@
 			compatible = "nexell,nxp3220-i2s";
 			#sound-dai-cells = <0>;
 			reg = <0x207b0000 0x1000>;
+			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>;
 			assigned-clocks = <&cmu CLK_SRC_I2S3_CORE>,
-					  <&cmu CLK_I2S0_CORE>,
-					  <&cmu CLK_PLL1_DIV>;
-			assigned-clock-parents = <&cmu CLK_PLL1_DIV>, <0>, <0>;
-			assigned-clock-rates = <0>, <12288000>, <0>;
+					<&cmu CLK_I2S3_CORE>;
+			assigned-clock-rates = <0>, <12288000>;
 			clocks = <&cmu CLK_I2S3_CORE>, <&cmu CLK_I2S3_APB>;
 			clock-names = "i2s", "pclk";
 			dmas = <&pdma1 7 &pdma1 6>;
@@ -752,6 +736,25 @@
 			status = "disabled";
 		};
 
+		nand: nand-controller@26180000 {
+			compatible = "nexell,nxp3220-nand";
+			reg = <0x26180000 0x1000>;
+			clocks = <&cmu CLK_NANDC0_APB>, <&cmu CLK_NANDC0_AXI>;
+			clock-names = "nand_apb", "nand_core";
+			interrupts = <GIC_SPI 66 IRQ_TYPE_NONE>;
+			assigned-clocks = <&cmu CLK_SRC_NANDC0_AXI>,
+					  <&cmu CLK_NANDC0_AXI>,
+					  <&cmu CLK_NANDC0_APB>;
+			assigned-clock-parents = <&pll_0 0>, <0>, <0>;
+			assigned-clock-rates = <250000000>, <250000000>, <125000000>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&nand_data>, <&nand_cs0>;
+			nand-bus-width = <8>;
+			nand-on-flash-bbt;
+			nand-ecc-mode = "hw_syndrome";
+			status = "disabled";
+		};
+
 		ohci: ohci@24090000 {
 			compatible = "generic-ohci";
 			reg = <0x24090000 0x100>;
@@ -767,10 +770,10 @@
 			#sound-dai-cells = <0>;
 			reg = <0x20c00000 0x1000>, <0x20c04000 0x4000>;
 			reg-names = "pdm", "sram";
-			assigned-clocks = <&cmu CLK_SRC_PDM0_CORE>,
-					  <&cmu CLK_SRC_PDM0_AXI>,
+			assigned-clocks = <&cmu CLK_SRC_PDM0_AXI>,
+					  <&cmu CLK_SRC_PDM0_CORE>,
 					  <&cmu CLK_PDM0_AXI>,
-					  <&cmu CLK_PLL1_DIV>;
+					  <&cmu CLK_PDM0_CORE>;
 			assigned-clock-parents = <&cmu CLK_PLL1_DIV>,
 						 <&cmu CLK_PLL1_DIV>,
 						 <0>,
@@ -844,14 +847,22 @@
 		};
 
 		pwm_timer: pwm-timer@208c0000 {
+			status = "okay";
+
 			compatible = "nexell,nxp3220-timer";
 			reg = <0x208c0000 0x1000>;
-			clocks =  <&cmu CLK_TIMER0_TCLK0>,
-			       <&cmu CLK_TIMER0_TCLK1>;
-			clock-names = "timer0", "timer1";
-			interrupts = <GIC_SPI 107 IRQ_TYPE_NONE>;
+			clocks =  <&cmu CLK_TIMER0_APB>,
+				  <&cmu CLK_TIMER0_TCLK0>,
+				  <&cmu CLK_TIMER0_TCLK1>,
+				  <&cmu CLK_TIMER0_TCLK2>;
+			clock-names = "apb", "clksrc", "clkevt0", "clkevt1";
+			clksrc-frequency = <100000000>;
+			clkevt-frequencies = <100000000>, <100000000>;
+			interrupts = <GIC_SPI 107 IRQ_TYPE_NONE>,
+				     <GIC_SPI 108 IRQ_TYPE_NONE>;
 			clksource = <0>;
-			clkevent = <1>;
+			clkevent0 = <1>;
+			clkevent1 = <2>;
 		};
 
 		tmuctrl_0: tmuctrl@200e0000 {
@@ -1089,9 +1100,14 @@
 			compatible = "nexell,nxp3220-vip";
 			reg = <0x25100000 0x1000>;
 			interrupts = <GIC_SPI 124 IRQ_TYPE_NONE>;
+			assigned-clocks = <&cmu_mm CLK_MM_VIP_AXI>,
+				<&cmu_mm CLK_MM_VIP_APB>;
+			assigned-clock-rates = <333333334>, <166666667>;
 			clock-names = "vip_axi", "vip_apb";
 			clocks = <&cmu_mm CLK_MM_VIP_AXI>,
 			       <&cmu_mm CLK_MM_VIP_APB>;
+			reset-names = "vip-reset";
+			resets = <&cmu_mm CLK_RESET_MM_VIP_AXI>;
 			module = <0>;
 			status = "disabled";
 		};
@@ -1105,6 +1121,41 @@
 		decimator: decimator@25100000 {
 			compatible = "nexell,nx3220-decimator";
 			module = <0>;
+			status = "disabled";
+		};
+
+		vpu: vpu@25180000 {
+			compatible = "nexell,nx-vpu";
+			reg = <0x25180000 0x10000>;
+			interrupts = <GIC_SPI 31 IRQ_TYPE_NONE>;
+			clocks = <&cmu_mm CLK_MM_CODA960_AXI>,
+				<&cmu_mm CLK_MM_CODA960_APB>,
+				<&cmu_mm CLK_MM_CODA960_CORE>;
+			clock-names = "vpu-clk-axi", "vpu-clk-apb", "vpu-clk-core";
+			assigned-clocks = <&cmu_mm CLK_MM_CODA960_CORE>;
+			assigned-clock-rates = <250000000>;
+			status = "disabled";
+		};
+
+		watchdog_secure: watchdog@20810000 {
+			compatible = "nexell,nxp3220-wdt";
+			reg = <0x20810000 0x1000>;
+			interrupts = <GIC_SPI 89 IRQ_TYPE_NONE>;
+			clock-names = "watchdog";
+			clocks = <&cmu CLK_SECURE_WDT0_APB>;
+			assigned-clocks = <&cmu CLK_SECURE_WDT0_APB>;
+			assigned-clock-rates = <140000000>;
+			status = "disabled";
+		};
+
+		watchdog: watchdog@20800000 {
+			compatible = "nexell,nxp3220-wdt";
+			reg = <0x20800000 0x1000>;
+			interrupts = <GIC_SPI 125 IRQ_TYPE_NONE>;
+			clock-names = "watchdog";
+			clocks = <&cmu CLK_WDT0_APB>;
+			assigned-clocks = <&cmu CLK_WDT0_APB>;
+			assigned-clock-rates = <140000000>;
 			status = "disabled";
 		};
 	};

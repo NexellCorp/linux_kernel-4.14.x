@@ -1527,4 +1527,8 @@ init_failure:
 	panic("NetLabel: failed to initialize properly (%d)\n", ret_val);
 }
 
+#ifdef CONFIG_DEFERRED_WIRELESS
+deferred_0_initcall(netlbl_init);
+#else
 subsys_initcall(netlbl_init);
+#endif

@@ -337,7 +337,13 @@ static int pwm_backlight_probe(struct platform_device *pdev)
 	 * FIXME: pwm_apply_args() should be removed when switching to
 	 * the atomic PWM API.
 	 */
+#ifndef CONFIG_DRM_PRE_INIT_DRM
 	pwm_apply_args(pb->pwm);
+#else
+	pb->pwm->state.enabled = false;
+	pb->pwm->state.polarity = pb->pwm->args.polarity;
+	pb->pwm->state.period = pb->pwm->args.period;
+#endif
 
 	/*
 	 * The DT case will set the pwm_period_ns field to 0 and store the
@@ -456,7 +462,15 @@ static struct platform_driver pwm_backlight_driver = {
 	.shutdown	= pwm_backlight_shutdown,
 };
 
+#ifdef CONFIG_DEFERRED_UP_BL
+static int __init pwm_bl_init(void)
+{
+	return platform_driver_register(&pwm_backlight_driver);
+}
+early_device_initcall(pwm_bl_init)
+#else
 module_platform_driver(pwm_backlight_driver);
+#endif
 
 MODULE_DESCRIPTION("PWM based Backlight Driver");
 MODULE_LICENSE("GPL");

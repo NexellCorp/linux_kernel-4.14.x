@@ -96,8 +96,12 @@ static struct drm_ioctl_desc nx_drm_ioctls[] = {
 			DRM_UNLOCKED | DRM_AUTH),
 	DRM_IOCTL_DEF_DRV(NX_GEM_SYNC, nx_drm_gem_sync_ioctl,
 			DRM_UNLOCKED | DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(NX_GEM_GET, nx_drm_gem_get_ioctl,
-			DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(NX_GEM_GET, nx_drm_gem_get_ioctl, DRM_UNLOCKED),
+#ifdef CONFIG_DRM_NEXELL_G2D
+	DRM_IOCTL_DEF_DRV(NX_G2D_GET_VER, nx_drm_g2d_get_version, DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(NX_G2D_DMA_EXEC, nx_drm_g2d_exec_ioctl, DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(NX_G2D_DMA_SYNC, nx_drm_g2d_sync_ioctl, DRM_UNLOCKED),
+#endif
 };
 
 static const struct file_operations nx_drm_fops = {
@@ -124,9 +128,21 @@ static struct dma_buf *__drm_gem_prime_export(struct drm_device *drm,
 }
 #endif
 
+static int nx_drm_open(struct drm_device *dev, struct drm_file *file)
+{
+	return nx_drm_subdrv_open(dev, file);
+}
+
+static void nx_drm_postclose(struct drm_device *dev, struct drm_file *file)
+{
+	nx_drm_subdrv_close(dev, file);
+}
+
 static struct drm_driver nx_drm_driver = {
-	.driver_features = DRIVER_MODESET |
-		DRIVER_GEM | DRIVER_PRIME | DRIVER_ATOMIC,
+	.driver_features = DRIVER_MODESET | DRIVER_GEM |
+			DRIVER_PRIME | DRIVER_ATOMIC | DRIVER_RENDER,
+	.open = nx_drm_open,
+	.postclose = nx_drm_postclose,
 	.lastclose = nx_drm_lastclose,
 	.prime_handle_to_fd = drm_gem_prime_handle_to_fd,
 	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
@@ -209,6 +225,11 @@ static int nx_drm_bind(struct device *dev)
 	if (ret)
 		goto err_mode_config_cleanup;
 
+	/* Probe non kms sub drivers and virtual display driver. */
+	ret = nx_drm_subdrv_probe(drm);
+	if (ret)
+		goto err_unbind_all;
+
 	drm_mode_config_reset(drm);
 
 	/* init kms poll for handling hpd */
@@ -227,6 +248,7 @@ static int nx_drm_bind(struct device *dev)
 
 err_cleanup_poll:
 	drm_kms_helper_poll_fini(drm);
+	nx_drm_subdrv_remove(drm);
 err_unbind_all:
 	component_unbind_all(drm->dev, drm);
 err_mode_config_cleanup:
@@ -243,6 +265,7 @@ static void nx_drm_unbind(struct device *dev)
 
 	drm_dev_unregister(drm);
 
+	nx_drm_subdrv_remove(drm);
 	nx_drm_fb_helper_exit(drm);
 
 	drm_kms_helper_poll_fini(drm);
@@ -286,11 +309,13 @@ static struct nx_drm_display_driver {
 	const char *match, *name;
 	struct platform_driver *driver;
 	struct list_head list;
-} nx_drm_panel_drvs[] = {
+} nx_drm_platform_drvs[] = {
 	NX_DRM_DRIVER("drm_lvds", "lvds",
 			panel_lcd_driver, CONFIG_DRM_NEXELL_LVDS),
 	NX_DRM_DRIVER("drm_rgb", "rgb",
 			panel_lcd_driver, CONFIG_DRM_NEXELL_RGB),
+	NX_DRM_DRIVER("drm_g2d", "g2d",
+			drm_g2d_driver, CONFIG_DRM_NEXELL_G2D),
 };
 
 static int nx_drm_probe(struct platform_device *pdev)
@@ -302,8 +327,8 @@ static int nx_drm_probe(struct platform_device *pdev)
 
 	DRM_DEBUG_DRIVER("enter %s\n", dev_name(dev));
 
-	for (i = 0; i < ARRAY_SIZE(nx_drm_panel_drvs); i++) {
-		struct nx_drm_display_driver *drv = &nx_drm_panel_drvs[i];
+	for (i = 0; i < ARRAY_SIZE(nx_drm_platform_drvs); i++) {
+		struct nx_drm_display_driver *drv = &nx_drm_platform_drvs[i];
 		const char *name = drv->match;
 		struct device *p = NULL, *d;
 
@@ -349,6 +374,7 @@ static const struct of_device_id of_nx_drm_match[] = {
 };
 MODULE_DEVICE_TABLE(of, of_nx_drm_match);
 
+#ifdef CONFIG_PM_SLEEP
 static void nx_drm_suspend(struct drm_device *drm)
 {
 #ifdef CONFIG_DRM_FBDEV_EMULATION
@@ -401,6 +427,7 @@ static int nx_drm_pm_resume(struct device *dev)
 
 	return 0;
 }
+#endif
 
 static SIMPLE_DEV_PM_OPS(nx_drm_pm_ops, nx_drm_pm_suspend, nx_drm_pm_resume);
 
@@ -421,8 +448,8 @@ static int __init nx_drm_init(void)
 	bool load;
 	int i, ret;
 
-	for (i = 0; i < ARRAY_SIZE(nx_drm_panel_drvs); i++) {
-		drv = &nx_drm_panel_drvs[i];
+	for (i = 0; i < ARRAY_SIZE(nx_drm_platform_drvs); i++) {
+		drv = &nx_drm_platform_drvs[i];
 		load = false;
 
 		if (!drv->driver)
@@ -458,8 +485,8 @@ static void __exit nx_drm_exit(void)
 
 	platform_driver_unregister(&nx_drm_drviver);
 
-	for (i = 0; i < ARRAY_SIZE(nx_drm_panel_drvs); i++) {
-		drv = &nx_drm_panel_drvs[i];
+	for (i = 0; i < ARRAY_SIZE(nx_drm_platform_drvs); i++) {
+		drv = &nx_drm_platform_drvs[i];
 		load = false;
 
 		if (!drv->driver)
@@ -480,7 +507,11 @@ static void __exit nx_drm_exit(void)
 	}
 }
 
+#ifdef CONFIG_DEFERRED_UP_DRM
+early_device_initcall(nx_drm_init);
+#else
 module_init(nx_drm_init);
+#endif
 module_exit(nx_drm_exit);
 
 MODULE_AUTHOR("jhkim <jhkim@nexell.co.kr>");

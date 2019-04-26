@@ -808,6 +808,12 @@ static int do_clock_action(struct nx_clipper *me,
 {
 	if (me->pwm)
 		pwm_enable(me->pwm);
+	else {
+		if (action->enable && !me->sensor_enabled)
+			nx_vip_padout_clock_enable(me->module, true);
+		else if (!action->enable && me->sensor_enabled)
+			nx_vip_padout_clock_enable(me->module, false);
+	}
 
 	if (action->delay_ms > 0)
 		mdelay(action->delay_ms);
@@ -1581,6 +1587,7 @@ static int init_v4l2_subdev(struct nx_clipper *me)
 
 static struct camera_sensor_info {
 	char name[V4L2_SUBDEV_NAME_SIZE];
+	int interlaced;
 } camera_sensor_info[NUMBER_OF_VIP_MODULE];
 
 static ssize_t camera_sensor_show_common(struct device *dev,
@@ -1593,8 +1600,11 @@ static ssize_t camera_sensor_show_common(struct device *dev,
 	if (!strlen(camera_sensor_info[module].name))
 		return scnprintf(*buf, PAGE_SIZE, "no exist");
 	else
-		return scnprintf(*buf, PAGE_SIZE, "name:%s",
-				 camera_sensor_info[module].name);
+		return scnprintf(*buf, PAGE_SIZE,
+				"is_mipi:%d,interlaced:%d,name:%s",
+				0,
+				camera_sensor_info[module].interlaced,
+				camera_sensor_info[module].name);
 }
 
 static ssize_t camera_sensor_show0(struct device *dev,
@@ -1642,6 +1652,8 @@ static int create_sysfs_for_camera_sensor(struct nx_clipper *me,
 		info->board_info.type,
 		i2c_adapter_id(me->sensor_info.i2c_adapter),
 		info->board_info.addr);
+
+	camera_sensor_info[me->module].interlaced = me->interlace;
 
 	strlcpy(camera_sensor_info[me->module].name, sensor_name,
 		V4L2_SUBDEV_NAME_SIZE);
@@ -1839,6 +1851,7 @@ static int nx_clipper_suspend(struct device *dev)
 			}
 		}
 #endif
+		nx_vip_reset(me->module);
 		nx_vip_clock_enable(me->module, false);
 	}
 
@@ -1852,6 +1865,7 @@ static int nx_clipper_resume(struct device *dev)
 	me = dev_get_drvdata(dev);
 	if (me) {
 		nx_vip_clock_enable(me->module, true);
+		nx_vip_reset(me->module);
 #ifdef CONFIG_VIDEO_NXP3220_CLIPPER
 		if (NX_ATOMIC_READ(&me->state) & STATE_MEM_RUNNING) {
 			struct v4l2_subdev *remote;

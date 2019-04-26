@@ -3044,7 +3044,15 @@ static struct amba_driver pl330_driver = {
 	.remove = pl330_remove,
 };
 
+#ifdef CONFIG_DEFERRED_UP_DMA
+static int __init amba_pl330_init(void)
+{
+	return amba_driver_register(&pl330_driver);
+}
+subsys_initcall(amba_pl330_init);
+#else
 module_amba_driver(pl330_driver);
+#endif
 
 MODULE_AUTHOR("Jaswinder Singh <jassisinghbrar@gmail.com>");
 MODULE_DESCRIPTION("API Driver for PL330 DMAC");

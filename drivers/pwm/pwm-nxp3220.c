@@ -317,17 +317,13 @@ static int __pwm_nexell_config(struct pwm_chip *chip, struct pwm_device *pwm,
 	return 0;
 }
 
-static int pwm_nexell_config(struct pwm_chip *chip, struct pwm_device *pwm,
-			      int duty_ns, int period_ns)
-{
-	return __pwm_nexell_config(chip, pwm, duty_ns, period_ns, false);
-}
-
 static void pwm_nexell_set_invert(struct nexell_pwm_chip *nx_pwm,
 				  unsigned int ch, bool invert)
 {
 	unsigned long flags;
 	u32 tcon;
+
+	dev_dbg(nx_pwm->chip.dev, "ch=%d, invert=%d\n", ch, invert);
 
 	spin_lock_irqsave(&nx_pwm_lock, flags);
 
@@ -357,6 +353,15 @@ static int pwm_nexell_set_polarity(struct pwm_chip *chip,
 	pwm_nexell_set_invert(nx_pwm, pwm->hwpwm, invert);
 
 	return 0;
+}
+
+static int pwm_nexell_config(struct pwm_chip *chip, struct pwm_device *pwm,
+			      int duty_ns, int period_ns)
+{
+	pwm_nexell_set_invert(to_nexell_pwm_chip(chip),
+			      pwm->hwpwm, pwm->state.polarity ? false : true);
+
+	return __pwm_nexell_config(chip, pwm, duty_ns, period_ns, false);
 }
 
 static const struct pwm_ops pwm_nexell_ops = {
@@ -402,7 +407,12 @@ static int pwm_nexell_parse_dt(struct nexell_pwm_chip *nx_pwm)
 		if (ch >= PWM_NUM)
 			break;
 
-		nx_pwm->freq[ch++] = val;
+		for ( ; ch < PWM_NUM; ch++) {
+			if (nx_pwm->output_mask & BIT(ch)) {
+				nx_pwm->freq[ch++] = val;
+				break;
+			}
+		}
 	}
 
 	return 0;
@@ -449,6 +459,9 @@ static int pwm_nexell_probe(struct platform_device *pdev)
 	}
 
 	for (ch = 0; ch < PWM_NUM; ++ch) {
+		if (!(nx_pwm->output_mask & BIT(ch)))
+			continue;
+
 		nx_pwm->tclk[ch] = devm_clk_get(dev, pwm_tclk_name[ch]);
 		if (IS_ERR(nx_pwm->tclk[ch])) {
 			dev_err(dev, "failed to get pwm tclk %d\n", ch);
@@ -466,11 +479,9 @@ static int pwm_nexell_probe(struct platform_device *pdev)
 			dev_err(dev, "failed to enable clock %d\n", ch);
 			return ret;
 		}
-	}
 
-	for (ch = 0; ch < PWM_NUM; ++ch)
-		if (nx_pwm->output_mask & BIT(ch))
-			pwm_nexell_set_invert(nx_pwm, ch, true);
+		pwm_nexell_set_invert(nx_pwm, ch, true);
+	}
 
 	platform_set_drvdata(pdev, nx_pwm);
 
@@ -478,15 +489,16 @@ static int pwm_nexell_probe(struct platform_device *pdev)
 	if (ret < 0) {
 		dev_err(dev, "failed to register PWM nx_pwm\n");
 		for (ch = 0; ch < PWM_NUM; ++ch)
-			clk_disable_unprepare(nx_pwm->tclk[ch]);
+			if (nx_pwm->output_mask & BIT(ch))
+				clk_disable_unprepare(nx_pwm->tclk[ch]);
 		return ret;
 	}
 
 	for (ch = 0; ch < PWM_NUM; ch++) {
 		dev_dbg(dev, "tclk%d at %lu\n",
 				ch,
-				!IS_ERR(nx_pwm->tclk[ch]) ?
-				clk_get_rate(nx_pwm->tclk[ch]) : 0);
+				IS_ERR_OR_NULL(nx_pwm->tclk[ch]) ? 0 :
+				clk_get_rate(nx_pwm->tclk[ch]));
 	}
 
 	return 0;
@@ -503,7 +515,8 @@ static int pwm_nexell_remove(struct platform_device *pdev)
 		return ret;
 
 	for (ch = 0; ch < PWM_NUM; ++ch)
-		clk_disable_unprepare(nx_pwm->tclk[ch]);
+		if (nx_pwm->output_mask & BIT(ch))
+			clk_disable_unprepare(nx_pwm->tclk[ch]);
 
 	return 0;
 }
@@ -518,6 +531,9 @@ static int pwm_nexell_suspend(struct device *dev)
 	for (ch = 0; ch < PWM_NUM; ++ch) {
 		struct pwm_device *pwm = &chip->pwms[ch];
 
+		if (!(nx_pwm->output_mask & BIT(ch)))
+			continue;
+
 		/* save registers */
 		nx_pwm->tcfg0[ch] = readl(nx_pwm->base + REG_TCFG0(ch));
 		nx_pwm->tcfg1[ch] = readl(nx_pwm->base + REG_TCFG1(ch));
@@ -528,7 +544,7 @@ static int pwm_nexell_suspend(struct device *dev)
 		pwm_nexell_disable(chip, pwm);
 
 		/* clock off */
-		if (!IS_ERR(nx_pwm->tclk[ch]))
+		if (!IS_ERR_OR_NULL(nx_pwm->tclk[ch]))
 			clk_disable_unprepare(nx_pwm->tclk[ch]);
 	}
 
@@ -545,8 +561,11 @@ static int pwm_nexell_resume(struct device *dev)
 		struct pwm_device *pwm = &chip->pwms[ch];
 		struct nexell_pwm_channel *nx_chan = pwm_get_chip_data(pwm);
 
+		if (!(nx_pwm->output_mask & BIT(ch)))
+			continue;
+
 		/* clock on */
-		if (!IS_ERR(nx_pwm->tclk[ch]))
+		if (!IS_ERR_OR_NULL(nx_pwm->tclk[ch]))
 			clk_prepare_enable(nx_pwm->tclk[ch]);
 
 		/* restore registers */
@@ -585,7 +604,15 @@ static struct platform_driver pwm_nexell_driver = {
 	.probe		= pwm_nexell_probe,
 	.remove		= pwm_nexell_remove,
 };
+#ifdef CONFIG_DEFERRED_UP_PWM
+static int __init pwm_nxp3220_init(void)
+{
+	return platform_driver_register(&pwm_nexell_driver);
+}
+early_device_initcall(pwm_nxp3220_init)
+#else
 module_platform_driver(pwm_nexell_driver);
+#endif
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Bon-gyu, KOO <freestyle@nexell.co.kr>");

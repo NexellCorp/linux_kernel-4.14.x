@@ -339,7 +339,11 @@ static int gic_set_affinity(struct irq_data *d, const struct cpumask *mask_val,
 
 	gic_lock_irqsave(flags);
 	mask = 0xff << shift;
+#ifdef CONFIG_SMP_IRQ_AFFINITY
+	bit = *((unsigned int *)mask_val) << shift;
+#else
 	bit = gic_cpu_map[cpu] << shift;
+#endif
 	val = readl_relaxed(reg) & ~mask;
 	writel_relaxed(val | bit, reg);
 	gic_unlock_irqrestore(flags);
@@ -484,7 +488,12 @@ static void gic_dist_init(struct gic_chip_data *gic)
 	/*
 	 * Set all global interrupts to this CPU only.
 	 */
+#ifdef CONFIG_SMP_IRQ_AFFINITY
+	/* transfer interrupt to all cores */
+	cpumask = 0xff;
+#else
 	cpumask = gic_get_cpumask(gic);
+#endif
 	cpumask |= cpumask << 8;
 	cpumask |= cpumask << 16;
 	for (i = 32; i < gic_irqs; i += 4)

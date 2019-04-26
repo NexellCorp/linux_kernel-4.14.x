@@ -89,13 +89,13 @@ static bool panel_lcd_ops_detect(struct device *dev,
 		if (display->check_panel)
 			return display->is_connected;
 
-		if (ops->prepare)
+		if (ops && ops->prepare)
 			ops->prepare(display);
 
 		ret = drm_panel_prepare(drm_panel);
 		if (!ret) {
 			drm_panel_unprepare(drm_panel);
-			if (ops->unprepare)
+			if (ops && ops->unprepare)
 				ops->unprepare(display);
 
 			display->is_connected = true;
@@ -211,7 +211,7 @@ static void panel_lcd_ops_set_mode(struct device *dev,
 
 	DRM_DEBUG_KMS("enter\n");
 
-	if (ops->set_mode)
+	if (ops && ops->set_mode)
 		ops->set_mode(display, mode, 0);
 }
 
@@ -239,8 +239,11 @@ static void panel_lcd_work(struct work_struct *work)
 	}
 
 	if (ctx->backlight) {
+		if (ctx->backlight->props.power == FB_BLANK_UNBLANK)
+			return;
+
 		if (ctx->backlight_delay)
-			mdelay(ctx->backlight_delay);
+			msleep(ctx->backlight_delay);
 
 		ctx->backlight->props.power = FB_BLANK_UNBLANK;
 		backlight_update_status(ctx->backlight);
@@ -254,7 +257,7 @@ static void panel_lcd_on(struct lcd_context *ctx)
 
 	DRM_DEBUG_KMS("enter\n");
 
-	if (ops->prepare)
+	if (ops && ops->prepare)
 		ops->prepare(display);
 
 	if (display->panel)
@@ -264,7 +267,7 @@ static void panel_lcd_on(struct lcd_context *ctx)
 		drm_panel_enable(display->panel);
 
 	/* last enable display to prevent LCD fliker */
-	if (ops->enable)
+	if (ops && ops->enable)
 		ops->enable(display);
 }
 
@@ -281,10 +284,10 @@ static void panel_lcd_off(struct lcd_context *ctx)
 	if (display->panel)
 		drm_panel_disable(display->panel);
 
-	if (ops->unprepare)
+	if (ops && ops->unprepare)
 		ops->unprepare(display);
 
-	if (ops->disable)
+	if (ops && ops->disable)
 		ops->disable(display);
 }
 
@@ -342,7 +345,6 @@ static int panel_mipi_attach(struct mipi_dsi_host *host,
 			container_of(host, struct mipi_resource, mipi_host);
 	struct lcd_context *ctx = container_of(mipi, struct lcd_context, mipi);
 	struct nx_drm_display *display = ctx_to_display(ctx);
-	struct nx_drm_mipi_ops *dsi_ops = display->ops->mipi;
 	struct drm_connector *connector = &ctx->connector.connector;
 
 	mipi->lanes = device->lanes;
@@ -353,8 +355,12 @@ static int panel_mipi_attach(struct mipi_dsi_host *host,
 	/* set mipi panel node */
 	display->panel_node = device->dev.of_node;
 
-	if (dsi_ops && dsi_ops->set_format)
-		dsi_ops->set_format(display, device);
+	if (display->ops && display->ops->mipi) {
+		struct nx_drm_mipi_ops *mipi_ops = display->ops->mipi;
+
+		if (mipi_ops && mipi_ops->set_format)
+			mipi_ops->set_format(display, device);
+	}
 
 	if (connector->dev)
 		drm_helper_hpd_irq_event(connector->dev);
@@ -389,14 +395,15 @@ static ssize_t panel_mipi_transfer(struct mipi_dsi_host *host,
 			container_of(host, struct mipi_resource, mipi_host);
 	struct lcd_context *ctx = container_of(mipi, struct lcd_context, mipi);
 	struct nx_drm_display *display = ctx_to_display(ctx);
-	struct nx_drm_display_ops *ops = display->ops;
-	struct nx_drm_mipi_ops *dsi_ops = ops->mipi;
-	int ret = -1;
 
-	if (dsi_ops && dsi_ops->transfer)
-		ret = dsi_ops->transfer(display, host, msg);
+	if (display->ops && display->ops->mipi) {
+		struct nx_drm_mipi_ops *mipi_ops = display->ops->mipi;
 
-	return ret;
+		if (mipi_ops && mipi_ops->transfer)
+			return mipi_ops->transfer(display, host, msg);
+	}
+
+	return -1;
 }
 
 static struct mipi_dsi_host_ops panel_mipi_ops = {
@@ -563,14 +570,15 @@ static int panel_lcd_parse_gpio(struct device *dev, struct lcd_context *ctx)
 		}
 
 		ctx->gpios_active[i] = flags;
-
+#ifndef CONFIG_DRM_PRE_INIT_DRM
 		/* disable at boottime */
 		gpiod_direction_output(desc[i],
-				flags == GPIO_ACTIVE_HIGH ? 0 : 1);
+				       flags == GPIO_ACTIVE_HIGH ? 0 : 1);
 
 		DRM_INFO("LCD enable-gpio.%d act %s\n",
-			gpio, flags == GPIO_ACTIVE_HIGH ?
-			"high" : "low ");
+			 gpio, flags == GPIO_ACTIVE_HIGH ?
+			 "high" : "low ");
+#endif
 	}
 
 	return 0;
@@ -589,15 +597,18 @@ static void panel_lcd_parse_backlight(struct device *dev,
 
 	ctx->backlight = of_find_backlight_by_node(np);
 	of_node_put(np);
+
 	if (ctx->backlight) {
 		of_property_read_u32(node,
 				"backlight-delay", &ctx->backlight_delay);
-
+#ifndef CONFIG_DRM_PRE_INIT_DRM
 		ctx->backlight->props.power = FB_BLANK_POWERDOWN;
 		backlight_update_status(ctx->backlight);
 
-		DRM_INFO("LCD backlight down, delay:%d\n",
-			ctx->backlight_delay);
+		DRM_INFO("LCD backlight %s, delay:%d\n",
+			ctx->backlight->props.power == FB_BLANK_UNBLANK ?
+			"on" : "off", ctx->backlight_delay);
+#endif
 	}
 }
 #endif
@@ -734,7 +745,7 @@ static int panel_lcd_probe(struct platform_device *pdev)
 		goto err_probe;
 
 	ops = ctx_to_display(ctx)->ops;
-	if (ops->open) {
+	if (ops && ops->open) {
 		err = ops->open(ctx_to_display(ctx), ctx->crtc_pipe);
 		if (err)
 			goto err_probe;
@@ -782,7 +793,7 @@ static int panel_lcd_remove(struct platform_device *pdev)
 	component_del(dev, &panel_comp_ops);
 
 	ops = ctx_to_display(ctx)->ops;
-	if (ops->close)
+	if (ops && ops->close)
 		ops->close(ctx_to_display(ctx), ctx->crtc_pipe);
 
 	nx_drm_display_put(dev, ctx_to_display(ctx));

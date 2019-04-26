@@ -75,6 +75,17 @@ struct usb_ep *usb_ep_autoconfig_ss(
 
 	type = desc->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK;
 
+#if defined(CONFIG_USB_F_IAP) || defined(CONFIG_USB_CONFIGFS_F_IAP) || \
+    defined(CONFIG_USB_F_IAP_MODULE) || defined(CONFIG_USB_CONFIGFS_F_IAP_MODULE)
+	if ((type == USB_ENDPOINT_XFER_BULK) &&
+	    (0x3 & desc->bEndpointAddress)) {
+		ep = gadget_find_ep_by_name(gadget, "ep3out");
+		if (ep && usb_gadget_ep_match_desc(gadget, ep, desc,
+				      ep_comp))
+			goto found_ep;
+	}
+#endif
+
 	if (gadget->ops->match_ep) {
 		ep = gadget->ops->match_ep(gadget, desc, ep_comp);
 		if (ep)

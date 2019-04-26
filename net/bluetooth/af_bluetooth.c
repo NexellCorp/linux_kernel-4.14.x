@@ -825,7 +825,11 @@ static void __exit bt_exit(void)
 	debugfs_remove_recursive(bt_debugfs);
 }
 
+#ifdef CONFIG_DEFERRED_BLUETOOTH
+deferred_0_initcall(bt_init);
+#else
 subsys_initcall(bt_init);
+#endif
 module_exit(bt_exit);
 
 MODULE_AUTHOR("Marcel Holtmann <marcel@holtmann.org>");

@@ -987,6 +987,10 @@ int snd_usb_apply_boot_quirk(struct usb_device *dev,
 			     const struct snd_usb_audio_quirk *quirk,
 			     unsigned int id)
 {
+#if defined(CONFIG_HID_IUI)
+	int i = 0;
+#endif
+
 	switch (id) {
 	case USB_ID(0x041e, 0x3000):
 		/* SB Extigy needs special boot-up sequence */
@@ -1027,6 +1031,14 @@ int snd_usb_apply_boot_quirk(struct usb_device *dev,
 	case USB_ID(0x047f, 0xc010): /* Plantronics Gamecom 780 */
 		return snd_usb_gamecon780_boot_quirk(dev);
 	}
+#if defined(CONFIG_HID_IUI)
+	for (i = 0; i <= 0xff; i++) {
+		if (id == USB_ID(0x05ac, (0x1200 | i))) {
+			pr_info("Apple IAP2 USB %s\n", __func__);
+			return snd_usb_fasttrackpro_boot_quirk(dev);
+		}
+	}
+#endif
 
 	return 0;
 }

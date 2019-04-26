@@ -103,7 +103,7 @@ void nx_mlc_set_enable(struct nx_mlc_reg *reg, bool enb)
 {
 	u32 val = readl(&reg->mlccontrolt) & ~((1 << 1) | (1 << 3));
 
-	writel(val | (1 << 1), &reg->mlccontrolt);
+	writel(val | ((enb ? 1 : 0) << 1), &reg->mlccontrolt);
 }
 
 void nx_mlc_set_dirty(struct nx_mlc_reg *reg)
@@ -119,6 +119,9 @@ void nx_mlc_set_layer_alpha(struct nx_mlc_reg *reg,
 	u32 val;
 
 	if (layer == 0 || layer == 1) {
+		if (alpha >= MAX_ALPHA_VALUE)
+			enb = false;
+
 		val = readl(&reg->mlcrgblayer[layer].mlccontrol);
 		val &= ~((1 << 2) | (1 << 4));
 		val |= ((enb ? 1 : 0) << 2);

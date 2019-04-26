@@ -8,7 +8,7 @@ comment "Truestware driver"
 config ARTIK_TRUSTZONE_DRIVER
 	tristate "ARTIK TrustZone driver"
 	depends on ((ARM_TRUSTZONE && (SOC_EXYNOS3250 || SOC_EXYNOS5422)) ||\
-				ARCH_S5P6818 || ARCH_S5P4418 || ARCH_SIP_S31NX)
+				ARCH_S5P6818 || ARCH_S5P4418 || ARCH_NXP3225)
 	default y
 	help
 	  This driver allows you can communicate with ARTIK Secure OS.
@@ -19,7 +19,7 @@ comment "Trustware crypto driver"
 config ARTIK_USE_TZCMA_FOR_CRYPTO
 	bool "ARTIK Uses TZCMA for crypto operation on ARTIK"
 	depends on (ARTIK_TRUSTZONE_DRIVER && (ARCH_S5P6818 || ARCH_S5P4418 ||\
-				SOC_EXYNOS3250 || ARCH_SIP_S31NX))
+				SOC_EXYNOS3250 || ARCH_NXP3225))
 	default y
 	help
 	  This driver supports to use continuous memory which is allocated
@@ -30,7 +30,7 @@ comment "Trustware DMA"
 config ARTIK_USE_DMA
 	bool "ARTIK Uses DMA for crypto operation on ARTIK"
 	depends on (ARTIK_USE_TZCMA_FOR_CRYPTO && (ARCH_S5P6818 ||\
-				ARCH_S5P4418 || ARCH_SIP_S31NX))
+				ARCH_S5P4418 || ARCH_NXP3225))
 	default y
 	help
 	  This driver supports to use dma for crypto operation on artik.

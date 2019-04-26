@@ -21,11 +21,17 @@
 #include <linux/of_irq.h>
 #include <linux/of_platform.h>
 #include <linux/reset.h>
+#include <linux/input.h>
 
 #include <linux/iio/iio.h>
 #include <linux/iio/sysfs.h>
 #include <linux/iio/driver.h>
 #include <linux/iio/machine.h>
+
+#include <linux/workqueue.h>
+#include <linux/kthread.h>
+#include <linux/of_device.h>
+
 
 /*
  * ADC definitions
@@ -79,6 +85,38 @@
 /* Register definitions for ADC_V3 */
 #define ADC_V3_EN(x)		((x) + 0x18)
 
+/* Touchscreen Register */
+#define ADC_V3_TOUCHSCREENCON(x)	((x) + 0x14)
+
+/* Bit definitions for ADC_V3 for Touchscreen */
+#define ADC_V3_TS_INTCLR		(1u << 1)
+#define ADC_V3_TS_INTENB		(1u << 1)
+
+#define ADC_V3_TS_PULLUP_DISABLE	(1u << 4)
+#define ADC_V3_TS_XP_OFF		(1u << 3)
+#define ADC_V3_TS_XM_ON			(1u << 2)
+#define ADC_V3_TS_YP_OFF		(1u << 1)
+#define ADC_V3_TS_YM_ON			(1u << 0)
+
+#define ADC_DATX_MASK			0xFFF
+#define ADC_DATY_MASK			0xFFF
+
+/* ADC X,Y Plus/Minus Channel */
+#define NX_ADC_CH_TS_XP			9
+#define NX_ADC_CH_TS_XM			8
+#define NX_ADC_CH_TS_YP			7
+#define NX_ADC_CH_TS_YM			6
+
+#define X_AXIS_MIN			0
+#define X_AXIS_MAX			((1 << 12) - 1)
+#define Y_AXIS_MAX			X_AXIS_MAX
+#define Y_AXIS_MIN			X_AXIS_MIN
+
+#define TS_PENDOWN			0
+#define TS_PENUP			1
+#define TS_CORRECTION_VALUE		250
+#define TS_COORDINATE_CNT		3
+
 #define ADC_CHANNEL(_index, _addr, _id) {		\
 	.type = IIO_VOLTAGE,				\
 	.indexed = 1,					\
@@ -110,6 +148,26 @@ static struct iio_chan_spec nexell_adc_v3_channels[] = {
 	ADC_CHANNEL(9, 7, "adc9"),
 };
 
+/* ADC-TS Data */
+struct nexell_adc_ts {
+	struct device *dev;
+	struct input_dev *inp;
+	struct iio_dev *iio;
+
+	int pendown;
+	int status;
+
+	int pre_xpos;
+	int pre_ypos;
+
+	int ts_sample_time;
+
+	int reg_value_backup;
+
+	struct workqueue_struct	*wqueue;
+	struct work_struct work;
+};
+
 /*
  * ADC data
  */
@@ -128,6 +186,8 @@ struct nexell_adc_info {
 	struct clk *clk;
 	struct iio_map *map;
 	struct reset_control *rst;
+
+	struct nexell_adc_ts *tsc;
 };
 
 struct nexell_adc_data {
@@ -398,19 +458,6 @@ static struct nexell_adc_data *nexell_adc_get_data(struct platform_device *pdev)
 /*
  * ADC functions
  */
-static irqreturn_t nexell_adc_v2_isr(int irq, void *dev_id)
-{
-	struct nexell_adc_info *adc = (struct nexell_adc_info *)dev_id;
-	void __iomem *reg = adc->adc_base;
-
-	writel(ADC_V2_INTCLR_CLR, ADC_V2_INTCLR(reg)); /* pending clear */
-	adc->value = readl(ADC_V2_DAT(reg)); /* get value */
-
-	complete(&adc->completion);
-
-	return IRQ_HANDLED;
-}
-
 static int nexell_adc_setup(struct nexell_adc_info *adc,
 		struct platform_device *pdev)
 {
@@ -446,7 +493,7 @@ static int nexell_adc_setup(struct nexell_adc_info *adc,
 	return 0;
 }
 
-static int nexell_read_raw(struct iio_dev *indio_dev,
+static int nexell_adc_read_raw(struct iio_dev *indio_dev,
 		struct iio_chan_spec const *chan,
 		int *val,
 		int *val2,
@@ -476,7 +523,7 @@ out:
 }
 
 static const struct iio_info nexell_adc_iio_info = {
-	.read_raw = &nexell_read_raw,
+	.read_raw = &nexell_adc_read_raw,
 	.driver_module = THIS_MODULE,
 };
 
@@ -498,14 +545,281 @@ static int nexell_adc_resume(struct platform_device *pdev)
 	return 0;
 }
 
+static inline bool nexell_ts_get_detect(struct nexell_adc_info *adc)
+{
+	return ((readl(ADC_V3_TOUCHSCREENCON(adc->adc_base)) >> 5) & 0x1);
+}
+
+static void nexell_adc_ts_v3_detect_mode(struct nexell_adc_info *adc, bool on)
+{
+	unsigned int reg_value = 0;
+
+	if (on)
+		reg_value &= ~ADC_V3_TS_PULLUP_DISABLE;
+	else
+		reg_value |= ADC_V3_TS_PULLUP_DISABLE;
+
+	reg_value &= ~ADC_V3_TS_XM_ON;
+	reg_value |= (ADC_V3_TS_XP_OFF | ADC_V3_TS_YP_OFF | ADC_V3_TS_YM_ON);
+
+	writel(reg_value, ADC_V3_TOUCHSCREENCON(adc->adc_base));
+
+	mdelay(2);
+}
+
+static int nexell_adc_ts_v3_read_xy(struct nexell_adc_info *adc, int *x, int *y)
+{
+	struct nexell_adc_ts *tsc;
+	struct iio_dev *indio_dev;
+	struct iio_chan_spec *chan;
+	unsigned int tx[TS_COORDINATE_CNT], ty[TS_COORDINATE_CNT];
+	unsigned int reg_value, tval;
+	int i, diff_x, diff_y;
+
+	*x  = 0, *y = 0;
+
+	tsc = ((struct nexell_adc_ts *)adc->tsc);
+	indio_dev = ((struct iio_dev *)tsc->iio);
+
+	reg_value = ADC_V3_TS_PULLUP_DISABLE;
+	reg_value &= ~(ADC_V3_TS_XP_OFF | ADC_V3_TS_YM_ON);
+	reg_value |= (ADC_V3_TS_YP_OFF | ADC_V3_TS_XM_ON);
+	writel(reg_value, ADC_V3_TOUCHSCREENCON(adc->adc_base));
+
+	/* It takes time to turn on/off the pull-up and switch. */
+	mdelay(1);
+
+	for (i = 0; i < TS_COORDINATE_CNT; i++) {
+		chan = ((struct iio_chan_spec *)
+				&nexell_adc_v3_channels[NX_ADC_CH_TS_YP - 2]);
+		nexell_adc_read_raw(indio_dev, chan, &tx[i], &tval, 0xFFFF);
+		*x += tx[i];
+		if (tx[i] < 0)
+			pr_warn("fail, read the adc-ch:%d value!!\n",
+				NX_ADC_CH_TS_YP);
+	}
+	*x /= TS_COORDINATE_CNT;
+
+	reg_value = ADC_V3_TS_PULLUP_DISABLE;
+	reg_value &= ~(ADC_V3_TS_YP_OFF | ADC_V3_TS_XM_ON);
+	reg_value |= (ADC_V3_TS_XP_OFF | ADC_V3_TS_YM_ON);
+	writel(reg_value, ADC_V3_TOUCHSCREENCON(adc->adc_base));
+
+	/* It takes time to turn on/off the pull-up and switch. */
+	mdelay(1);
+
+	for (i = 0; i < TS_COORDINATE_CNT; i++) {
+		chan = ((struct iio_chan_spec *)
+				&nexell_adc_v3_channels[NX_ADC_CH_TS_XP - 2]);
+		nexell_adc_read_raw(indio_dev, chan, &ty[i], &tval, 0xFFFF);
+		*y += ty[i];
+		if (ty[i] < 0)
+			pr_warn("fail, read the adc-ch:%d value!!\n",
+				NX_ADC_CH_TS_XP);
+	}
+	*y /= TS_COORDINATE_CNT;
+
+	/* Discard values with large deviations. */
+	if ((tsc->pre_xpos != 0) && (tsc->pre_ypos != 0)) {
+		diff_x = ((tsc->pre_xpos > *x)
+			? (tsc->pre_xpos - *x) : (*x - tsc->pre_xpos));
+		diff_y = ((tsc->pre_ypos > *y)
+			? (tsc->pre_ypos - *y) : (*y - tsc->pre_ypos));
+
+		if (!((diff_x >= TS_CORRECTION_VALUE)
+			|| (diff_y >= TS_CORRECTION_VALUE))) {
+			tsc->pre_xpos = *x;
+			tsc->pre_ypos = *y;
+		} else {
+			*x = tsc->pre_xpos;
+			*y = tsc->pre_ypos;
+		}
+	} else {
+		tsc->pre_xpos = *x;
+		tsc->pre_ypos = *y;
+	}
+
+	if ((*x < 0) || (*y < 0))
+		return -1;
+
+	return 0;
+}
+
+static void nexell_adc_ts_v3_thread(struct work_struct *data)
+{
+	struct nexell_adc_ts *tsc
+		= container_of(data, struct nexell_adc_ts, work);
+	struct nexell_adc_info *adc = iio_priv(tsc->iio);
+	struct input_dev *inp = adc->tsc->inp;
+	unsigned int reg_value;
+	int x, y;
+
+	while (1) {
+		nexell_adc_ts_v3_detect_mode(adc, true);
+
+		if (nexell_ts_get_detect(adc)) {
+			tsc->pendown = TS_PENUP;
+			break;
+		}
+
+		if (nexell_adc_ts_v3_read_xy(adc, &x, &y) < 0)
+			continue;
+
+		input_report_abs(inp, ABS_X, (x & ADC_DATX_MASK));
+		input_report_abs(inp, ABS_Y, (y & ADC_DATY_MASK));
+		input_report_abs(inp, ABS_PRESSURE, 1);
+		input_report_key(inp, BTN_TOUCH, 1);
+		input_sync(inp);
+
+		msleep(tsc->ts_sample_time);
+	}
+
+	tsc->pre_xpos = 0;
+	tsc->pre_ypos = 0;
+
+	if (tsc->pendown == TS_PENUP) {
+		input_report_key(inp, BTN_TOUCH, 0);
+		input_report_abs(inp, ABS_PRESSURE, 0);
+		input_sync(inp);
+	}
+
+	reg_value = readl(ADC_V2_INTENB(adc->adc_base));
+	reg_value |= (ADC_V3_TS_INTENB | tsc->reg_value_backup);
+	writel(reg_value, ADC_V2_INTENB(adc->adc_base));
+}
+
+static irqreturn_t nexell_adc_ts_v3_isr(int irq, void *dev_id)
+{
+	struct nexell_adc_info *adc
+		= ((struct nexell_adc_info *)dev_id);
+	unsigned int reg_value;
+
+	/* Check the Touchscreen Interrupt Pending */
+	reg_value = ((readl(ADC_V2_INTCLR(adc->adc_base)) >> 1) & 0x1);
+	if (reg_value) {
+		writel(ADC_V3_TS_INTCLR, ADC_V2_INTCLR(adc->adc_base));
+
+		reg_value = readl(ADC_V2_INTENB(adc->adc_base));
+		adc->tsc->reg_value_backup = reg_value;
+		reg_value &= ~ADC_V3_TS_INTENB;
+		writel(reg_value, ADC_V2_INTENB(adc->adc_base));
+
+		adc->tsc->pendown = TS_PENDOWN;
+
+		schedule_work(&adc->tsc->work);
+	} else {
+		writel(ADC_V2_INTCLR_CLR, ADC_V2_INTCLR(adc->adc_base));
+
+		adc->value = readl(ADC_V2_DAT(adc->adc_base));
+
+		complete(&adc->completion);
+	}
+
+	return IRQ_HANDLED;
+}
+
+static int nexell_adc_ts_open(struct input_dev *inp)
+{
+	struct nexell_adc_info *adc = input_get_drvdata(inp);
+
+	nexell_adc_ts_v3_detect_mode(adc, true);
+
+	return 0;
+}
+
+static void nexell_adc_ts_close(struct input_dev *inp)
+{
+	struct nexell_adc_info *adc = input_get_drvdata(inp);
+
+	nexell_adc_ts_v3_detect_mode(adc, false);
+}
+
+static void nexell_adc_ts_init(struct platform_device *pdev)
+{
+	struct iio_dev *iio = platform_get_drvdata(pdev);
+	struct nexell_adc_info *adc = iio_priv(iio);
+	unsigned int reg_value;
+
+	nexell_adc_ts_v3_detect_mode(adc, true);
+
+	reg_value = readl(ADC_V2_INTENB(adc->adc_base));
+	reg_value |= (ADC_V3_TS_INTENB | ADC_V2_INTENB_ENB);
+	writel(reg_value, ADC_V2_INTENB(adc->adc_base));
+}
+
+static int nexell_adc_ts_probe(struct platform_device *pdev)
+{
+	struct iio_dev *iio = platform_get_drvdata(pdev);
+	struct nexell_adc_info *adc = iio_priv(iio);
+	struct nexell_adc_ts *tsc;
+	struct input_dev *inp;
+	int ret = 0;
+
+	tsc = devm_kzalloc(&pdev->dev, sizeof(*tsc), GFP_KERNEL);
+	if (!tsc)
+		return -ENOMEM;
+
+	inp = devm_input_allocate_device(&pdev->dev);
+	if (!inp)
+		return -ENOMEM;
+
+	inp->name	= "Nexell Touchscreen";
+	inp->phys	= "nexell/event0";
+	inp->open	= nexell_adc_ts_open;
+	inp->close	= nexell_adc_ts_close;
+	inp->dev.parent = &pdev->dev;
+
+	inp->id.bustype = BUS_HOST;
+	inp->id.vendor  = 0x0001;
+	inp->id.product = 0x0001;
+	inp->id.version = 0x0100;
+
+	inp->absbit[0] = BIT(ABS_X) | BIT(ABS_Y);
+	inp->evbit[0]  = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
+	inp->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
+
+	input_set_abs_params(inp, ABS_X, X_AXIS_MIN, X_AXIS_MAX, 0, 0);
+	input_set_abs_params(inp, ABS_Y, Y_AXIS_MIN, Y_AXIS_MAX, 0, 0);
+	input_set_abs_params(inp, ABS_PRESSURE, 0, 1, 0, 0);
+	input_set_abs_params(inp, ABS_TOOL_WIDTH, 0, 1, 0, 0);
+
+	input_set_drvdata(inp, tsc);
+	ret = input_register_device(inp);
+	if (ret) {
+		dev_err(&pdev->dev, "fail, %s register for input device ...\n",
+			pdev->name);
+		goto err_dev;
+	}
+
+	tsc->dev = &pdev->dev;
+	tsc->inp = inp;
+	tsc->iio = iio;
+	adc->tsc = tsc;
+
+	nexell_adc_ts_init(pdev);
+
+	ret = of_property_read_u32(pdev->dev.of_node, "ts-sample-time",
+				   &tsc->ts_sample_time);
+	if (ret)
+		tsc->ts_sample_time = 4;
+
+	INIT_WORK(&tsc->work, nexell_adc_ts_v3_thread);
+
+	return 0;
+
+err_dev:
+	input_free_device(inp);
+
+	return ret;
+}
+
 static int nexell_adc_probe(struct platform_device *pdev)
 {
 	struct iio_dev *iio = NULL;
 	struct nexell_adc_info *adc = NULL;
 	struct resource	*mem;
 	struct device_node *np = pdev->dev.of_node;
-	int irq;
-	int ret = -ENODEV;
+	int irq, ret = -ENODEV;
 
 	if (!np)
 		return ret;
@@ -564,8 +878,9 @@ static int nexell_adc_probe(struct platform_device *pdev)
 			goto err_unprepare_clk;
 		}
 
-		ret = devm_request_irq(&pdev->dev, irq, nexell_adc_v2_isr,
-				0, dev_name(&pdev->dev), adc);
+		ret = devm_request_irq(&pdev->dev, irq,
+			nexell_adc_ts_v3_isr, 0, dev_name(&pdev->dev), adc);
+
 		if (ret < 0) {
 			dev_err(&pdev->dev, "failed get irq (%d)\n", irq);
 			goto err_unprepare_clk;
@@ -599,7 +914,14 @@ static int nexell_adc_probe(struct platform_device *pdev)
 
 	dev_dbg(&pdev->dev, "ADC init success\n");
 
-	return 0;
+	/* parsing the touchscreen option */
+	if (of_property_read_bool(np, "touchscreen-enable")) {
+		ret = nexell_adc_ts_probe(pdev);
+		if (ret < 0)
+			goto err_of_populate;
+	}
+
+	return ret;
 
 err_of_populate:
 	device_for_each_child(&pdev->dev, NULL,
@@ -635,7 +957,15 @@ static struct platform_driver nexell_adc_driver = {
 	},
 };
 
+#ifdef CONFIG_DEFERRED_ADC
+static int __init nexell_adc_driver_init(void)
+{
+	return platform_driver_register(&nexell_adc_driver);
+}
+deferred_module_init(nexell_adc_driver_init)
+#else
 module_platform_driver(nexell_adc_driver);
+#endif
 
 MODULE_AUTHOR("Bon-gyu, KOO <freestyle@nexell.co.kr>");
 MODULE_DESCRIPTION("ADC driver for the Nexell SoC");
