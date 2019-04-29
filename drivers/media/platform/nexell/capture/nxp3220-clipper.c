@@ -39,15 +39,196 @@
 #include "../nx-video.h"
 #include "nxp3220-vip-primitive.h"
 #include "nxp3220-vip.h"
+#include "low.h"
 
 #define NX_CLIPPER_DEV_NAME	"nx-clipper"
 
 /*	#define DEBUG_SYNC	*/
+#define DEBUG_MLC_DPC	0
 #ifdef DEBUG_SYNC
 #include <linux/timer.h>
 
 #define DEBUG_SYNC_TIMEOUT_MS	(1000)
 #endif
+
+#if (1)
+#define dbgout(msg...)		pr_info(msg)
+#else
+#define dbgout(msg...)		do {} while (0)
+#endif
+
+#define dump_register 1
+void dump_register_dpc(void)
+{
+#if (dump_register)
+#undef dbgout
+#define dbgout(args...) printk(args)
+	struct nx_dpc_reg *preg =
+		(struct nx_dpc_reg *)ioremap_nocache(0x25140800, 0x800);
+
+	dbgout(" dpchtotal	= 0x%04x\r\n", preg->dpchtotal);
+	dbgout(" dpchswidth	= 0x%04x\r\n", preg->dpchswidth);
+	dbgout(" dpchastart	= 0x%04x\r\n", preg->dpchastart);
+	dbgout(" dpchaend	= 0x%04x\r\n", preg->dpchaend);
+	dbgout(" dpcvtotal	= 0x%04x\r\n", preg->dpcvtotal);
+	dbgout(" dpcvswidth	= 0x%04x\r\n", preg->dpcvswidth);
+	dbgout(" dpcvastart	= 0x%04x\r\n", preg->dpcvastart);
+	dbgout(" dpcvaend	= 0x%04x\r\n", preg->dpcvaend);
+	dbgout(" dpcctrl0	= 0x%04x\r\n", preg->dpcctrl0);
+	dbgout(" dpcctrl1	= 0x%04x\r\n", preg->dpcctrl1);
+	dbgout(" dpcevtotal	= 0x%04x\r\n", preg->dpcevtotal);
+	dbgout(" dpcevswidth	= 0x%04x\r\n", preg->dpcevswidth);
+	dbgout(" dpcevastart	= 0x%04x\r\n", preg->dpcevastart);
+	dbgout(" dpcevaend	= 0x%04x\r\n", preg->dpcctrl0);
+	dbgout(" dpcvseoffset	= 0x%04x\r\n", preg->dpcvseoffset);
+	dbgout(" dpcvssoffset	= 0x%04x\r\n", preg->dpcvssoffset);
+	dbgout(" dpcevseoffset	= 0x%04x\r\n", preg->dpcevseoffset);
+	dbgout(" dpcevssoffset	= 0x%04x\r\n", preg->dpcevssoffset);
+	dbgout(" dpcdelay0	= 0x%04x\r\n", preg->dpcdelay0);
+	dbgout(" dpcupscalecon0	= 0x%04x\r\n", preg->dpcupscalecon0);
+	dbgout(" dpcupscalecon1	= 0x%04x\r\n", preg->dpcupscalecon1);
+	dbgout(" dpcupscalecon2	= 0x%04x\r\n", preg->dpcupscalecon2);
+	dbgout(" dpcrnumgencon0	= 0x%04x\r\n", preg->dpcrnumgencon0);
+	dbgout(" dpcrnumgencon1	= 0x%04x\r\n", preg->dpcrnumgencon1);
+	dbgout(" dpcrnumgencon2	= 0x%04x\r\n", preg->dpcrnumgencon2);
+	dbgout(" dpcrndconformula_l = 0x%04x\r\n", preg->dpcrndconformula_l);
+	dbgout(" dpcrndconformula_h = 0x%04x\r\n", preg->dpcrndconformula_h);
+	dbgout(" dpcfdtaddr = 0x%04x\r\n", preg->dpcfdtaddr);
+	dbgout(" dpcfrdithervalue = 0x%04x\r\n", preg->dpcfrdithervalue);
+	dbgout(" dpcfgdithervalue = 0x%04x\r\n", preg->dpcfgdithervalue);
+	dbgout(" dpcfbdithervalue = 0x%04x\r\n", preg->dpcfbdithervalue);
+
+	dbgout(" dpcdelay1	= 0x%04x\r\n", preg->dpcdelay1);
+	dbgout(" dpcmputime0	= 0x%04x\r\n", preg->dpcmputime0);
+	dbgout(" dpcmputime1	= 0x%04x\r\n", preg->dpcmputime1);
+	dbgout(" dpcmpuwrdatal	= 0x%04x\r\n", preg->dpcmpuwrdatal);
+	dbgout(" dpcmpuindex	= 0x%04x\r\n", preg->dpcmpuindex);
+	dbgout(" dpcmpustatus	= 0x%04x\r\n", preg->dpcmpustatus);
+	dbgout(" dpcmpudatah	= 0x%04x\r\n", preg->dpcmpudatah);
+	dbgout(" dpcmpurdatal	= 0x%04x\r\n", preg->dpcmpurdatal);
+	dbgout(" dpcdummy12	= 0x%04x\r\n", preg->dpcdummy12);
+	dbgout(" dpccmdbufferdatal	= 0x%04x\r\n", preg->dpccmdbufferdatal);
+	dbgout(" dpccmdbufferdatah	= 0x%04x\r\n", preg->dpccmdbufferdatah);
+	dbgout(" dpcpolctrl	= 0x%04x\r\n", preg->dpcpolctrl);
+	dbgout(" dpcpadposition[0]	= 0x%04x\r\n", preg->dpcpadposition[0]);
+	dbgout(" dpcpadposition[1]	= 0x%04x\r\n", preg->dpcpadposition[1]);
+	dbgout(" dpcpadposition[2]	= 0x%04x\r\n", preg->dpcpadposition[2]);
+	dbgout(" dpcpadposition[3]	= 0x%04x\r\n", preg->dpcpadposition[3]);
+	dbgout(" dpcpadposition[4]	= 0x%04x\r\n", preg->dpcpadposition[4]);
+	dbgout(" dpcpadposition[5]	= 0x%04x\r\n", preg->dpcpadposition[5]);
+	dbgout(" dpcpadposition[6]	= 0x%04x\r\n", preg->dpcpadposition[6]);
+	dbgout(" dpcpadposition[7]	= 0x%04x\r\n", preg->dpcpadposition[7]);
+	dbgout(" dpcrgbmask[0]	= 0x%04x\r\n", preg->dpcrgbmask[0]);
+	dbgout(" dpcrgbmask[1]	= 0x%04x\r\n", preg->dpcrgbmask[0]);
+	dbgout(" dpcrgbshift	= 0x%04x\r\n", preg->dpcrgbshift);
+	dbgout(" dpcdataflush	= 0x%04x\r\n", preg->dpcdataflush);
+#endif
+}
+
+void dump_register_mlc(void)
+{
+#if (dump_register)
+#undef dbgout
+#define dbgout(args...) printk(args)
+	int i;
+	struct nx_mlc_reg *preg =
+		(struct nx_mlc_reg *)ioremap_nocache(0x25140000, 0x800);
+
+	dbgout(" mlccontrolt	= 0x%04x\r\n", preg->mlccontrolt);
+	dbgout(" mlcscreensize	= 0x%04x\r\n", preg->mlcscreensize);
+	dbgout(" mlcbgcolor	= 0x%04x\r\n", preg->mlcbgcolor);
+
+	for (i = 0; i < 2; i++) {
+		dbgout(" mlcleftright[%d] = 0x%04x\r\n", i,
+				preg->mlcrgblayer[i].mlcleftright);
+		dbgout(" mlctopbottom[%d] = 0x%04x\r\n", i,
+				preg->mlcrgblayer[i].mlctopbottom);
+		dbgout(" mlcinvalidleftright0[%d] = 0x%04x\r\n", i,
+				preg->mlcrgblayer[i].mlcinvalidleftright0);
+		dbgout(" mlcinvalidtopbottom0[%d] = 0x%04x\r\n", i,
+				preg->mlcrgblayer[i].mlcinvalidtopbottom0);
+		dbgout(" mlcinvalidleftright1[%d] = 0x%04x\r\n", i,
+				preg->mlcrgblayer[i].mlcinvalidleftright1);
+		dbgout(" mlcinvalidtopbottom1[%d] = 0x%04x\r\n", i,
+				preg->mlcrgblayer[i].mlcinvalidtopbottom1);
+		dbgout(" mlccontrol[%d]	= 0x%04x\r\n", i,
+				preg->mlcrgblayer[i].mlccontrol);
+		dbgout(" mlchstride[%d]	= 0x%04x\r\n", i,
+				preg->mlcrgblayer[i].mlchstride);
+		dbgout(" mlcvstride[%d]	= 0x%04x\r\n", i,
+				preg->mlcrgblayer[i].mlcvstride);
+		dbgout(" mlctpcolor[%d]	= 0x%04x\r\n", i,
+				preg->mlcrgblayer[i].mlctpcolor);
+		dbgout(" mlcinvcolor[%d] = 0x%04x\r\n", i,
+				preg->mlcrgblayer[i].mlcinvcolor);
+		dbgout(" mlcaddress[%d]	= 0x%04x\r\n", i,
+				preg->mlcrgblayer[i].mlcaddress);
+	}
+
+	dbgout(" mlcleftright	= 0x%04x\r\n",
+			preg->mlcvideolayer.mlcleftright);
+	dbgout(" mlctopbottom	= 0x%04x\r\n",
+			preg->mlcvideolayer.mlctopbottom);
+	dbgout(" mlccontrol	= 0x%04x\r\n", preg->mlcvideolayer.mlccontrol);
+	dbgout(" mlcvstride	= 0x%04x\r\n", preg->mlcvideolayer.mlcvstride);
+	dbgout(" mlctpcolor	= 0x%04x\r\n", preg->mlcvideolayer.mlctpcolor);
+	dbgout(" mlcinvcolor	= 0x%04x\r\n", preg->mlcvideolayer.mlcinvcolor);
+	dbgout(" mlcaddress	= 0x%04x\r\n", preg->mlcvideolayer.mlcaddress);
+	dbgout(" mlcaddresscb	= 0x%04x\r\n",
+			preg->mlcvideolayer.mlcaddresscb);
+	dbgout(" mlcaddresscr	= 0x%04x\r\n",
+			preg->mlcvideolayer.mlcaddresscr);
+	dbgout(" mlcvstridecb	= 0x%04x\r\n",
+			preg->mlcvideolayer.mlcvstridecb);
+	dbgout(" mlcvstridecr	= 0x%04x\r\n",
+			preg->mlcvideolayer.mlcvstridecr);
+	dbgout(" mlchscale	= 0x%04x\r\n", preg->mlcvideolayer.mlchscale);
+	dbgout(" mlcvscale	= 0x%04x\r\n", preg->mlcvideolayer.mlcvscale);
+	dbgout(" mlcluenh	= 0x%04x\r\n", preg->mlcvideolayer.mlcluenh);
+	dbgout(" mlcchenh[0]	= 0x%04x\r\n", preg->mlcvideolayer.mlcchenh[0]);
+	dbgout(" mlcchenh[1]	= 0x%04x\r\n", preg->mlcvideolayer.mlcchenh[1]);
+	dbgout(" mlcchenh[2]	= 0x%04x\r\n", preg->mlcvideolayer.mlcchenh[2]);
+	dbgout(" mlcchenh[3]	= 0x%04x\r\n", preg->mlcvideolayer.mlcchenh[3]);
+
+	dbgout(" mlcleftright	= 0x%04x\r\n", preg->mlcrgblayer2.mlcleftright);
+	dbgout(" mlctopbottom	= 0x%04x\r\n", preg->mlcrgblayer2.mlctopbottom);
+	dbgout(" mlcinvalidleftright0	= 0x%04x\r\n",
+			preg->mlcrgblayer2.mlcinvalidleftright0);
+	dbgout(" mlcinvalidtopbottom0	= 0x%04x\r\n",
+			preg->mlcrgblayer2.mlcinvalidtopbottom0);
+	dbgout(" mlcinvalidleftright1	= 0x%04x\r\n",
+			preg->mlcrgblayer2.mlcinvalidleftright1);
+	dbgout(" mlcinvalidtopbottom1	= 0x%04x\r\n",
+			preg->mlcrgblayer2.mlcinvalidtopbottom1);
+	dbgout(" mlccontrol	= 0x%04x\r\n", preg->mlcrgblayer2.mlccontrol);
+	dbgout(" mlchstride	= 0x%04x\r\n", preg->mlcrgblayer2.mlchstride);
+	dbgout(" mlcvstride	= 0x%04x\r\n", preg->mlcrgblayer2.mlcvstride);
+	dbgout(" mlctpcolor	= 0x%04x\r\n", preg->mlcrgblayer2.mlctpcolor);
+	dbgout(" mlcinvcolor	= 0x%04x\r\n", preg->mlcrgblayer2.mlcinvcolor);
+	dbgout(" mlcaddress	= 0x%04x\r\n", preg->mlcrgblayer2.mlcaddress);
+
+	dbgout(" mlcpaletetable2	= 0x%04x\r\n", preg->mlcpaletetable2);
+	dbgout(" mlcgammacont	= 0x%04x\r\n", preg->mlcgammacont);
+	dbgout(" mlcrgammatablewrite = 0x%04x\r\n", preg->mlcrgammatablewrite);
+	dbgout(" mlcggammatablewrite = 0x%04x\r\n", preg->mlcggammatablewrite);
+	dbgout(" mlcbgammatablewrite = 0x%04x\r\n", preg->mlcbgammatablewrite);
+	dbgout(" yuvlayergammatable_red = 0x%04x\r\n",
+			preg->yuvlayergammatable_red);
+	dbgout(" yuvlayergammatable_green = 0x%04x\r\n",
+			preg->yuvlayergammatable_green);
+	dbgout(" yuvlayergammatable_blue = 0x%04x\r\n",
+			preg->yuvlayergammatable_blue);
+	dbgout(" dimctrl = 0x%04x\r\n", preg->dimctrl);
+	dbgout(" dimlut0 = 0x%04x\r\n", preg->dimlut0);
+	dbgout(" dimlut1 = 0x%04x\r\n", preg->dimlut1);
+	dbgout(" dimbusyflag = 0x%04x\r\n", preg->dimbusyflag);
+	dbgout(" dimprdarrr0 = 0x%04x\r\n", preg->dimprdarrr0);
+	dbgout(" dimprdarrr1 = 0x%04x\r\n", preg->dimprdarrr1);
+	dbgout(" dimram0rddata = 0x%04x\r\n", preg->dimram0rddata);
+	dbgout(" dimram1rddata = 0x%04x\r\n", preg->dimram1rddata);
+	dbgout(" mlcclkenb = 0x%04x\r\n", preg->mlcclkenb);
+#endif
+}
 
 #ifdef CONFIG_ARM_NXP3220_DEVFREQ
 static struct pm_qos_request nx_clipper_qos;
@@ -879,7 +1060,6 @@ static int update_buffer(struct nx_clipper *me)
 				buf->stride[1]);
 	me->last_buf = buf;
 
-#ifdef DEBUG_SYNC
 	dev_dbg(&me->pdev->dev, "%s: module : %d, crop width : %d\n",
 		__func__, me->module, me->crop.width);
 	dev_dbg(&me->pdev->dev, "crop height : %d\n", me->crop.height);
@@ -891,6 +1071,7 @@ static int update_buffer(struct nx_clipper *me)
 	dev_dbg(&me->pdev->dev, "%s: Stride[0] : 0x%X, Stride[1] : 0x%X\n",
 		__func__, buf->stride[0], buf->stride[1]);
 
+#ifdef DEBUG_SYNC
 	mod_timer(&me->timer, jiffies +
 		msecs_to_jiffies(DEBUG_SYNC_TIMEOUT_MS));
 #endif
@@ -1146,6 +1327,10 @@ static int nx_clipper_s_stream(struct v4l2_subdev *sd, int enable)
 #endif
 		NX_ATOMIC_SET_MASK(STATE_CLIP_RUNNING, &me->state);
 	} else {
+#if DEBUG_MLC_DPC
+		dump_register_dpc();
+		dump_register_mlc();
+#endif
 		if (!(NX_ATOMIC_READ(&me->state) &
 		      (STATE_MEM_RUNNING | STATE_CLIP_RUNNING)))
 			goto UP_AND_OUT;
@@ -1158,7 +1343,7 @@ static int nx_clipper_s_stream(struct v4l2_subdev *sd, int enable)
 						   &me->state);
 				if (!wait_for_completion_timeout(&me->stop_done,
 								 2*HZ)) {
-					pr_warn("timeout for waiting clipper stop\n");
+					pr_warn("waiting clipper stop\n");
 					nx_vip_stop(module, VIP_CLIPPER);
 				}
 
@@ -1270,6 +1455,7 @@ static int nx_clipper_set_selection(struct v4l2_subdev *sd,
 	case V4L2_SEL_TGT_CROP:
 		if (sel->r.left >= me->width || sel->r.top >= me->height)
 			return -EINVAL;
+
 		if ((sel->r.left + sel->r.width) > me->width ||
 			(sel->r.top + sel->r.height) > me->height)
 			return -EINVAL;
@@ -1645,6 +1831,7 @@ static int create_sysfs_for_camera_sensor(struct nx_clipper *me,
 	struct kobject *kobj;
 	char kobject_name[16] = {0, };
 	char sensor_name[V4L2_SUBDEV_NAME_SIZE];
+	struct device *dev = &me->pdev->dev;
 
 	memset(sensor_name, 0, V4L2_SUBDEV_NAME_SIZE);
 
@@ -1662,14 +1849,14 @@ static int create_sysfs_for_camera_sensor(struct nx_clipper *me,
 		me->module);
 	kobj = kobject_create_and_add(kobject_name, &platform_bus.kobj);
 	if (!kobj) {
-		dev_err(&me->pdev->dev, "failed to kobject_create for module %d\n",
+		dev_err(dev, "failed to kobject_create for module %d\n",
 			me->module);
 		return -EINVAL;
 	}
 
 	ret = sysfs_create_file(kobj, camera_sensor_attrs[me->module]);
 	if (ret) {
-		dev_err(&me->pdev->dev, "failed to sysfs_create_file for module %d\n",
+		dev_err(dev, "failed to sysfs_create_file for module %d\n",
 			me->module);
 		kobject_put(kobj);
 	}
