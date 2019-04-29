@@ -256,6 +256,10 @@
 	status = "okay";
 };
 
+&deinterlacer {
+	status = "okay";
+};
+
 &drm {
         status = "okay";
 };
