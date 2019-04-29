@@ -1111,6 +1111,19 @@
 			status = "disabled";
 		};
 
+		deinterlacer: deinterlacer@0x250c0000 {
+			compatible ="nexell,nxp3220-deinterlacer";
+			reg = <0x250C0000 0x1000>;
+			interrupts = <GIC_SPI 33 IRQ_TYPE_NONE>;
+			assigned-clocks = <&cmu_mm CLK_MM_DEINTERLACE_AXI>,
+				<&cmu_mm CLK_MM_DEINTERLACE_APB>;
+			assigned-clock-rates = <333333334>, <166666667>;
+			clock-names = "axi","apb";
+			clocks = <&cmu_mm CLK_MM_DEINTERLACE_AXI>,
+				<&cmu_mm CLK_MM_DEINTERLACE_APB>;
+			status = "disabled";
+		};
+
 		vpu: vpu@25180000 {
 			compatible = "nexell,nx-vpu";
 			reg = <0x25180000 0x10000>;
