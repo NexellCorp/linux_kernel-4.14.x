@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a73e4bb1_fa026316",
+        "filename": "arch/arm/boot/dts/nxp3220-evb-common.dtsi",
+        "patchSetId": 1
+      },
+      "lineNbr": 672,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-29T10:42:21Z",
+      "side": 1,
+      "message": "set alpha order",
+      "revId": "09b5c7674d4614a245460f58b2fc8efbacec06fa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
