@@ -1,0 +1,510 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ff958cb2_edb1006c",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 759,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "change dev_dbg",
+      "range": {
+        "startLine": 709,
+        "startChar": 0,
+        "endLine": 759,
+        "endChar": 17
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "db7ff0a6_c2428620",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 871,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "change to dev_err",
+      "range": {
+        "startLine": 871,
+        "startChar": 2,
+        "endLine": 871,
+        "endChar": 8
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9f4bbabb_e4ad8880",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 876,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "change to dev_err",
+      "range": {
+        "startLine": 876,
+        "startChar": 2,
+        "endLine": 876,
+        "endChar": 8
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2b8b6a5c_3e639625",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1094,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "change to dev_dbg",
+      "range": {
+        "startLine": 1069,
+        "startChar": 0,
+        "endLine": 1094,
+        "endChar": 31
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "1aed3382_7b2f001e",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1145,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "change to dev_dbg",
+      "range": {
+        "startLine": 1137,
+        "startChar": 0,
+        "endLine": 1145,
+        "endChar": 16
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "e51cb732_fc7d2e9e",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1191,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "change to dev_dbg",
+      "range": {
+        "startLine": 1191,
+        "startChar": 1,
+        "endLine": 1191,
+        "endChar": 9
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8c593e9_00d19119",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1385,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "change function name to nx_deinterlacer_irq_register or ..",
+      "range": {
+        "startLine": 1385,
+        "startChar": 11,
+        "endLine": 1385,
+        "endChar": 37
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d64bebe8_ce0d5c9d",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1401,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "return -EINVAL ?",
+      "range": {
+        "startLine": 1401,
+        "startChar": 8,
+        "endLine": 1401,
+        "endChar": 11
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3a45fd0d_3ee0cebc",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1408,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "remove this",
+      "range": {
+        "startLine": 1407,
+        "startChar": 1,
+        "endLine": 1408,
+        "endChar": 29
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ac492d94_640a85df",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1412,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "remove this",
+      "range": {
+        "startLine": 1409,
+        "startChar": 7,
+        "endLine": 1412,
+        "endChar": 21
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d07f8f39_382dc91c",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1415,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "chage to ret",
+      "range": {
+        "startLine": 1415,
+        "startChar": 2,
+        "endLine": 1415,
+        "endChar": 9
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d86bb585_6ce484ee",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1416,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "chage to ret",
+      "range": {
+        "startLine": 1416,
+        "startChar": 6,
+        "endLine": 1416,
+        "endChar": 13
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "43d771e7_ced18a77",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1419,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "chage to ret",
+      "range": {
+        "startLine": 1419,
+        "startChar": 11,
+        "endLine": 1419,
+        "endChar": 12
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4aa66766_f9c5dbf9",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1422,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "chage to ret",
+      "range": {
+        "startLine": 1422,
+        "startChar": 2,
+        "endLine": 1422,
+        "endChar": 9
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fddcdbe2_8d6b04ff",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1423,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "chage to ret",
+      "range": {
+        "startLine": 1423,
+        "startChar": 6,
+        "endLine": 1423,
+        "endChar": 13
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "da9b6dbe_d4b99827",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1426,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "chage to ret",
+      "range": {
+        "startLine": 1426,
+        "startChar": 11,
+        "endLine": 1426,
+        "endChar": 12
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "62214533_8922566b",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1430,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "remove this",
+      "range": {
+        "startLine": 1429,
+        "startChar": 2,
+        "endLine": 1430,
+        "endChar": 55
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "93a74f65_15f71fa4",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1458,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "i thik this function into xxx_probe.",
+      "range": {
+        "startLine": 1453,
+        "startChar": 1,
+        "endLine": 1458,
+        "endChar": 47
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0c19cf74_7ca82aa3",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1567,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "cange to nx_deinterlacer_clock_disable",
+      "range": {
+        "startLine": 1567,
+        "startChar": 3,
+        "endLine": 1567,
+        "endChar": 14
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "41ec28c1_15dbe870",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1578,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "change to nx_deinterlacer_clock_enable",
+      "range": {
+        "startLine": 1578,
+        "startChar": 1,
+        "endLine": 1578,
+        "endChar": 12
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8d45d1bd_c90db573",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1620,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "nx_deinterlacer_clock_enable",
+      "range": {
+        "startLine": 1620,
+        "startChar": 1,
+        "endLine": 1620,
+        "endChar": 12
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4092ddc4_96ad8c6b",
+        "filename": "drivers/media/platform/nexell/m2m/nxp3220-deinterlacer.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1639,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-04-30T01:06:41Z",
+      "side": 1,
+      "message": "nx_deinterlacer_clock_disable",
+      "range": {
+        "startLine": 1639,
+        "startChar": 4,
+        "endLine": 1639,
+        "endChar": 15
+      },
+      "revId": "25e4c7837b43146bfe00882490a88e54c432fdd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
