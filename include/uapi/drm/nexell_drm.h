@@ -113,9 +113,9 @@ enum nx_g2d_cmd_type {
  * G2D buffer type
  */
 enum nx_g2d_buf_type {
+	NX_G2D_BUF_TYPE_NONE = 0,
 	NX_G2D_BUF_TYPE_GEM = (1 << 0),
 	NX_G2D_BUF_TYPE_CPU = (1 << 1),
-	NX_G2D_BUF_TYPE_NONE = (1 << 2),
 };
 
 /**
