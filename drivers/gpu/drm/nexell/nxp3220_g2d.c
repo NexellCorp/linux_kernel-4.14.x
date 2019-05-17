@@ -217,13 +217,15 @@ static irqreturn_t nx_g2d_irq_handler(int irq, void *dev_id)
 	struct nx_g2d_reg *reg = g2d->reg;
 	u32 pend = readl(&reg->status);
 
-	dev_dbg(g2d->dev, "IRQ:0x%08x\n", pend);
+	dev_dbg(g2d->dev, "IRQ:%s/%s\n",
+		pend | NX_G2D_INTC_G2D_PEND ? "G2D" : "None",
+		pend | NX_G2D_INTC_EMPTY_PEND ? "EMPTY" : "None");
 
 	if (pend & NX_G2D_INTC_G2D_PEND)
-		pend &= ~NX_G2D_IRQ_G2D_ENB;
+		pend |= NX_G2D_IRQ_G2D_ENB;
 
 	if (pend & NX_G2D_INTC_EMPTY_PEND)
-		pend &= ~NX_G2D_IRQ_EMPTY_ENB;
+		pend |= NX_G2D_IRQ_EMPTY_ENB;
 
 	writel(pend, &reg->status);
 	complete(&g2d->complete);
