@@ -957,12 +957,16 @@ static struct platform_driver nexell_adc_driver = {
 	},
 };
 
-#ifdef CONFIG_DEFERRED_ADC
+#if defined(CONFIG_DEFERRED_ADC) || defined(CONFIG_DEFERRED_UP_ADC)
 static int __init nexell_adc_driver_init(void)
 {
 	return platform_driver_register(&nexell_adc_driver);
 }
+#if CONFIG_DEFERRED_LEVEL == 1
 deferred_module_init(nexell_adc_driver_init)
+#elif CONFIG_DEFERRED_LEVEL == 2
+subsys_initcall(nexell_adc_driver_init);
+#endif
 #else
 module_platform_driver(nexell_adc_driver);
 #endif
