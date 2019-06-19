@@ -80,10 +80,27 @@ static const struct nexell_fixed_factor_clock src_fixed_factor_clks[] __initcons
 	FFACTOR(CLK_EXT_SRC, "ext_src", "oscclk", 1, 2, 0),
 };
 
+#ifndef CONFIG_CPU_FREQ
 PNAME(src_mux_p) = { "pll0", "pll1_div", "div_cpu_pll",
 	"div_pll_ddr0", "div_pll_ddr1", "ext_src", "oscclk"};
+#else
+PNAME(src_mux_p) = { "pll0", "pll1_div",
+	"div_pll_ddr0", "div_pll_ddr1", "ext_src", "oscclk"};
 
+#endif
 PNAME(snd_mux_p) = { "pll1_div", "div_pll_ddr1", "ext_src" };
+
+static u32 src_mux_table[] = {
+	MUX_PLL0_CLK_NUM,
+	MUX_PLL1_CLK_NUM,
+#ifndef CONFIG_CPU_FREQ
+	MUX_PLL_CPU_DIV_NUM,
+#endif
+	MUX_PLL_DDR0_DIV_NUM,
+	MUX_PLL_DDR1_DIV_NUM,
+	MUX_EXT_SRC_CLK0_NUM,
+	MUX_OSCCLK_IN_NUM,
+};
 
 static u32 snd_mux_table[] = {
 	MUX_PLL1_CLK_NUM,
@@ -105,7 +122,7 @@ static u32 snd_mux_table[] = {
 #define COMP_BASE_SND(_id, cname, f) \
 	COMP_BASE(_id, NULL, cname, snd_mux_p, f)
 
-#define COMP_MUX_SRC(o)		COMP_MUX(o, 0, 4, 0)
+#define COMP_MUX_SRC(o)		COMP_MUX_T(o, 0, 4, src_mux_table, 0)
 #define COMP_MUX_SND(o)		COMP_MUX_T(o, 0, 4, snd_mux_table, 0)
 
 #define COMP_DIV_SRC(o) 	COMP_DIV(o + 0x60, 0, 8, 0)
@@ -205,17 +222,17 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 		COMP_DIV_SRC(I2C0_APB)
 		COMP_GATE_SRC(I2C0_APB)
 	}, {
-		COMP_BASE_SRC(CLK_SRC_SDMMC0_CORE, "src_sdmmc0_core")
+		COMP_BASE_SRC_F(CLK_SRC_SDMMC0_CORE, "src_sdmmc0_core", CLK_IGNORE_UNUSED)
 		COMP_MUX_SRC(SDMMC0_CORE)
 		COMP_DIV_SRC(SDMMC0_CORE)
 		COMP_GATE_SRC(SDMMC0_CORE)
 	}, {
-		COMP_BASE_SRC(CLK_SRC_SDMMC1_CORE, "src_sdmmc1_core")
+		COMP_BASE_SRC_F(CLK_SRC_SDMMC1_CORE, "src_sdmmc1_core", CLK_IGNORE_UNUSED)
 		COMP_MUX_SRC(SDMMC1_CORE)
 		COMP_DIV_SRC(SDMMC1_CORE)
 		COMP_GATE_SRC(SDMMC1_CORE)
 	}, {
-		COMP_BASE_SRC(CLK_SRC_SDMMC2_CORE, "src_sdmmc2_core")
+		COMP_BASE_SRC_F(CLK_SRC_SDMMC2_CORE, "src_sdmmc2_core", CLK_IGNORE_UNUSED)
 		COMP_MUX_SRC(SDMMC2_CORE)
 		COMP_DIV_SRC(SDMMC2_CORE)
 		COMP_GATE_SRC(SDMMC2_CORE)
