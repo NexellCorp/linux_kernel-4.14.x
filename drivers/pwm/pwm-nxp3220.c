@@ -293,8 +293,11 @@ static int __pwm_nexell_config(struct pwm_chip *chip, struct pwm_device *pwm,
 	/* -1UL will give 100% duty. */
 	--tcmp;
 
+	if (tcmp == -1)
+		tcmp = 0;
+
 	dev_dbg(nx_pwm->chip.dev,
-			"tin_ns=%u, tcmp=%u/%u\n", tin_ns, tcmp, tcnt);
+		"tin_ns=%u, tcnt=%u, tcmp=%u\n", tin_ns, tcnt, tcmp);
 
 	/* Update PWM registers. */
 	writel(tcnt, nx_pwm->base + REG_TCNTB(ch));
