@@ -617,7 +617,8 @@ void nx_soc_gpio_set_out_value(unsigned int io, int high)
 	unsigned int grp = PAD_GET_GROUP(io);
 	unsigned int bit = PAD_GET_BITNO(io);
 
-	pr_debug("%s (%d.%02d)\n", __func__, grp, bit);
+	pr_debug("%s (%d.%02d) %s\n",
+		 __func__, grp, bit, high ? "high" : "low");
 
 	switch (io & ~(32 - 1)) {
 	case PAD_GPIO_A:
