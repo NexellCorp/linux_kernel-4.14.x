@@ -230,9 +230,11 @@ static void panel_lcd_work(struct work_struct *work)
 				ctx->gpios_active[i] == GPIO_ACTIVE_HIGH
 				? "high" : "low ", ctx->gpios_delay[i]);
 
-			gpiod_set_value_cansleep(desc[i],
-				ctx->gpios_active[i] == GPIO_ACTIVE_HIGH ?
-								1 : 0);
+			/*
+			 * If the flag is GPIO_ACTIVE_LOW,
+			 * it automatically applies the inverse value.
+			 */
+			gpiod_set_value_cansleep(desc[i], 1);
 			if (ctx->gpios_delay[i])
 				mdelay(ctx->gpios_delay[i]);
 		}
@@ -331,9 +333,11 @@ static void panel_lcd_ops_disable(struct device *dev)
 	if (ctx->enable_gpios) {
 		desc = ctx->enable_gpios->desc;
 		for (i = 0; i < ctx->enable_gpios->ndescs; i++)
-			gpiod_set_value_cansleep(desc[i],
-				ctx->gpios_active[i] ==
-				GPIO_ACTIVE_HIGH ? 0 : 1);
+			/*
+			 * If the flag is GPIO_ACTIVE_LOW,
+			 * it automatically applies the inverse value.
+			 */
+			gpiod_set_value_cansleep(desc[i], 0);
 	}
 	ctx->enabled = false;
 }
@@ -571,9 +575,12 @@ static int panel_lcd_parse_gpio(struct device *dev, struct lcd_context *ctx)
 
 		ctx->gpios_active[i] = flags;
 #ifndef CONFIG_DRM_PRE_INIT_DRM
-		/* disable at boottime */
-		gpiod_direction_output(desc[i],
-				       flags == GPIO_ACTIVE_HIGH ? 0 : 1);
+		/*
+		 * disable at boottime:
+		 * If the flag is GPIO_ACTIVE_LOW,
+		 * it automatically applies the inverse value.
+		 */
+		gpiod_direction_output(desc[i], 0);
 
 		DRM_INFO("LCD enable-gpio.%d act %s\n",
 			 gpio, flags == GPIO_ACTIVE_HIGH ?
