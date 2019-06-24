@@ -511,8 +511,10 @@ static int exynos4412_tmu_initialize(struct platform_device *pdev)
 	if (i == of_thermal_get_ntrips(data->tzd)) {
 		pr_err("%s: No CRITICAL trip point defined at of-thermal.c!\n",
 		       __func__);
+#ifndef CONFIG_ARCH_NEXELL
 		ret = -EINVAL;
 		goto out;
+#endif
 	}
 
 	threshold_code = temp_to_code(data, crit_temp / MCELSIUS);
