@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "38466fea_d1a765cd",
+        "filename": "arch/arm/boot/dts/nxp3220-evb-common.dtsi",
+        "patchSetId": 3
+      },
+      "lineNbr": 292,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-06-24T10:35:54Z",
+      "side": 1,
+      "message": "is this 3.3v ?",
+      "range": {
+        "startLine": 292,
+        "startChar": 1,
+        "endLine": 292,
+        "endChar": 14
+      },
+      "revId": "d7f9e7afd03b527b6e9394f0aa6b9e0fa5bc03d0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    }
+  ]
+}
