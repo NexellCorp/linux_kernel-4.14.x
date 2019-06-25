@@ -600,7 +600,16 @@ static struct platform_driver nx_vip_driver = {
 	},
 };
 
+#ifdef CONFIG_DEFERRED_UP_VIP
+static int __init nx_vip_init(void)
+{
+        return platform_driver_register(&nx_vip_driver);
+}
+
+subsys_initcall(nx_vip_init);
+#else
 module_platform_driver(nx_vip_driver);
+#endif
 
 MODULE_AUTHOR("JongKeun Choi<jkchoi@nexell.co.kr>");
 MODULE_DESCRIPTION("Nexell NXP3220 SoC VIP device driver");

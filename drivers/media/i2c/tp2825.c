@@ -1530,7 +1530,7 @@ static struct i2c_driver tp2825_i2c_driver = {
 	.id_table = tp2825_id,
 };
 
-#ifdef CONFIG_V4L2_INIT_LEVEL_UP
+#ifdef CONFIG_DEFERRED_UP_VIP 
 static int __init tp2825_mod_init(void)
 {
 	return i2c_add_driver(&tp2825_i2c_driver);
@@ -1541,7 +1541,7 @@ static void __exit tp2825_mod_exit(void)
 	i2c_del_driver(&tp2825_i2c_driver);
 }
 
-#ifdef CONFIG_V4L2_INIT_LEVEL_UP
+#ifdef CONFIG_DEFERRED_UP_VIP 
 subsys_initcall(tp2825_mod_init);
 #else
 module_init(tp2825_mod_init);
