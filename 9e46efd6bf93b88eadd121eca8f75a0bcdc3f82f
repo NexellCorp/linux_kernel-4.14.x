@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9d555e5e_dcf450ef",
+        "filename": "drivers/clk/nexell/clk-nxp3220-cmu.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 225,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-06-25T04:40:14Z",
+      "side": 1,
+      "message": "is this need ?",
+      "range": {
+        "startLine": 225,
+        "startChar": 58,
+        "endLine": 225,
+        "endChar": 75
+      },
+      "revId": "9e46efd6bf93b88eadd121eca8f75a0bcdc3f82f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    }
+  ]
+}
