@@ -216,7 +216,16 @@ static struct platform_driver nx_v4l2_driver = {
 	},
 };
 
+#ifdef CONFIG_DEFERRED_UP_VIP
+static int __init nx_v4l2_init(void)
+{
+        return platform_driver_register(&nx_v4l2_driver);
+}
+
+subsys_initcall(nx_v4l2_init);
+#else
 module_platform_driver(nx_v4l2_driver);
+#endif
 
 MODULE_AUTHOR("JongKeun Choi<jkchoi@nexell.co.kr>");
 MODULE_DESCRIPTION("Nexell SoC V4L2/MEDIA top device driver");

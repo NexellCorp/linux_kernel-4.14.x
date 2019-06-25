@@ -1594,7 +1594,16 @@ static struct platform_driver nx_deinterlacer_driver = {
 	},
 };
 
+#ifdef CONFIG_DEFERRED_UP_DEINTERLACER
+static int __init nx_deinterlacer_init(void)
+{
+        return platform_driver_register(&nx_deinterlacer_driver);
+}
+
+subsys_initcall(nx_deinterlacer_init);
+#else
 module_platform_driver(nx_deinterlacer_driver);
+#endif
 
 MODULE_AUTHOR("JongKeun Choi<jkchoi@nexell.co.kr>");
 MODULE_DESCRIPTION("Nexell deinterlace devicer driver");

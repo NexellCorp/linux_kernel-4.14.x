@@ -83,6 +83,8 @@ config DEFERRED_BLOCK_LOOP
 config DEFERRED_BLUETOOTH
 	bool "deferred initcall bluetooth"
 	default y
+	help
+	  This change subsys initcall to deferred initcall .
 
 config DEFERRED_ADC
 	bool "deferred initcall adc"
@@ -99,17 +101,8 @@ config DEFERRED_BUFIO
 	default y
 	depends on DEFERRED_LEVEL=1
 
-config DEFERRED_DECIMATOR
-	bool "deferred initcall decimator"
-	default y
-	depends on DEFERRED_LEVEL=1
-
 config DEFERRED_NXE2000
 	bool "deferred initcall NXE2000"
-	default y
-
-config DEFERRED_NEXELL_MMC
-	bool "deferred initcall NEXELL MMC"
 	default y
 
 config DEFERRED_DWC_ETHERNET
@@ -165,11 +158,6 @@ config DEFERRED_WIRELESS
 	bool "deferred initcall wireless"
 	default y
 
-config DEFERRED_UP_NEXELL_MMC
-	bool "deferred initcall level up nexell mmc"
-	default y
-	depends on DEFERRED_LEVEL=2
-
 config DEFERRED_UP_BLOCK
 	bool "deferred initcall level up BLOCK"
 	default y
@@ -193,7 +181,6 @@ config DEFERRED_UP_DRM
 config DEFERRED_UP_MMC
 	bool "deferred initcall level up MMC"
 	default y
-	depends on DEFERRED_LEVEL=2
 
 config DEFERRED_UP_PWM
 	bool "initcall initcall level up PWM"
@@ -217,6 +204,16 @@ config DEFERRED_UP_FS
 
 config DEFERRED_UP_ADC
 	bool "initcall initcall level up ADC"
+	default y
+	depends on DEFERRED_LEVEL=2
+
+config DEFERRED_UP_VIP
+	bool "initcall initcall level up VIP"
+	default y
+	depends on DEFERRED_LEVEL=2
+
+config DEFERRED_UP_DEINTERLACER
+	bool "initcall initcall level up Deinterlacer"
 	default y
 	depends on DEFERRED_LEVEL=2
 
