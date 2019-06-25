@@ -2237,7 +2237,7 @@ static void __exit rfcomm_exit(void)
 	rfcomm_cleanup_sockets();
 }
 
-#if defined(CONFIG_DEFERRED_BLUETOOTH) && (CONFIG_DEFERRED_LEVEL == 1)
+#if defined(CONFIG_DEFERRED_BLUETOOTH)
 deferred_module_init(rfcomm_init);
 #else
 module_init(rfcomm_init);

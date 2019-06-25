@@ -417,7 +417,7 @@ static struct platform_driver bcm434545_bluetooth_platform_driver = {
 		   },
 };
 
-#if defined(CONFIG_DEFERRED_BLUETOOTH) && (CONFIG_DEFERRED_LEVEL == 1)
+#if defined(CONFIG_DEFERRED_BLUETOOTH)
 static int __init dw_bcm434545_bt_pltfm_init(void)
 {
 	return platform_driver_register(&bcm434545_bluetooth_platform_driver);
