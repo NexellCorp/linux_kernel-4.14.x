@@ -308,6 +308,7 @@
 &dwmmc_0 {
 	status = "okay";
 	cap-mmc-highspeed;
+	mmc-ddr-3_3v;
 	broken-cd;
 	non-removable;
 	nexell,drive_shift = <0x04>;
