@@ -228,6 +228,7 @@ static struct nx_drm_fb *nx_drm_fb_alloc(
 static uint32_t nx_drm_fb_mode_format(uint32_t bpp, uint32_t depth,
 				      bool bgr, bool argb)
 {
+	struct drm_format_name_buf format_name;
 	uint32_t fmt;
 
 	switch (bpp) {
@@ -254,6 +255,8 @@ static uint32_t nx_drm_fb_mode_format(uint32_t bpp, uint32_t depth,
 		fmt = DRM_FORMAT_XRGB8888;
 		break;
 	}
+
+	DRM_INFO("FB format:%s\n", drm_get_format_name(fmt, &format_name));
 
 	return fmt;
 }
