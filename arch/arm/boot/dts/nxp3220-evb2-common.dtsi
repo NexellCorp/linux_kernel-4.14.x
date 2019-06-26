@@ -275,13 +275,16 @@
 };
 
 &drm {
+	status = "okay";
+
 	/* get clock from cmu_ddr (800Mhz) */
 	assigned-clocks = <&cmu CLK_SRC_DPC0_X2>,
        			<&cmu_mm CLK_MM_DPC_AXI>,
 			<&pll_0 0>;
 	assigned-clock-parents = <&cmu_ddr CLK_PLL_DDR1_DIV>, <0>, <0>;
 	assigned-clock-rates = <0>, <333333334>, <0>;
-      	status = "okay";
+	color-key-disable;
+	alphablend-disable;
 };
 
 &drm_rgb {
