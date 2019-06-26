@@ -285,7 +285,7 @@ void nx_mlc_set_rgb_format(struct nx_mlc_reg *reg, int layer,
 
 	val = readl(&reg->mlcrgblayer[layer].mlccontrol);
 	val &= ~(mask | (1 << 4));
-	val |= (u32)format;
+	val |= (u32)format & mask;
 	writel(val, &reg->mlcrgblayer[layer].mlccontrol);
 }
 
