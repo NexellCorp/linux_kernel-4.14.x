@@ -235,6 +235,7 @@ static int nx_display_crtc_begin(struct drm_crtc *crtc)
 	struct nx_display *dp = to_nx_crtc(crtc)->context;
 	struct nx_overlay *ovl = to_nx_plane(crtc->primary)->context;
 	int crtc_w, crtc_h;
+	bool colorkey_enb = false;
 
 	crtc_w = crtc->state->mode.hdisplay;
 	crtc_h = crtc->state->mode.vdisplay;
@@ -244,8 +245,12 @@ static int nx_display_crtc_begin(struct drm_crtc *crtc)
 	nx_display_set_backcolor(dp);
 	nx_display_set_format(dp, crtc_w, crtc_h);
 
+	if (dp->color_key_on | ovl->color.colorkey_on)
+		colorkey_enb = true;
+
 	/* color key */
-	nx_overlay_set_color(ovl, NX_COLOR_TRANS, dp->color_key, true, false);
+	nx_overlay_set_color(ovl, NX_COLOR_TRANS,
+			dp->color_key, colorkey_enb, false);
 
 	return 0;
 }
@@ -388,9 +393,18 @@ static int nx_display_crtc_parse_planes(struct device *dev,
 	}
 
 	dp->num_overlays = size;
+	dp->color_key_on = true;
+	dp->alpla_blend_on = true;
+
 	of_property_read_u32(np, "back-color", &dp->back_color);
 	of_property_read_u32(np, "color-key", &dp->color_key);
 	of_property_read_u32(np, "video-priority", &dp->video_priority);
+
+	if (of_property_read_bool(np, "color-key-disable"))
+		dp->color_key_on = false;
+
+	if (of_property_read_bool(np, "alphablend-disable"))
+		dp->alpla_blend_on = false;
 
 	return 0;
 }
@@ -651,14 +665,15 @@ static void nx_display_plane_disable(struct drm_plane *plane)
 
 static void nx_display_plane_set_color(struct drm_plane *plane,
 				       enum nx_overlay_color type,
-				       unsigned int color)
+				       unsigned int color,
+				       bool enable)
 {
 	struct nx_overlay *ovl = to_nx_plane(plane)->context;
 
 	if (type == NX_COLOR_COLORKEY)
 		type = NX_COLOR_TRANS;
 
-	nx_overlay_set_color(ovl, type, color, true, true);
+	nx_overlay_set_color(ovl, type, color, enable, true);
 }
 
 static void nx_display_plane_set_priority(struct drm_plane *plane, int priority)
@@ -679,17 +694,43 @@ static int nx_display_plane_set_property(struct drm_plane *plane,
 
 	if (property == color->rgb.colorkey) {
 		ovl->color.colorkey = val;
-		nx_display_plane_set_color(plane, NX_COLOR_COLORKEY, val);
+		nx_display_plane_set_color(plane, NX_COLOR_COLORKEY,
+				ovl->color.colorkey, ovl->color.colorkey_on);
 	}
 
 	if (property == color->rgb.transcolor) {
 		ovl->color.transcolor = val;
-		nx_display_plane_set_color(plane, NX_COLOR_TRANS, val);
+		nx_display_plane_set_color(plane, NX_COLOR_TRANS,
+				ovl->color.transcolor,
+				ovl->color.transcolor_on);
 	}
 
 	if (property == color->rgb.alphablend) {
 		ovl->color.alphablend = val;
-		nx_display_plane_set_color(plane, NX_COLOR_ALPHA, val);
+		nx_display_plane_set_color(plane, NX_COLOR_ALPHA,
+				ovl->color.alphablend,
+				ovl->color.alphablend_on);
+	}
+
+	if (property == color->rgb.colorkey_on) {
+		ovl->color.colorkey_on = val ? true : false;
+		nx_display_plane_set_color(plane, NX_COLOR_COLORKEY,
+				ovl->color.colorkey,
+				ovl->color.colorkey_on);
+	}
+
+	if (property == color->rgb.transcolor_on) {
+		ovl->color.transcolor_on = val ? true : false;
+		nx_display_plane_set_color(plane, NX_COLOR_TRANS,
+				ovl->color.transcolor,
+				ovl->color.transcolor_on);
+	}
+
+	if (property == color->rgb.alphablend_on) {
+		ovl->color.alphablend_on = val ? true : false;
+		nx_display_plane_set_color(plane, NX_COLOR_ALPHA,
+				ovl->color.alphablend,
+				ovl->color.alphablend_on);
 	}
 
 	if (property == prop->priority) {
@@ -719,6 +760,15 @@ static int nx_display_plane_get_property(struct drm_plane *plane,
 
 	if (property == color->rgb.alphablend)
 		*val = ovl->color.alphablend;
+
+	if (property == color->rgb.colorkey_on)
+		*val = ovl->color.colorkey_on ? 1 : 0;
+
+	if (property == color->rgb.transcolor_on)
+		*val = ovl->color.transcolor_on ? 1 : 0;
+
+	if (property == color->rgb.alphablend_on)
+		*val = ovl->color.alphablend_on ? 1 : 0;
 
 	if (property == prop->priority)
 		*val = ovl->dp->video_priority;
@@ -750,12 +800,25 @@ static void nx_display_plane_create_props(struct drm_device *drm,
 		drm_property_create_range(drm, 0, "transcolor", 0, 0xffffffff);
 		drm_object_attach_property(&plane->base,
 			color->rgb.transcolor, ovl->color.transcolor);
-
 		color->rgb.alphablend =
 		drm_property_create_range(drm, 0, "alphablend",
 			0, MAX_ALPHA_VALUE);
 		drm_object_attach_property(&plane->base,
 			color->rgb.alphablend, ovl->color.alphablend);
+#ifdef CONFIG_DRM_NEXELL_PROPERTY_COLOR_ENABLE
+		color->rgb.colorkey_on =
+		drm_property_create_range(drm, 0, "colorkey-enable", 0, 1);
+		drm_object_attach_property(&plane->base,
+			color->rgb.colorkey_on, ovl->color.colorkey_on);
+		color->rgb.transcolor_on =
+		drm_property_create_range(drm, 0, "transcolor-enable", 0, 1);
+		drm_object_attach_property(&plane->base,
+			color->rgb.transcolor_on, ovl->color.transcolor_on);
+		color->rgb.alphablend_on =
+		drm_property_create_range(drm, 0, "alphablend-enable", 0, 1);
+		drm_object_attach_property(&plane->base,
+			color->rgb.alphablend_on, ovl->color.alphablend_on);
+#endif
 	}
 
 	prop->priority =
@@ -801,6 +864,9 @@ static struct nx_overlay *nx_display_plane_create(
 	/* default alpha opacity */
 	ovl->color.alpha = MAX_ALPHA_VALUE;
 	ovl->color.alphablend = MAX_ALPHA_VALUE;
+	ovl->color.colorkey_on = dp->color_key_on;
+	ovl->color.alphablend_on = dp->alpla_blend_on;
+	ovl->color.transcolor_on = true;
 
 	snprintf(ovl->name, sizeof(ovl->name),
 		"%d-%s.%d", dp->module, yuv ? "vid" : "rgb", id);
