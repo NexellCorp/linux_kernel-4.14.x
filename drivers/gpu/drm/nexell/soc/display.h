@@ -66,6 +66,9 @@ struct nx_overlay_prop {
 			struct drm_property *transcolor;
 			struct drm_property *alphablend;
 			struct drm_property *colorkey;
+			struct drm_property *transcolor_on;
+			struct drm_property *alphablend_on;
+			struct drm_property *colorkey_on;
 		} rgb;
 	} color;
 	struct drm_property *priority;
@@ -97,6 +100,9 @@ struct nx_overlay {
 			u32 transcolor;
 			u32 invertcolor;
 			u32 colorkey;
+			bool alphablend_on;
+			bool transcolor_on;
+			bool colorkey_on;
 		};
 		/* VIDEO */
 		struct {
@@ -131,6 +137,8 @@ struct nx_display {
 				/* 2: RGB0 > RGB1 > vidoe .. */
 	unsigned int back_color;
 	unsigned int color_key;
+	bool color_key_on;
+	bool alpla_blend_on;
 	bool boot_on;
 	struct videomode vm;
 	struct nx_display_par *dpp; /* get from display ctx */
