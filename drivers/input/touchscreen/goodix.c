@@ -919,7 +919,23 @@ static struct i2c_driver goodix_ts_driver = {
 		.pm = &goodix_pm_ops,
 	},
 };
+
+#ifdef CONFIG_DEFERRED_UP_TOUCH
+static int __init goodix_ts_init(void)
+{
+	int ret = -ENODEV;
+
+	ret = i2c_add_driver(&goodix_ts_driver);
+	if (ret != 0)
+		pr_err("Failed to register I2C driver: %d\n", ret);
+
+	return ret;
+}
+
+fs_initcall_sync(goodix_ts_init);
+#else
 module_i2c_driver(goodix_ts_driver);
+#endif
 
 MODULE_AUTHOR("Benjamin Tissoires <benjamin.tissoires@gmail.com>");
 MODULE_AUTHOR("Bastien Nocera <hadess@hadess.net>");
