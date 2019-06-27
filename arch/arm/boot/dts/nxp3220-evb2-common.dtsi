@@ -636,7 +636,7 @@
 		#size-cells = <1>;
 		compatible = "m25p80", "jedec,spi-nor";
 		reg = <0>;
-		spi-max-frequency = <1000000>;
+		spi-max-frequency = <40000000>;
 		disable-4byte-address;
 		m25p,fast-read;
 		spi-cpol;
