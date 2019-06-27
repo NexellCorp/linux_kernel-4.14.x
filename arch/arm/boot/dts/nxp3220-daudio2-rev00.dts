@@ -17,6 +17,7 @@
 	};
 };
 
+
 &dwmmc_0 {
 	status = "okay";
 };
@@ -33,6 +34,18 @@
 
 &gmac0 {
 	status = "disabled";
+};
+
+&gpio_keys {
+	pinctrl-names = "default";
+	pinctrl-0 = <&button_pwr>;
+
+	button@pwr {
+		label = "power";
+		gpios = <&alive_0 0 GPIO_ACTIVE_LOW>;
+		linux,code = <KEY_POWER>;
+		gpio-key,wakeup;
+	};
 };
 
 &m_can0 {
