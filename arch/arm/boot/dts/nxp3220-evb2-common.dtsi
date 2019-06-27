@@ -607,6 +607,20 @@
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
 
+	spi0_wp: spi0-wp {
+		nexell,pins = "gpioc-1";
+		nexell,pin-function = <NX_PIN_FUNC0>;
+		nexell,pin-pull = <NX_PIN_PULL_UP>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	spi0_hold: spi0-hold {
+		nexell,pins = "gpioc-2";
+		nexell,pin-function = <NX_PIN_FUNC0>;
+		nexell,pin-pull = <NX_PIN_PULL_UP>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
 	tp2825_rst: tp2825-rst {
 		nexell,pins = "alive-2";
 		nexell,pin-function = <NX_PIN_FUNC0>;
@@ -629,7 +643,7 @@
 
 &spi_0 {
 	status = "okay";
-	pinctrl-0 = <&spi0_bus>;
+	pinctrl-0 = <&spi0_bus>, <&spi0_wp>, <&spi0_hold>;
 	cs-gpios = <&gpio_c 4 0>;
 
 	flash: m25p80 {
