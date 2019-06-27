@@ -93,6 +93,12 @@ struct nx_overlay {
 	int stride;
 	unsigned int h_filter;
 	unsigned int v_filter;
+
+	/* color control */
+	bool alphablend_on;
+	bool transcolor_on;
+	bool colorkey_on;
+
 	union {
 		/* RGB */
 		struct {
@@ -100,9 +106,6 @@ struct nx_overlay {
 			u32 transcolor;
 			u32 invertcolor;
 			u32 colorkey;
-			bool alphablend_on;
-			bool transcolor_on;
-			bool colorkey_on;
 		};
 		/* VIDEO */
 		struct {
