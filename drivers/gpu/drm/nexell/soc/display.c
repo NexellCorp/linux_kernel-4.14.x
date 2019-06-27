@@ -439,7 +439,7 @@ static int nx_overlay_rgb_set_format(struct nx_overlay *ovl,
 	if (ovl->color.alphablend < MAX_ALPHA_VALUE)
 		alpha = true;
 
-	if (!ovl->color.alphablend_on)
+	if (!ovl->alphablend_on)
 		alpha = false;
 
 	nx_mlc_set_layer_lock_size(reg, id, lock_size);
@@ -726,7 +726,7 @@ void nx_overlay_set_color(struct nx_overlay *ovl,
 
 		if (ovl->pixelbyte == 2) {
 			color = rgb888_to_rgb565((u32)color);
-			color = rgb565_to_rgb888((u16) color);
+			color = rgb565_to_rgb888((u16)color);
 		}
 
 		ovl->color.invertcolor = (on ? color : 0);
