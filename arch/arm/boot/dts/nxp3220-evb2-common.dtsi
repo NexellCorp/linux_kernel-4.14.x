@@ -88,25 +88,10 @@
 		status = "okay";
 	};
 
-	gpio_keys {
+	gpio_keys: gpio-keys {
 		compatible = "gpio-keys";
 		#address-cells = <1>;
 		#size-cells = <0>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&button_key>, <&button_pwr>;
-
-		button@key {
-			label = "key";
-			gpios = <&gpio_c 7 GPIO_ACTIVE_LOW>;
-			linux,code = <KEY_BACK>;
-		};
-
-		button@pwr {
-			label = "power";
-			gpios = <&alive_0 0 GPIO_ACTIVE_LOW>;
-			linux,code = <KEY_POWER>;
-			gpio-key,wakeup;
-		};
 	};
 
 	i2c_audio: i2c@audio {
