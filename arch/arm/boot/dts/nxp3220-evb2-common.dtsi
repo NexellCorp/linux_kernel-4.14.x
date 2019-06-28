@@ -500,9 +500,8 @@
 	#size-cells = <0>;
 	status = "okay";
 
-	rate = <400000>;
-        retry-delay = <500>;
-        retry-cnt = <10>;
+	samsung,i2c-max-bus-freq = <100000>;
+	samsung,i2c-sda-delay = <100>;
 
 	alc5623_0: alc5623@1a {
 		#sound-dai-cells = <0>;
