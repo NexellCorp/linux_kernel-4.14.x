@@ -212,10 +212,10 @@ static void nx_display_sync_mode(struct nx_display *dp)
 	int efp = SYNC_VAL(dpp->evfront_porch, vm->vfront_porch);
 	int ebp = SYNC_VAL(dpp->evback_porch, vm->vback_porch);
 	int esw = SYNC_VAL(dpp->evsync_len, vm->vsync_len);
-	int eso = SYNC_VAL(dpp->evstart_offs, 0);
-	int eeo = SYNC_VAL(dpp->evend_offs, 0);
-	int vso = SYNC_VAL(dpp->vstart_offs, 0);
-	int veo = SYNC_VAL(dpp->vend_offs, 0);
+	int eso = SYNC_VAL(dpp->evstart_offs, 1);
+	int eeo = SYNC_VAL(dpp->evend_offs, 1);
+	int vso = SYNC_VAL(dpp->vstart_offs, 1);
+	int veo = SYNC_VAL(dpp->vend_offs, 1);
 
 	nx_dpc_set_sync(reg, INTERLACE(flags),
 			vm->hactive, vm->vactive/div,
@@ -232,9 +232,11 @@ static void nx_display_sync_mode(struct nx_display *dp)
 		"%s: crtc.%d: y:%4d, vfp:%3d, vbp:%3d, vsw:%3d, vi:%d\n",
 		 __func__, dp->module, vm->vactive/div, vm->vfront_porch,
 		 vm->vback_porch, vm->vsync_len, vs_pol);
-	dev_dbg(dp->dev, "%s: crtc.%d: offset vs:%d, ve:%d, es:%d, ee:%d\n",
+	dev_dbg(dp->dev,
+		"%s: crtc.%d: offset vs:%d, ve:%d, es:%d, ee:%d\n",
 		__func__, dp->module, vso, veo, eso, eeo);
-	dev_dbg(dp->dev, "%s: crtc.%d: even   ef:%d, eb:%d, es:%d]\n",
+	dev_dbg(dp->dev,
+		"%s: crtc.%d: even   ef:%d, eb:%d, es:%d]\n",
 		__func__, dp->module, efp, ebp, esw);
 }
 
