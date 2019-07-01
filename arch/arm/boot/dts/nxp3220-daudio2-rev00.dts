@@ -10,11 +10,6 @@
 
 / {
 	compatible = "nexell,nxp3220-daudio2", "nexell,nxp3220";
-
-	aliases {
-		i2c2 = &i2c_1;
-		i2c1 = &i2c_2;
-	};
 };
 
 
