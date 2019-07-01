@@ -269,7 +269,6 @@
 	assigned-clock-parents = <&cmu_ddr CLK_PLL_DDR1_DIV>, <0>, <0>;
 	assigned-clock-rates = <0>, <333333334>, <0>;
 	color-key-disable;
-	alphablend-disable;
 };
 
 &drm_rgb {
