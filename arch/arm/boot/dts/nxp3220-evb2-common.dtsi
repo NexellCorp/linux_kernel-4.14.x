@@ -94,6 +94,16 @@
 		#size-cells = <0>;
 	};
 
+	i2c_audio_ipod: i2c@audio-ipod {
+		compatible = "i2c-gpio";
+		pinctrl-names = "default";
+		pinctrl-0 = <&i2c_audio_ipod_sda>, <&i2c_audio_ipod_scl>;
+		gpios = <&gpio_b 29 0 /* sda */
+			 &gpio_b 30 0 /* scl */>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+	};
+
 	i2c_audio: i2c@audio {
 		compatible = "i2c-gpio";
 		pinctrl-names = "default";
@@ -357,6 +367,24 @@
 	};
 };
 
+&i2c_audio_ipod {
+	alc5623_0: alc5623@1a {
+		#sound-dai-cells = <0>;
+		compatible = "realtek,alc5623";
+		reg = <0x1a>;
+		amp-power-gpio = <&alive_0 5 GPIO_ACTIVE_HIGH>;
+		amp-mute-gpio = <&gpio_c 6 GPIO_ACTIVE_HIGH>;
+		dac-volume = <0xb>; /* -4.50 dB, 0x08:0dB, step: 1.5dB */
+	};
+
+        ipod: ipod@10 {
+                #sound-dai-cells = <0>;
+                compatible = "fms,ipod";
+                reg = <0x10>;
+                rst-gpios = <&alive_0 13 0>;
+        };
+};
+
 &i2c_audio {
 	alc5623_1: alc5623@1a {
 		#sound-dai-cells = <0>;
@@ -494,31 +522,6 @@
 	}; /* nxe1500@33 */
 }; /* &i2c_0 */
 
-&i2c_1 {
-	#address-cells = <1>;
-	#size-cells = <0>;
-	status = "okay";
-
-	samsung,i2c-max-bus-freq = <100000>;
-	samsung,i2c-sda-delay = <100>;
-
-	alc5623_0: alc5623@1a {
-		#sound-dai-cells = <0>;
-		compatible = "realtek,alc5623";
-		reg = <0x1a>;
-		amp-power-gpio = <&alive_0 5 GPIO_ACTIVE_HIGH>;
-		amp-mute-gpio = <&gpio_c 6 GPIO_ACTIVE_HIGH>;
-		dac-volume = <0xb>; /* -4.50 dB, 0x08:0dB, step: 1.5dB */
-	};
-
-        ipod: ipod@10 {
-                #sound-dai-cells = <0>;
-                compatible = "fms,ipod";
-                reg = <0x10>;
-                rst-gpios = <&alive_0 13 0>;
-        };
-};
-
 &i2s0 {
 	status = "okay";
 	frame-bit = <32>;
@@ -564,6 +567,20 @@
 
 	button_pwr: button-pwr {
 		nexell,pins = "alive-0";
+		nexell,pin-function = <NX_PIN_FUNC0>;
+		nexell,pin-pull = <NX_PIN_PULL_UP>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	i2c_audio_ipod_sda: i2c-audio-ipod-sda {
+		nexell,pins = "gpiob-29";
+		nexell,pin-function = <NX_PIN_FUNC0>;
+		nexell,pin-pull = <NX_PIN_PULL_UP>;
+		nexell,pin-strength = <NX_PIN_STR0>;
+	};
+
+	i2c_audio_ipod_scl: i2c-audio-ipod-scl {
+		nexell,pins = "gpiob-30";
 		nexell,pin-function = <NX_PIN_FUNC0>;
 		nexell,pin-pull = <NX_PIN_PULL_UP>;
 		nexell,pin-strength = <NX_PIN_STR0>;
