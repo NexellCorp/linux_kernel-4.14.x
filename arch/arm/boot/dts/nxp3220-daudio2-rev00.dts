@@ -10,6 +10,9 @@
 
 / {
 	compatible = "nexell,nxp3220-daudio2", "nexell,nxp3220";
+        aliases {
+                i2c1 = &i2c_audio_ipod;
+        };
 };
 
 
