@@ -826,7 +826,7 @@ static void __exit bt_exit(void)
 }
 
 #ifdef CONFIG_DEFERRED_BLUETOOTH
-deferred_0_initcall(bt_init);
+deferred_early_initcall(bt_init);
 #else
 subsys_initcall(bt_init);
 #endif

@@ -740,7 +740,7 @@ static int __init nxe2000_i2c_init(void)
 	return ret;
 }
 #ifdef CONFIG_DEFERRED_NXE2000
-deferred_0_initcall(nxe2000_i2c_init)
+deferred_early_initcall(nxe2000_i2c_init)
 #else
 subsys_initcall_sync(nxe2000_i2c_init);
 #endif
