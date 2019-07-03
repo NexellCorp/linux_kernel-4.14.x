@@ -766,7 +766,6 @@
 		VMLINUX_SYMBOL(__initcall_end) = .;			\
 		DEFERRED_INIT_CALLS_LEVEL(0)				\
 		DEFERRED_INIT_CALLS_LEVEL(1)				\
-		DEFERRED_INIT_CALLS_LEVEL(2)				\
 		VMLINUX_SYMBOL(__deferred_initcall_end) = .;
 #else
 

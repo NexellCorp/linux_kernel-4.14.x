@@ -84,7 +84,7 @@ extern void cleanup_module(void);
  */
 #define module_init(x)	__initcall(x);
 #ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
-#define deferred_module_init(x)	deferred_2_initcall(x);
+#define deferred_module_init(x)	deferred_device_initcall(x);
 #endif
 
 /**
