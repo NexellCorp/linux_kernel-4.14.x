@@ -213,9 +213,8 @@ extern bool initcall_debug;
 #define late_initcall(fn)		__define_initcall(fn, 8)
 #define late_initcall_sync(fn)		__define_initcall(fn, 8s)
 
-#define deferred_0_initcall(fn)		__define_deferred_initcall(fn, 0);
-#define deferred_1_initcall(fn)		__define_deferred_initcall(fn, 1);
-#define deferred_2_initcall(fn)		__define_deferred_initcall(fn, 2);
+#define deferred_early_initcall(fn)	__define_deferred_initcall(fn, 0);
+#define deferred_device_initcall(fn)	__define_deferred_initcall(fn, 1);
 #else
 #define device_initcall(fn)		__define_initcall(fn, 6)
 #define device_initcall_sync(fn)	__define_initcall(fn, 6s)
