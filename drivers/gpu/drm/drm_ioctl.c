@@ -500,6 +500,7 @@ int drm_version(struct drm_device *dev, void *data,
  */
 int drm_ioctl_permit(u32 flags, struct drm_file *file_priv)
 {
+#ifdef CONFIG_DRM_CHECK_AUTHENTICATION
 	/* ROOT_ONLY is only for CAP_SYS_ADMIN */
 	if (unlikely((flags & DRM_ROOT_ONLY) && !capable(CAP_SYS_ADMIN)))
 		return -EACCES;
@@ -524,7 +525,7 @@ int drm_ioctl_permit(u32 flags, struct drm_file *file_priv)
 	if (unlikely(!(flags & DRM_RENDER_ALLOW) &&
 		     drm_is_render_client(file_priv)))
 		return -EACCES;
-
+#endif
 	return 0;
 }
 EXPORT_SYMBOL(drm_ioctl_permit);
