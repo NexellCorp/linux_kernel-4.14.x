@@ -1065,19 +1065,6 @@
 			operating-points-v2 = <&sys_bus_opp_table>;
 		};
 
-		vpu: vpu@25180000 {
-			compatible = "nexell, nx-vpu";
-			reg = <0x25180000 0x10000>;
-			interrupts = <GIC_SPI 31 IRQ_TYPE_NONE>;
-			clocks = <&cmu_mm CLK_MM_CODA960_AXI>,
-				<&cmu_mm CLK_MM_CODA960_APB>,
-				<&cmu_mm CLK_MM_CODA960_CORE>;
-			clock-names = "vpu-clk-axi", "vpu-clk-apb", "vpu-clk-core";
-			assigned-clocks = <&cmu_mm CLK_MM_CODA960_CORE>;
-			assigned-clock-rates = <250000000>;
-			status = "disabled";
-		};
-
 		rtc: rtc@2008c000 {
 			compatible = "nexell,nx-rtc";
 			reg = <0x2008C000 0x100>;
