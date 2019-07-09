@@ -136,6 +136,205 @@
 		status = "disabled";
 	};
 
+	nx_axim_qos: nx-axim-qos  {
+		compatible = "syscon", "simple-mfd";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		axim_dma_0: axim-dma0 {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x20320000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_dma_1: axim-dma1 {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x20330000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_sdma_0: axim-sdma0 {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x20340000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_sdma_1: axim-sdma1 {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x20350000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_cssys: axim-cssys {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x20360000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_sss: axim-sss {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x20390000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_mp2tsi_0: axim-mp2tsi0 {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x203a0000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_mp2tsi_1: axim-mp2tsi1 {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x203b0000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_pdm: axim-pdm {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x203c0000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_mdma: axim-mdma {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x203d0000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+/*
+		axim_cpu: axim-cpu {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x203e0000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_usb: axim-usb {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x203f0000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+*/
+		axim_coda: axim-coda {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x251a0000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_vip: axim-vip {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x251b0000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_dpc: axim-dpc {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x251c0000 0x4>;
+			use-axqos;
+			awqos-value = <0xf>;
+			arqos-value = <0xf>;
+		};
+
+		axim_deinterlace: axim-deinterlace {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x251d0000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_g2d: axim-g2d {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x251e0000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_rotator: axim-rotator {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x251f0000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_sdmmc_0: axim-sdmmc0 {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x26190000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_sdmmc_1: axim-sdmmc1 {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x261a0000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_sdmmc_2: axim-sdmmc2 {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x261b0000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_rgmii: axim-rgmii {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x261c0000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_rmii: axim-rmii {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x261d0000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+
+		axim_nand: axim-nand {
+			compatible = "nexell,nxp3220-axim-busqos", "syscon";
+			reg = <0x261e0000 0x4>;
+			use-axqos;
+			awqos-value = <0>;
+			arqos-value = <0>;
+		};
+	};
+
 	soc: soc {
 		compatible = "simple-bus";
 		#address-cells = <1>;
