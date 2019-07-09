@@ -143,6 +143,21 @@
 		interrupt-parent = <&gic>;
 		ranges;
 
+		axim_qos: axim_qos  {
+			compatible = "syscon", "simple-mfd";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges;
+
+			axim_dpc: axim-dpc {
+				compatible = "nexell,nxp3220-axim-qos", "syscon";
+				reg = <0x251c0000 0x4>;
+				awqos-value = <0xf>;
+				arqos-value = <0xf>;
+				axqos-enb;
+			};
+		};
+
 		amba {
 			#address-cells = <1>;
 			#size-cells = <1>;
