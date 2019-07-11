@@ -276,7 +276,7 @@
 	assigned-clocks = <&cmu CLK_SRC_DPC0_X2>,
        			<&cmu_mm CLK_MM_DPC_AXI>,
 			<&pll_0 0>;
-	assigned-clock-parents = <&cmu_ddr CLK_PLL_DDR1_DIV>, <0>, <0>;
+	assigned-clock-parents = <&cmu_ddr CLK_PLL_DDR0_DIV>, <0>, <0>;
 	assigned-clock-rates = <0>, <333333334>, <0>;
 	color-key-disable;
 };
