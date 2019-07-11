@@ -80,15 +80,18 @@ static const struct nexell_fixed_factor_clock src_fixed_factor_clks[] __initcons
 	FFACTOR(CLK_EXT_SRC, "ext_src", "oscclk", 1, 2, 0),
 };
 
+/*
+ * MUX name must be one of clk_fixed_factor, refer to FFACTOR types
+ */
 #ifndef CONFIG_CPU_FREQ
-PNAME(src_mux_p) = { "pll0", "pll1_div", "div_cpu_pll",
-	"div_pll_ddr0", "div_pll_ddr1", "ext_src", "oscclk"};
+PNAME(src_mux_p) = { "pll0", "pll1_div", "pll_cpu_div",
+	"pll_ddr0_div", "pll_ddr1_div", "ext_src", "oscclk"};
 #else
 PNAME(src_mux_p) = { "pll0", "pll1_div",
-	"div_pll_ddr0", "div_pll_ddr1", "ext_src", "oscclk"};
+	"pll_ddr0_div", "pll_ddr1_div", "ext_src", "oscclk"};
 
 #endif
-PNAME(snd_mux_p) = { "pll1_div", "div_pll_ddr1", "ext_src" };
+PNAME(snd_mux_p) = { "pll1_div", "pll_ddr1_div", "ext_src" };
 
 static u32 src_mux_table[] = {
 	MUX_PLL0_CLK_NUM,
