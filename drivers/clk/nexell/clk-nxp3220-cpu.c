@@ -21,7 +21,7 @@
 PNAME(cpu_mux_p)		= { "pll_cpu" };
 
 static const struct nexell_fixed_factor_clock cpu_fixed_factor_clks[] __initconst = {
-	FFACTOR(CLK_CPU_DIV_PLL, "div_cpu_pll", "pll_cpu", 1, 1,
+	FFACTOR(CLK_CPU_DIV_PLL, "pll_cpu_div", "pll_cpu", 1, 1,
 		CLK_SET_RATE_PARENT),
 };
 
@@ -74,7 +74,7 @@ static const struct nexell_gate_clock cpu_gate_clks[] __initconst = {
 	GATE_CPU(CLK_CPU_AXIM_APB, "cpu_axim_apb", "div_cpu_apb",
 	     CPU_CPU0_ARM + 0x10, 10, 0, 0),
 
-	GATE_CPU(CLK_CPU_PLL_DIV, "cpu_pll_div", "div_cpu_pll",
+	GATE_CPU(CLK_CPU_PLL_DIV, "cpu_pll_div", "pll_cpu_div",
 	     PLL_CPU_DIV0 + 0x10, 0, 0, 0),
 	GATE_CPU(CLK_CPU_HPM, "cpu_hpm", "div_cpu_hpm",
 	     HPM_CPU0 + 0x10, 0, 0, 0),
