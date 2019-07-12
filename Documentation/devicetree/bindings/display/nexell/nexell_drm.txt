@@ -21,10 +21,12 @@ Optional Properties:
 - alphablend-disable: disable alpha blend at boot time
 - video-scale-hfilter-max: video layer's horizontal line filter enable max limit
                            value, if source image width is greater than or equal
-			   this value, disable horizontal line filter
+			   this value, disable horizontal line filter.
+			   If set to 0, it is automatically set.
 - video-scale-vfilter-max: video layer's veritcal line filter enable max limit
                            value, if source image height is greater than or equal
-			   this value, disable vertical line filter
+			   this value, disable vertical line filter.
+			   If set to 0, it is automatically set.
 
 Example:
 
