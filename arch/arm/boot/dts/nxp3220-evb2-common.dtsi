@@ -279,6 +279,8 @@
 	assigned-clock-parents = <&cmu_ddr CLK_PLL_DDR0_DIV>, <0>, <0>;
 	assigned-clock-rates = <0>, <333333334>, <0>;
 	color-key-disable;
+	video-scale-hfilter-max = <1920>;
+	video-scale-vfilter-max = <720>;
 };
 
 &drm_rgb {
