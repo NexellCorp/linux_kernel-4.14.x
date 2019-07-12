@@ -536,6 +536,7 @@ static int nx_overlay_yuv_set_pos(struct nx_overlay *ovl,
 				  int dst_x, int dst_y, int dst_w, int dst_h,
 				  bool sync)
 {
+	struct nx_display *dp = ovl->dp;
 	struct nx_mlc_reg *reg = ovl->base;
 	int sx, sy, ex, ey;
 	int hf = 1, vf = 1;
@@ -574,6 +575,12 @@ static int nx_overlay_yuv_set_pos(struct nx_overlay *ovl,
 	if (ex == 0 || ey == 0 ||
 		(src_w == dst_w && src_h == dst_h))
 		hf = 0, vf = 0;
+
+	if (dp->video_scale_hf_max && src_w >= dp->video_scale_hf_max)
+		hf = 0;
+
+	if (dp->video_scale_vf_max && src_h >= dp->video_scale_vf_max)
+		vf = 0;
 
 	ovl->h_filter = hf;
 	ovl->v_filter = vf;

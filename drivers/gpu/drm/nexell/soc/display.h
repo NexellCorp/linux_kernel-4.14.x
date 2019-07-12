@@ -138,6 +138,9 @@ struct nx_display {
 	int height;
 	int video_priority;	/* 0: video>RGBn, 1: RGB0>video>RGB1, */
 				/* 2: RGB0 > RGB1 > vidoe .. */
+	int video_scale_hf_max;
+	int video_scale_vf_max;
+
 	unsigned int back_color;
 	unsigned int color_key;
 	bool color_key_on;
