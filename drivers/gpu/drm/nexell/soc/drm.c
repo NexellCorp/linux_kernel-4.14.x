@@ -406,6 +406,11 @@ static int nx_display_crtc_parse_planes(struct device *dev,
 	if (of_property_read_bool(np, "alphablend-disable"))
 		dp->alpla_blend_on = false;
 
+	of_property_read_u32(np,
+		"video-scale-hfilter-max", &dp->video_scale_hf_max);
+	of_property_read_u32(np,
+		"video-scale-vfilter-max", &dp->video_scale_vf_max);
+
 	return 0;
 }
 
