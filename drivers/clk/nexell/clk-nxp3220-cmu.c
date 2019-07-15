@@ -75,23 +75,18 @@
 #define MUX_EXT_SRC_CLK0_NUM		5
 #define MUX_OSCCLK_IN_NUM		6
 
-static const struct nexell_fixed_factor_clock src_fixed_factor_clks[] __initconst = {
-	FFACTOR(CLK_PLL1_DIV, "pll1_div", "pll1", 1, 2, CLK_SET_RATE_PARENT),
-	FFACTOR(CLK_EXT_SRC, "ext_src", "oscclk", 1, 2, 0),
-};
-
 /*
- * MUX name must be one of clk_fixed_factor, refer to FFACTOR types
+ * MUX name must be one of clock, registerd by DT
  */
 #ifndef CONFIG_CPU_FREQ
 PNAME(src_mux_p) = { "pll0", "pll1_div", "pll_cpu_div",
-	"pll_ddr0_div", "pll_ddr1_div", "ext_src", "oscclk"};
+	"pll_ddr0_div", "pll_ddr1_div", "ext_clk", "oscclk"};
 #else
 PNAME(src_mux_p) = { "pll0", "pll1_div",
-	"pll_ddr0_div", "pll_ddr1_div", "ext_src", "oscclk"};
+	"pll_ddr0_div", "pll_ddr1_div", "ext_clk", "oscclk"};
 
 #endif
-PNAME(snd_mux_p) = { "pll1_div", "pll_ddr1_div", "ext_src" };
+PNAME(snd_mux_p) = { "pll1_div", "pll_ddr1_div", "ext_clk" };
 
 static u32 src_mux_table[] = {
 	MUX_PLL0_CLK_NUM,
@@ -996,9 +991,6 @@ static void __init nxp3220_cmu_init(struct device_node *np)
 		return;
 	}
 
-	/* Register CMU_SRC clocks */
-	nexell_clk_register_fixed_factor(ctx, src_fixed_factor_clks,
-					 ARRAY_SIZE(src_fixed_factor_clks));
 	nxp3220_clk_register_composite(ctx, src_clks, ARRAY_SIZE(src_clks));
 
 	nexell_clk_sleep_init(ctx->reg, &nxp3220_cmu_syscore_ops,
