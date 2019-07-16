@@ -376,7 +376,7 @@
 		reg = <0x1a>;
 		amp-power-gpio = <&alive_0 5 GPIO_ACTIVE_HIGH>;
 		amp-mute-gpio = <&gpio_c 6 GPIO_ACTIVE_HIGH>;
-		dac-volume = <0xb>; /* -4.50 dB, 0x08:0dB, step: 1.5dB */
+		dac-volume = <0x12>; /* amixer 13, 0x08:0dB, step: 1.5dB */
 	};
 
         ipod: ipod@10 {
@@ -392,7 +392,7 @@
 		#sound-dai-cells = <0>;
 		compatible = "realtek,alc5623";
 		reg = <0x1a>;
-		dac-volume = <0xb>; /* -4.50 dB, 0x08:0dB, step: 1.5dB */
+		dac-volume = <0x12>; /* amixer 13, 0x08:0dB, step: 1.5dB */
 	};
 };
 
