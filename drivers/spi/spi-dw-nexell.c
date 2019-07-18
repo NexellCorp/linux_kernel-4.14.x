@@ -100,22 +100,6 @@ static void nx_spi_dma_exit(struct dw_spi *dws)
 	dma_release_channel(dws->rxchan);
 }
 
-static irqreturn_t nx_dma_transfer(struct dw_spi *dws)
-{
-	u16 irq_status = dw_readl(dws, DW_SPI_ISR);
-
-	if (!irq_status)
-		return IRQ_NONE;
-
-	dw_readl(dws, DW_SPI_ICR);
-	spi_reset_chip(dws);
-
-	dev_err(&dws->master->dev, "%s: FIFO overrun/underrun\n", __func__);
-	dws->master->cur_msg->status = -EIO;
-	spi_finalize_current_transfer(dws->master);
-	return IRQ_HANDLED;
-}
-
 static bool nx_spi_can_dma(struct spi_master *master, struct spi_device *spi,
 		struct spi_transfer *xfer)
 {
@@ -311,9 +295,8 @@ static int nx_spi_dma_setup(struct dw_spi *dws, struct spi_transfer *xfer)
 	dw_writel(dws, DW_SPI_DMACR, dma_ctrl);
 
 	/* Set the interrupt mask */
-	spi_umask_intr(dws, SPI_INT_TXOI | SPI_INT_RXUI | SPI_INT_RXOI);
 
-	dws->transfer_handler = nx_dma_transfer;
+	spi_umask_intr(dws, SPI_INT_TXOI | SPI_INT_RXUI | SPI_INT_RXOI | SPI_INT_RXFI);
 
 	return 0;
 }
@@ -405,12 +388,14 @@ static int nx_dw_spi_probe(struct platform_device *pdev)
 	struct dw_spi *dws;
 	struct resource *mem;
 	int ret, num_cs;
+	char mode_str[20];
 
 	dws_nx = devm_kzalloc(&pdev->dev, sizeof(struct dw_spi_nx),
 			GFP_KERNEL);
 	if (!dws_nx)
 		return -ENOMEM;
 
+	memset(mode_str, 0, 20);
 	dws = &dws_nx->dws;
 
 	/* Get basic io resource and map it */
@@ -463,8 +448,11 @@ static int nx_dw_spi_probe(struct platform_device *pdev)
 				&dws->reg_io_width))
 		dws->reg_io_width = 4;
 
-	if (device_property_read_bool(&pdev->dev, "spi-dma"))
+	if (device_property_read_bool(&pdev->dev, "spi-dma")) {
 		nx_dw_spi_dma_init(dws);
+		sprintf(mode_str, "%s", "DMA");
+	} else
+		sprintf(mode_str, "%s", "Buffer");
 
 	if (device_property_read_bool(&pdev->dev, "spi-slave")) {
 		struct device_node *of_node = pdev->dev.of_node;
@@ -498,6 +486,8 @@ static int nx_dw_spi_probe(struct platform_device *pdev)
 		goto err_pclk;
 
 	platform_set_drvdata(pdev, dws_nx);
+
+	dev_info(&pdev->dev, "It operates in %s Mode!\n", mode_str);
 
 	return 0;
 
