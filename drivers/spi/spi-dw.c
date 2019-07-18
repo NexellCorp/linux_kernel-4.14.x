@@ -468,6 +468,19 @@ static int dw_spi_transfer_one(struct spi_master *master,
 			spi_enable_chip(dws, 1);
 			return ret;
 		}
+
+		if (dws->n_bytes == 1)
+			txlevel = min_t(u8, dws->fifo_len - 1,
+					dws->len / dws->n_bytes);
+		else if (dws->n_bytes == 2)
+			txlevel = min_t(u16, dws->fifo_len - 1,
+					dws->len / dws->n_bytes);
+		else
+			txlevel = min_t(u32, dws->fifo_len - 1 ,
+					dws->len / dws->n_bytes);
+
+		dw_writel(dws, DW_SPI_DMATDLR, txlevel);
+		dw_writel(dws, DW_SPI_DMARDLR, txlevel);
 	} else if (!chip->poll_mode) {
 		txlevel = min_t(u16, dws->fifo_len / 2, dws->len / dws->n_bytes);
 		if (!spi_controller_is_slave(dws->master))
@@ -482,8 +495,14 @@ static int dw_spi_transfer_one(struct spi_master *master,
 			 SPI_INT_RXUI | SPI_INT_RXOI;
 
 		spi_umask_intr(dws, imask);
+	}
 
-		dws->transfer_handler = interrupt_transfer;
+	dws->transfer_handler = interrupt_transfer;
+
+	if (!dws->dma_mapped) {
+		dw_writel(dws, DW_SPI_DMARDLR, 0x0);
+		dw_writel(dws, DW_SPI_DMATDLR, 0x0);
+		dw_writel(dws, DW_SPI_DMACR, 0x0);
 	}
 
 	spi_enable_chip(dws, 1);
