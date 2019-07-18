@@ -486,6 +486,12 @@ static int dw_spi_transfer_one(struct spi_master *master,
 		dws->transfer_handler = interrupt_transfer;
 	}
 
+	if (!dws->dma_mapped) {
+		dw_writel(dws, DW_SPI_DMARDLR, 0x0);
+		dw_writel(dws, DW_SPI_DMATDLR, 0x0);
+		dw_writel(dws, DW_SPI_DMACR, 0x0);
+	}
+
 	spi_enable_chip(dws, 1);
 	if (dws->dma_mapped) {
 		ret = dws->dma_ops->dma_transfer(dws, transfer);
