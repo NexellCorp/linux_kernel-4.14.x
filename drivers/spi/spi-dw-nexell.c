@@ -107,13 +107,15 @@ static irqreturn_t nx_dma_transfer(struct dw_spi *dws)
 	if (!irq_status)
 		return IRQ_NONE;
 
-	dw_readl(dws, DW_SPI_ICR);
-	spi_reset_chip(dws);
+	if (!(irq_status & (SPI_INT_RXFI | SPI_INT_RXOI))) {
+		if (!dws->master->cur_msg) {
+			spi_mask_intr(dws, SPI_INT_TXEI);
 
-	dev_err(&dws->master->dev, "%s: FIFO overrun/underrun\n", __func__);
-	dws->master->cur_msg->status = -EIO;
-	spi_finalize_current_transfer(dws->master);
-	return IRQ_HANDLED;
+			return IRQ_HANDLED;
+		}
+	}
+
+	return interrupt_transfer(dws);
 }
 
 static bool nx_spi_can_dma(struct spi_master *master, struct spi_device *spi,
@@ -311,8 +313,8 @@ static int nx_spi_dma_setup(struct dw_spi *dws, struct spi_transfer *xfer)
 	dw_writel(dws, DW_SPI_DMACR, dma_ctrl);
 
 	/* Set the interrupt mask */
-	spi_umask_intr(dws, SPI_INT_TXOI | SPI_INT_RXUI | SPI_INT_RXOI);
 
+	spi_umask_intr(dws, SPI_INT_TXOI | SPI_INT_RXUI | SPI_INT_RXOI | SPI_INT_RXFI);
 	dws->transfer_handler = nx_dma_transfer;
 
 	return 0;
