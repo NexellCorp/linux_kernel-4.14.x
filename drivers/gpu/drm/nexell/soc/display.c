@@ -824,14 +824,11 @@ void nx_overlay_set_addr_yuv(struct nx_overlay *ovl,
 	}
 
 	lu_a += cl + (ct * lu_s);
+	cb_a = cb_a + xo + (yo * cb_s);
+	cr_a = cr_a + xo + (yo * cr_s);
 
-	if (ovl->format & FMT_VID_YUV_TO_YVU) {
-		cr_a = cb_a + xo + (yo * cb_s);
-		cb_a = cr_a + xo + (yo * cr_s);
-	} else {
-		cb_a = cb_a + xo + (yo * cb_s);
-		cr_a = cr_a + xo + (yo * cr_s);
-	}
+	if (ovl->format & FMT_VID_YUV_TO_YVU)
+		swap(cb_a, cr_a);
 
 	dev_dbg(ovl->dp->dev,
 		"%s: %s, lu:0x%x,%d, cb:0x%x,%d, cr:0x%x,%d : %d,%d\n",
