@@ -20,6 +20,7 @@
  *
  */
 
+#include <linux/version.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>
 #include <linux/hrtimer.h>
@@ -30,12 +31,22 @@
 #include <linux/platform_device.h>
 #include <linux/rfkill.h>
 #include <linux/serial_core.h>
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+#include <linux/pm_wakeup.h>
+#include <linux/device.h>
+#else
 #ifdef CONFIG_HAS_WAKELOCK
 #include <linux/wakelock.h>
 #endif
+#endif
+
 #include <linux/of_gpio.h>
 #include <linux/of.h>
 #include <linux/gpio.h>
+
+//#define BT_LPM_ENABLE
+//#define FORCE_ENABLE_BT_WAKE
 
 static struct rfkill *bt_rfkill;
 #ifdef BT_LPM_ENABLE
@@ -51,9 +62,14 @@ struct bcm_bt_lpm {
 
 	struct uart_port *uport;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+	struct wakeup_source host_wake_lock;
+	struct wakeup_source bt_wake_lock;
+#else
 #ifdef CONFIG_HAS_WAKELOCK
 	struct wake_lock host_wake_lock;
 	struct wake_lock bt_wake_lock;
+#endif
 #endif
 } bt_lpm;
 
@@ -87,18 +103,6 @@ static int bcm434545_bt_rfkill_set_power(void *data, bool blocked)
 			return -1;
 		}
 #endif
-		if (bt_status.is_inverted_power) {
-			pr_info("%s: run inverted power reset (onoff=1)\n",
-				__func__);
-			gpio_set_value(bt_gpio.bt_en, 1);
-		} else {
-			pr_info("%s: run normal power reset (onoff=0)\n",
-				__func__);
-			gpio_set_value(bt_gpio.bt_en, 0);
-		}
-
-		msleep(400);
-
 		if (bt_status.is_inverted_power) {
 			pr_info("%s: run inverted power control (onoff=0)\n",
 				__func__);
@@ -154,24 +158,19 @@ static const struct rfkill_ops bcm434545_bt_rfkill_ops = {
 #ifdef BT_LPM_ENABLE
 static void set_wake_locked(int wake)
 {
-#ifdef CONFIG_BT_UART_IN_AUDIO
-	struct uart_port *port = bt_lpm.uport;
-#endif
+	if (wake) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+		__pm_wakeup_event(&bt_lpm.bt_wake_lock, HZ/2);
+#else
 #ifdef CONFIG_HAS_WAKELOCK
-	if (wake)
-		wake_lock(&bt_lpm.bt_wake_lock);
+		wake_lock_timeout(&bt_lpm.bt_wake_lock, HZ/2);
 #endif
+#endif
+	}
 	gpio_set_value(bt_gpio.bt_wake, wake);
 	bt_lpm.dev_wake = wake;
 
 	if (bt_wake_state != wake) {
-#ifdef CONFIG_BT_UART_IN_AUDIO
-		if (bt_lpm.host_wake) {
-			if (wake)
-				port->ops->set_wake(port, wake);
-		} else
-			port->ops->set_wake(port, wake);
-#endif
 		pr_debug("[BT] %s = %d\n", __func__, wake);
 		bt_wake_state = wake;
 	}
@@ -183,10 +182,14 @@ static enum hrtimer_restart enter_lpm(struct hrtimer *timer)
 		set_wake_locked(0);
 
 	bt_status.bt_is_running = 0;
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+	__pm_wakeup_event(&bt_lpm.bt_wake_lock, HZ/2);
+#else
 #ifdef CONFIG_HAS_WAKELOCK
-	wake_lock_timeout(&bt_lpm.bt_wake_lock, HZ / 2);
+	wake_lock_timeout(&bt_lpm.bt_wake_lock, HZ/2);
 #endif
+#endif
+
 	return HRTIMER_NORESTART;
 }
 
@@ -211,28 +214,33 @@ static void update_host_wake_locked(int host_wake)
 
 	bt_status.bt_is_running = 1;
 
-	if (host_wake)
+	if (host_wake) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+		__pm_wakeup_event(&bt_lpm.host_wake_lock, HZ/2);
+#else
 #ifdef CONFIG_HAS_WAKELOCK
-		wake_lock(&bt_lpm.host_wake_lock);
+		wake_lock_timeout(&bt_lpm.host_wake_lock, HZ/2);
 #endif
-	else {
+#endif
+	} else {
 		/* Take a timed wakelock, so that upper layers can take it.
 		 * The chipset deasserts the hostwake lock, when there is no
 		 * more data to send.
 		 */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+		__pm_wakeup_event(&bt_lpm.host_wake_lock, HZ/2);
+#else
 #ifdef CONFIG_HAS_WAKELOCK
 		pr_err("[BT] %s : deasserted host_wake\n", __func__);
 		pr_err("release wakelock in 1s\n");
 		wake_lock_timeout(&bt_lpm.host_wake_lock, HZ/2);
+#endif
 #endif
 	}
 }
 
 static irqreturn_t host_wake_isr(int irq, void *dev)
 {
-#ifdef CONFIG_BT_UART_IN_AUDIO
-	struct uart_port *port = bt_lpm.uport;
-#endif
 	int host_wake;
 
 	host_wake = gpio_get_value(bt_gpio.bt_hostwake);
@@ -244,14 +252,8 @@ static irqreturn_t host_wake_isr(int irq, void *dev)
 		return IRQ_HANDLED;
 	}
 
-#ifdef CONFIG_BT_UART_IN_AUDIO
-	if (bt_lpm.dev_wake) {
-		if (host_wake)
-			port->ops->set_wake(port, host_wake);
-	} else
-		port->ops->set_wake(port, host_wake);
-#endif
 	update_host_wake_locked(host_wake);
+
 	return IRQ_HANDLED;
 }
 
@@ -266,20 +268,26 @@ static int bcm_bt_lpm_init(struct platform_device *pdev)
 
 	bt_lpm.host_wake = 0;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+	wakeup_source_init(&bt_lpm.host_wake_lock, "BT_host_wake");
+	wakeup_source_init(&bt_lpm.bt_wake_lock, "BT_bt_wake");
+#else
 #ifdef CONFIG_HAS_WAKELOCK
 	wake_lock_init(&bt_lpm.host_wake_lock, WAKE_LOCK_SUSPEND,
 		"BT_host_wake");
 	wake_lock_init(&bt_lpm.bt_wake_lock, WAKE_LOCK_SUSPEND,
 		"BT_bt_wake");
 #endif
+#endif
 
 	bt_gpio.irq = gpio_to_irq(bt_gpio.bt_hostwake);
 	ret = devm_request_irq(&pdev->dev, bt_gpio.irq, host_wake_isr,
-			IRQF_TRIGGER_RISING, "bt_host_wake", NULL);
+		IRQF_TRIGGER_RISING, "bt_host_wake", NULL);
 	if (ret) {
 		pr_err("[BT] Request_host wake irq failed.\n");
 		return ret;
 	}
+
 	return 0;
 }
 #endif
@@ -294,11 +302,9 @@ static int bcm434545_bluetooth_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
-	if (of_property_read_u32(pdev->dev.of_node, "inverted-power-control",
-			&bt_status.is_inverted_power)) {
-		pr_info("%s: inverted-power-control property not found",
-			__func__);
-		bt_status.is_inverted_power = 0;
+	if (of_find_property(pdev->dev.of_node, "inverted-power-control", NULL)) {
+		pr_info("%s : inverted-power-control property found.\n", __func__);
+		bt_status.is_inverted_power = 1;
 	}
 
 	rc = devm_gpio_request(&pdev->dev, bt_gpio.bt_en, "bten_gpio");
@@ -361,8 +367,8 @@ static int bcm434545_bluetooth_probe(struct platform_device *pdev)
 	}
 #endif
 	bt_rfkill = rfkill_alloc("bcm434545 Bluetooth", &pdev->dev,
-				RFKILL_TYPE_BLUETOOTH, &bcm434545_bt_rfkill_ops,
-				NULL);
+		RFKILL_TYPE_BLUETOOTH, &bcm434545_bt_rfkill_ops,
+		NULL);
 	if (unlikely(!bt_rfkill)) {
 		dev_err(&pdev->dev, "bt_rfkill alloc failed.\n");
 		return -ENOMEM;
@@ -380,7 +386,6 @@ static int bcm434545_bluetooth_probe(struct platform_device *pdev)
 	rfkill_set_sw_state(bt_rfkill, true);
 
 	dev_info(&pdev->dev, "%s End\n", __func__);
-
 	return 0;
 }
 
@@ -390,9 +395,14 @@ static int bcm434545_bluetooth_remove(struct platform_device *pdev)
 	rfkill_destroy(bt_rfkill);
 
 #ifdef BT_LPM_ENABLE
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+	wakeup_source_trash(&bt_lpm.host_wake_lock);
+	wakeup_source_trash(&bt_lpm.bt_wake_lock);
+#else
 #ifdef CONFIG_HAS_WAKELOCK
 	wake_lock_destroy(&bt_lpm.host_wake_lock);
 	wake_lock_destroy(&bt_lpm.bt_wake_lock);
+#endif
 #endif
 #endif
 	return 0;
@@ -411,10 +421,10 @@ static struct platform_driver bcm434545_bluetooth_platform_driver = {
 	.probe = bcm434545_bluetooth_probe,
 	.remove = bcm434545_bluetooth_remove,
 	.driver = {
-		   .name = "bcm434545_bluetooth",
-		   .owner = THIS_MODULE,
-		   .of_match_table = of_match_ptr(artik_bluetooth_match),
-		   },
+	   .name = "bcm434545_bluetooth",
+	   .owner = THIS_MODULE,
+	   .of_match_table = of_match_ptr(artik_bluetooth_match),
+	},
 };
 
 #if defined(CONFIG_DEFERRED_BLUETOOTH)
