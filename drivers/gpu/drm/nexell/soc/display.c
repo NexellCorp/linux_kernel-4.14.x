@@ -582,6 +582,13 @@ static int nx_overlay_yuv_set_pos(struct nx_overlay *ovl,
 	if (dp->video_scale_vf_max && src_h >= dp->video_scale_vf_max)
 		vf = 0;
 
+	/* limitation: NV12/NV16/YUYV is not support veritical filter */
+	if (src_h > dst_h &&
+	   (ovl->format == NX_MLC_FMT_VID_YUYV ||
+	    ovl->format == NX_MLC_FMT_VID_422_CBCR ||
+	    ovl->format == NX_MLC_FMT_VID_420_CBCR))
+		vf = 0;
+
 	ovl->h_filter = hf;
 	ovl->v_filter = vf;
 
