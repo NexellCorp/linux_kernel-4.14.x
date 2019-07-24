@@ -662,7 +662,8 @@ static int setplane_internal(struct drm_plane *plane,
 			     uint32_t crtc_w, uint32_t crtc_h,
 			     /* src_{x,y,w,h} values are 16.16 fixed point */
 			     uint32_t src_x, uint32_t src_y,
-			     uint32_t src_w, uint32_t src_h)
+			     uint32_t src_w, uint32_t src_h,
+			     uint32_t flags)
 {
 	struct drm_modeset_acquire_ctx ctx;
 	int ret;
@@ -672,6 +673,9 @@ retry:
 	ret = drm_modeset_lock_all_ctx(plane->dev, &ctx);
 	if (ret)
 		goto fail;
+
+	ctx.flags = flags;
+
 	ret = __setplane_internal(plane, crtc, fb,
 				  crtc_x, crtc_y, crtc_w, crtc_h,
 				  src_x, src_y, src_w, src_h, &ctx);
@@ -734,7 +738,8 @@ int drm_mode_setplane(struct drm_device *dev, void *data,
 				 plane_req->crtc_x, plane_req->crtc_y,
 				 plane_req->crtc_w, plane_req->crtc_h,
 				 plane_req->src_x, plane_req->src_y,
-				 plane_req->src_w, plane_req->src_h);
+				 plane_req->src_w, plane_req->src_h,
+				 plane_req->flags);
 }
 
 static int drm_mode_cursor_universal(struct drm_crtc *crtc,
