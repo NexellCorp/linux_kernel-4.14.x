@@ -41,8 +41,8 @@ static const uint32_t support_formats_vid[] = {
 	/* 1 plane */
 	DRM_FORMAT_YUYV, /* [31:0] Cr0:Y1:Cb0:Y0 8:8:8:8 little endian */
 	/*2 plane YCbCr */
-	DRM_FORMAT_NV61, /* 2x1 subsampled Cb:Cr plane : 422 */
-	DRM_FORMAT_NV21, /* 2x2 subsampled Cb:Cr plane : 420 */
+	DRM_FORMAT_NV16, /* 2x1 subsampled Cb:Cr plane : 422 */
+	DRM_FORMAT_NV12, /* 2x2 subsampled Cb:Cr plane : 420 */
 	/* 3 plane YCbCr */
 	DRM_FORMAT_YUV420, /* 2x2 subsampled Cb (1) and Cr (2) planes */
 	DRM_FORMAT_YVU420, /* 2x2 subsampled Cr (1) and Cb (2) planes */
@@ -164,10 +164,10 @@ static uint32_t plane_yuv_format(uint32_t fourcc, uint32_t *format)
 	case DRM_FORMAT_YUYV:
 		fmt = NX_MLC_FMT_VID_YUYV;
 		break;
-	case DRM_FORMAT_NV61:
+	case DRM_FORMAT_NV16:
 		fmt = NX_MLC_FMT_VID_422_CBCR;
 		break;
-	case DRM_FORMAT_NV21:
+	case DRM_FORMAT_NV12:
 		fmt = NX_MLC_FMT_VID_420_CBCR;
 		break;
 	default:
