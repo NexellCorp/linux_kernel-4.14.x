@@ -345,7 +345,8 @@
 					  <&cmu CLK_SRC_UART0_APB>,
 					  <&cmu CLK_SYS_DIV_SYS0_HSIF_APB>,
 					  <&cmu CLK_SYS_DIV_SYS0_HSIF_AXI>,
-					  <&cmu CLK_SYS_DIV_I2C0_APB>;
+					  <&cmu CLK_SYS_DIV_I2C0_APB>,
+					  <&cmu CLK_SRC_HPM_SYS0>;
 
 			assigned-clock-parents = <&pll_0 0>,	/* SRC_SYS0_AXI */
 						 <0>,		/* SYS_DIV_SYS0_AXI */
@@ -362,7 +363,8 @@
 						 <&pll_0 0>,	/* SRC_UART0_APB */
 						 <0>,		/* SYS_DIV_SYS0_HSIF_APB */
 						 <0>,		/* SYS_DIV_SYS0_HSIF_AXI */
-						 <0>;		/* SYS_DIV_I2C0_APB */
+						 <0>,		/* SYS_DIV_I2C0_APB */
+						 <&pll_0 0>;	/* SRC_HPM_SYS0 */
 
 			assigned-clock-rates = <333333334>,     /* SRC_SYS0_AXI */
 					       <333333334>,     /* SYS_DIV_SYS0_AXI */
@@ -379,7 +381,8 @@
 					       <0>,             /* SRC_UART0_APB */
 					       <125000000>,     /* SYS_DIV_SYS0_HSIF_APB */
 					       <250000000>,     /* SYS_DIV_SYS0_HSIF_AXI */
-					       <100000000>;	/* SYS_DIV_I2C0_APB */
+					       <100000000>,	/* SYS_DIV_I2C0_APB */
+					       <500000000>;	/* SRC_HPM_SYS0 */
 		};
 
 		cmu_cpu: clock-controller@22000000 {
@@ -533,6 +536,9 @@
 		ecid: ecid@20060000 {
 			compatible = "nexell,nxp3220-ecid";
 			reg = <0x20060000 0x1000>;
+			syscon_sys = <&sys_reg_sys>;
+			clocks = <&cmu_cpu CLK_CPU_HPM>, <&cmu CLK_HPM_SYS0>;
+			clock-names = "cpu_hpm", "core_hpm";
 		};
 
 		ehci: ehci@24080000 {
