@@ -271,13 +271,6 @@
 
 &drm {
 	status = "okay";
-
-	/* get clock from cmu_ddr (800Mhz) */
-	assigned-clocks = <&cmu CLK_SRC_DPC0_X2>,
-       			<&cmu_mm CLK_MM_DPC_AXI>,
-			<&pll_0 0>;
-	assigned-clock-parents = <&pll_ddr0_div 0>, <0>, <0>;
-	assigned-clock-rates = <0>, <333333334>, <0>;
 	color-key-disable;
 	video-scale-hfilter-max = <1>;
 	video-scale-vfilter-max = <1>;
