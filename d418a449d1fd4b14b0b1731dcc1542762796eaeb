@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "17ea5e1f_ba638ccb",
+        "filename": "arch/arm/boot/dts/nxp3220.dtsi",
+        "patchSetId": 2
+      },
+      "lineNbr": 539,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2019-07-30T04:19:49Z",
+      "side": 1,
+      "message": "rename syscon_sys to syscon",
+      "range": {
+        "startLine": 539,
+        "startChar": 3,
+        "endLine": 539,
+        "endChar": 14
+      },
+      "revId": "d418a449d1fd4b14b0b1731dcc1542762796eaeb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    }
+  ]
+}
