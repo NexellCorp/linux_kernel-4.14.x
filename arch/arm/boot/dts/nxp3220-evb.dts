@@ -11,7 +11,3 @@
 / {
 	compatible = "nexell,nxp3220-evb", "nexell,nxp3220";
 };
-
-&cpu_thermal {
-	status = "disable";
-};

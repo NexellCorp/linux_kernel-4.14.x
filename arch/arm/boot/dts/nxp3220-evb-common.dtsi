@@ -207,8 +207,9 @@
 			thermal-sensors = <&tmuctrl_0>;
 			polling-delay-passive = <1000>;
 			polling-delay = <1000>;
-			/*
+
 			trips {
+				/*
 				cpu_alert0: cpu-alert-0 {
 					temperature = <40000>;
 					hysteresis = <10000>;
@@ -229,8 +230,8 @@
 					hysteresis = <10000>;
 					type = "critical";
 				};
+				*/
 			};
-			*/
 		};
 	};
 
