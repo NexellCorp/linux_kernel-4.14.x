@@ -239,7 +239,7 @@
 		/* Audio sample rate 48Khz */
 		pll_1_div: pll1-div {
 			compatible = "nexell,fixed-factor-clock";
-			#clock-cells = <0>;
+			#clock-cells = <1>;
 			clock-div = <2>;
 			clock-mult = <1>;
 			clock-flags = <CLK_SET_RATE_PARENT>;
@@ -261,7 +261,7 @@
 		/* CPU DVFS */
 		pll_cpu_div: pll-cpu-div {
 			compatible = "nexell,fixed-factor-clock";
-			#clock-cells = <0>;
+			#clock-cells = <1>;
 			clock-div = <1>;
 			clock-mult = <1>;
 			clock-flags = <CLK_SET_RATE_PARENT>;
@@ -282,7 +282,7 @@
 		/* DDR Memory and IO: Set by bootloader */
 		pll_ddr0_div: pll-ddr0-div {
 			compatible = "nexell,fixed-factor-clock";
-			#clock-cells = <0>;
+			#clock-cells = <1>;
 			clock-div = <2>;
 			clock-mult = <1>;
 			clock-flags = <CLK_SET_RATE_PARENT>;
@@ -301,7 +301,7 @@
 		/* Audio sample rate 44.1Khz */
 		pll_ddr1_div: pll-ddr1-div {
 			compatible = "nexell,fixed-factor-clock";
-			#clock-cells = <0>;
+			#clock-cells = <1>;
 			clock-div = <2>;
 			clock-mult = <1>;
 			clocks = <&pll_ddr1 0>;
