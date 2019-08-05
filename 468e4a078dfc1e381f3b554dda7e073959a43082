@@ -137,6 +137,30 @@
       "revId": "468e4a078dfc1e381f3b554dda7e073959a43082",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "66752983_3604e283",
+        "filename": "drivers/spi/spi-dw.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 505,
+      "author": {
+        "id": 1015625
+      },
+      "writtenOn": "2019-08-05T13:55:11Z",
+      "side": 1,
+      "message": "Since line 503 is not dma_map, it can not move down 483 lines. please check the condition of line 502. I through about moving it down to line 498, but since it needs to initialize even when it is \"chip-\u003epoll_mode\", I added a routine to initialize it separately. please check.",
+      "parentUuid": "2785f2fa_c080a71c",
+      "range": {
+        "startLine": 503,
+        "startChar": 2,
+        "endLine": 505,
+        "endChar": 36
+      },
+      "revId": "468e4a078dfc1e381f3b554dda7e073959a43082",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
     }
   ]
 }
