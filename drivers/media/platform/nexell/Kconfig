@@ -25,3 +25,15 @@ config VIDEO_NXP3220_CAPTURE
 	  BT.1120.
 
 source "drivers/media/platform/nexell/capture/Kconfig"
+
+config VIDEO_NXP3220_M2M
+	bool "Nexell NXP3220 M2M interface driver"
+	default n
+	help
+	  This is the interface driver for Nexell NXP3220 SoC for the M2M
+	  device. These are devices that read data form the source memory and
+	  then reprocess and output the result to the destinatoi memory.
+
+	  Say Y here to enable Nexell M2M deivces.
+
+source "drivers/media/platform/nexell/m2m/Kconfig"

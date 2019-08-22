@@ -69,6 +69,7 @@ struct clk_pll_data {
 
 struct clk_pll {
 	struct clk_hw hw;
+	const char *name;
 	struct regmap *regmap;
 	struct pll_pms pms;
 	struct clk_pll_data *pll_data;
@@ -290,6 +291,9 @@ static int nexell_clk_pll_set_rate(struct clk_hw *hw, unsigned long rate,
 	unsigned long flags;
 	int ret;
 
+	pr_debug("%s: set rate %ld, parent %ld\n",
+			pll->name, rate, parent_rate);
+
 	ret = pll_round_rate(pll, rate, parent_rate, &pms);
 	if (ret < 0)
 		return ret;
@@ -358,6 +362,7 @@ static void __init nexell_clk_register_pll(struct device_node *np,
 	pll->refclk_rate = clk_get_rate(__clk_lookup(parent_name));
 	pll->pll_data = pll_data;
 	pll->regmap = regmap;
+	pll->name = name;
 
 	init.name = name;
 	init.ops = &pll_ops;

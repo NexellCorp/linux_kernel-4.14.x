@@ -44,13 +44,6 @@ config SMP_IRQ_AFFINITY
 	help
 	  This enbalse support allows multi-core to handle irq.
 
-config QUICKBOOT_DEFERRED_INIT
-	bool "deferred initcall for quickboot"
-	depends on ARCH_NEXELL
-	default n
-	help
-	  This option delays some initcall to support quickboot.
-
 config QUICKBOOT_QUIET
 	bool "quickboot quiet booting"
 	default n
@@ -58,10 +51,15 @@ config QUICKBOOT_QUIET
 	  This enables quiet booting for nexell quickboot.
 
 config LATE_INIT_TO_DEFER
-	bool "late init to defer for quickboot"
+	bool
+
+config QUICKBOOT_DEFERRED_INIT
+	bool "deferred initcall for quickboot"
+	depends on ARCH_NEXELL
 	default n
+	select LATE_INIT_TO_DEFER
 	help
-	  This option delays late initcall for quickboot.
+	  This option delays some initcall to support quickboot.
 
 config DEFERRED_LEVEL
 	int "level of deferred initcalls (1-2)"
@@ -74,122 +72,149 @@ menu "Deferred initcall features"
 
 config DEFERRED_CRYPTO
 	bool "deferred initcall crypto"
-	default y if DEFERRED_LEVEL=1
+	default y
+	depends on DEFERRED_LEVEL=1
 
 config DEFERRED_BLOCK_LOOP
 	bool "deferred initcall block loop"
-	default y if DEFERRED_LEVEL=1
+	default y
+	depends on DEFERRED_LEVEL=1
 
 config DEFERRED_BLUETOOTH
 	bool "deferred initcall bluetooth"
-	default y if DEFERRED_LEVEL=1 || DEFERRED_LEVEL=2
+	default y
+	help
+	  This change subsys initcall to deferred initcall .
 
 config DEFERRED_ADC
 	bool "deferred initcall adc"
-	default y if DEFERRED_LEVEL=1
+	default y
+	depends on DEFERRED_LEVEL=1
 
 config DEFERRED_KEYPAD
 	bool "deferred initcall keypad"
-	default y if DEFERRED_LEVEL=1
+	default y
+	depends on DEFERRED_LEVEL=1
 
 config DEFERRED_BUFIO
 	bool "deferred initcall buffered IO"
-	default y if DEFERRED_LEVEL=1
-
-config DEFERRED_DECIMATOR
-	bool "deferred initcall decimator"
-	default y if DEFERRED_LEVEL=1
+	default y
+	depends on DEFERRED_LEVEL=1
 
 config DEFERRED_NXE2000
 	bool "deferred initcall NXE2000"
-	default y if DEFERRED_LEVEL=1 || DEFERRED_LEVEL=2
-
-config DEFERRED_NEXELL_MMC
-	bool "deferred initcall NEXELL MMC"
-	default y if DEFERRED_LEVEL=1 || DEFERRED_LEVEL=2
+	default y
 
 config DEFERRED_DWC_ETHERNET
 	bool "deferred initcall dwc ethernet"
-	default y if DEFERRED_LEVEL=1
+	default y
+	depends on DEFERRED_LEVEL=1
 
 config DEFERRED_TMU
 	bool "deferred initcall TMU"
-	default y if DEFERRED_LEVEL=1
+	default y
+	depends on DEFERRED_LEVEL=1
 
 config DEFERRED_DWC_PLAT
 	bool "deferred initcall dwc platform"
-	default y if DEFERRED_LEVEL=1
+	default y
+	depends on DEFERRED_LEVEL=1
 
 config DEFERRED_EHCI_PLAT
 	bool "deferred initcall ehci platform"
-	default y if DEFERRED_LEVEL=1
+	default y
+	depends on DEFERRED_LEVEL=1
 
 config DEFERRED_OHCI_PLAT
 	bool "deferred initcall ohci platform"
-	default y if DEFERRED_LEVEL=1
+	default y
+	depends on DEFERRED_LEVEL=1
 
 config DEFERRED_SLAB_SYSFS
 	bool "deferred initcall slab sysfs"
-	default y if DEFERRED_LEVEL=1
+	default y
+	depends on DEFERRED_LEVEL=1
 
 config DEFERRED_IPV6
 	bool "deferred initcall ipv6"
-	default y if DEFERRED_LEVEL=1
+	default y
+	depends on DEFERRED_LEVEL=1
 
 config DEFERRED_SOUND_I2S
 	bool "deferred initcall SOUND I2S"
-	default y if DEFERRED_LEVEL=1
+	default y
+	depends on DEFERRED_LEVEL=1
 
 config DEFERRED_SOUND_PDM
 	bool "deferred initcall SOUND PDM"
-	default y if DEFERRED_LEVEL=1
+	default y
+	depends on DEFERRED_LEVEL=1
 
 config DEFERRED_PARAM_SYSFS
 	bool "deferred initcall param sysfs"
-	default y if DEFERRED_LEVEL=1 || DEFERRED_LEVEL=2
+	default y
 
 config DEFERRED_WIRELESS
 	bool "deferred initcall wireless"
-	default y if DEFERRED_LEVEL=1 || DEFERRED_LEVEL=2
-
-config DEFERRED_UP_NEXELL_MMC
-	bool "deferred initcall level up nexell mmc"
-	default y if DEFERRED_LEVEL=2
+	default y
 
 config DEFERRED_UP_BLOCK
 	bool "deferred initcall level up BLOCK"
-	default y if DEFERRED_LEVEL=2
+	default y
+	depends on DEFERRED_LEVEL=2
 
 config DEFERRED_UP_CRC32
 	bool "deferred initcall level up crc32"
-	default y if DEFERRED_LEVEL=2
+	default y
+	depends on DEFERRED_LEVEL=2
 
 config DEFERRED_UP_DMA
 	bool "deferred initcall level up DMA"
-	default y if DEFERRED_LEVEL=2
+	default y
+	depends on DEFERRED_LEVEL=2
 
 config DEFERRED_UP_DRM
 	bool "deferred initcall level up DRM"
-	default y if DEFERRED_LEVEL=2
+	default y
+	depends on DEFERRED_LEVEL=2
 
 config DEFERRED_UP_MMC
 	bool "deferred initcall level up MMC"
-	default y if DEFERRED_LEVEL=2
+	default y
 
 config DEFERRED_UP_PWM
 	bool "initcall initcall level up PWM"
-	default y if DEFERRED_LEVEL=2
+	default y
+	depends on DEFERRED_LEVEL=2
 
 config DEFERRED_UP_SERIAL
 	bool "initcall initcall level up serial"
-	default y if DEFERRED_LEVEL=2
+	default y
+	depends on DEFERRED_LEVEL=2
 
 config DEFERRED_UP_BL
 	bool "initcall initcall level up backlight"
-	default y if DEFERRED_LEVEL=2
+	default y
+	depends on DEFERRED_LEVEL=2
 
 config DEFERRED_UP_FS
 	bool "initcall initcall level up FileSystem"
-	default y if DEFERRED_LEVEL=2
+	default y
+	depends on DEFERRED_LEVEL=2
+
+config DEFERRED_UP_ADC
+	bool "initcall initcall level up ADC"
+	default y
+	depends on DEFERRED_LEVEL=2
+
+config DEFERRED_UP_VIP
+	bool "initcall initcall level up VIP"
+	default y
+	depends on DEFERRED_LEVEL=2
+
+config DEFERRED_UP_DEINTERLACER
+	bool "initcall initcall level up Deinterlacer"
+	default y
+	depends on DEFERRED_LEVEL=2
 
 endmenu

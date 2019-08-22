@@ -628,6 +628,8 @@ static void dpms_legacy(struct drm_fb_helper *fb_helper, int dpms_mode)
 static void drm_fb_helper_dpms(struct fb_info *info, int dpms_mode)
 {
 	struct drm_fb_helper *fb_helper = info->par;
+	struct drm_connector *connector;
+	int i;
 
 	/*
 	 * For each CRTC in this fb, turn the connectors on/off.
@@ -638,10 +640,17 @@ static void drm_fb_helper_dpms(struct fb_info *info, int dpms_mode)
 		return;
 	}
 
-	if (drm_drv_uses_atomic_modeset(fb_helper->dev))
-		restore_fbdev_mode_atomic(fb_helper, dpms_mode == DRM_MODE_DPMS_ON);
-	else
-		dpms_legacy(fb_helper, dpms_mode);
+	drm_fb_helper_for_each_connector(fb_helper, i) {
+		/* Check dpms to keep the previous state */
+		connector = fb_helper->connector_info[i]->connector;
+		if (connector->dpms == dpms_mode)
+			continue;
+
+		if (drm_drv_uses_atomic_modeset(fb_helper->dev))
+			restore_fbdev_mode_atomic(fb_helper, dpms_mode == DRM_MODE_DPMS_ON);
+		else
+			dpms_legacy(fb_helper, dpms_mode);
+	}
 	mutex_unlock(&fb_helper->lock);
 }
 

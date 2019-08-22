@@ -90,7 +90,7 @@ enum nx_gem_type {
 };
 
 /**
- * A structure to G2D command.
+ * G2D command type
  */
 enum nx_g2d_cmd_type {
 	NX_G2D_CMD_SRC_CTRL,
@@ -110,6 +110,15 @@ enum nx_g2d_cmd_type {
 };
 
 /**
+ * G2D buffer type
+ */
+enum nx_g2d_buf_type {
+	NX_G2D_BUF_TYPE_NONE = 0,
+	NX_G2D_BUF_TYPE_GEM = (1 << 0),
+	NX_G2D_BUF_TYPE_CPU = (1 << 1),
+};
+
+/**
  * A structure to g2d buffer
  *
  * @handle: a handle to gem object created.
@@ -119,11 +128,8 @@ enum nx_g2d_cmd_type {
 struct nx_g2d_buf {
 	__u32 handle;
 	__u32 offset;
-	unsigned int type;
+	enum nx_g2d_buf_type type;
 };
-
-#define	NX_G2D_BUF_TYPE_GEM	(1 << 0)
-#define	NX_G2D_BUF_TYPE_CPU	(1 << 1)
 
 /**
  * A structure to g2d ioctl command argument

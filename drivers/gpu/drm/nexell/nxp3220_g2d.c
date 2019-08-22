@@ -95,11 +95,13 @@ static void nx_g2d_dump_cmd(struct nx_g2d_data *g2d, struct nx_g2d_cmd *cmd)
 {
 	int i;
 
+	dev_dbg(g2d->dev, "================================================\n");
 	for (i = 0; i < NX_G2D_CMD_NR; i++) {
 		if (cmd->cmd_mask & (1 << i))
 			dev_dbg(g2d->dev, "[0x%2x] 0x%08x\n",
 				cmd_reg_offs[i], cmd->cmd[i]);
 	}
+	dev_dbg(g2d->dev, "================================================\n");
 }
 
 static inline void nx_g2d_set_axiparam(struct nx_g2d_data *g2d)
@@ -130,6 +132,8 @@ static void nx_g2d_exec_cmd(struct nx_g2d_data *g2d, struct nx_g2d_cmd *cmd)
 	u32 val;
 	int i;
 
+	cmd->cmd[NX_G2D_CMD_RUN] = 0;
+
 	for (i = 0; i < NX_G2D_CMD_NR; i++) {
 		if (cmd->cmd_mask & (1 << i))
 			writel(cmd->cmd[i], base + cmd_reg_offs[i]);
@@ -137,11 +141,10 @@ static void nx_g2d_exec_cmd(struct nx_g2d_data *g2d, struct nx_g2d_cmd *cmd)
 
 	val = readl(&reg->status) | (1 << 31);
 	val |= NX_G2D_IRQ_G2D_ENB | NX_G2D_IRQ_EMPTY_ENB;
+	writel(val, &reg->status);
 
 	/* run */
 	writel(1, base + cmd_reg_offs[NX_G2D_CMD_RUN]);
-
-	writel(val, &reg->status);
 }
 
 static int nx_g2d_setup_cmd(struct drm_device *drm, struct drm_file *file,
@@ -162,40 +165,46 @@ static int nx_g2d_setup_cmd(struct drm_device *drm, struct drm_file *file,
 	 * get source buffer
 	 */
 	buf = &req->src;
-	if (buf->handle) {
-		if (buf->type != NX_G2D_BUF_TYPE_GEM) {
-			dev_err(g2d->dev,
-				"Failed to source buffer type:0x%x\n",
-				buf->type);
-			return -EINVAL;
-		}
+	if (buf->type != NX_G2D_BUF_TYPE_NONE && buf->handle) {
+		if (buf->type == NX_G2D_BUF_TYPE_GEM)
+			addr = nx_drm_gem_get_dma_addr(drm, buf->handle, file);
+		else
+			addr = buf->handle;
 
-		addr = nx_drm_gem_get_dma_addr(drm, buf->handle, file);
 		if (!addr)
 			return -ENOMEM;
 
 		req->cmd[NX_G2D_CMD_SRC_ADDR] = (u32)addr + buf->offset;
 		req->cmd_mask |= 1 << NX_G2D_CMD_SRC_ADDR;
+		dev_dbg(g2d->dev,
+			"SRC:0x%08x\n", req->cmd[NX_G2D_CMD_SRC_ADDR]);
 	}
 
 	/*
 	 * get destinatioin buffer
 	 */
 	buf = &req->dst;
-	if (!buf->handle || buf->type != NX_G2D_BUF_TYPE_GEM) {
+	if (buf->type == NX_G2D_BUF_TYPE_NONE || !buf->handle) {
 		dev_err(g2d->dev,
 			"Failed to destination buffer type:%d, hnd:%d\n",
 			buf->type, buf->handle);
 		return -EINVAL;
 	}
 
-	addr = nx_drm_gem_get_dma_addr(drm, buf->handle, file);
+	if (buf->type == NX_G2D_BUF_TYPE_GEM)
+		addr = nx_drm_gem_get_dma_addr(drm, buf->handle, file);
+	else
+		addr = buf->handle;
+
 	if (!addr)
 		return -ENOMEM;
 
 	req->cmd[NX_G2D_CMD_DST_ADDR] = (u32)addr + buf->offset;
 	req->cmd_mask |= 1 << NX_G2D_CMD_DST_ADDR;
 	req->cmd_nr = hweight_long(req->cmd_mask);
+
+	dev_dbg(g2d->dev,
+		"DST:0x%08x\n", req->cmd[NX_G2D_CMD_DST_ADDR]);
 
 	nx_g2d_dump_cmd(g2d, req);
 
@@ -208,11 +217,15 @@ static irqreturn_t nx_g2d_irq_handler(int irq, void *dev_id)
 	struct nx_g2d_reg *reg = g2d->reg;
 	u32 pend = readl(&reg->status);
 
+	dev_dbg(g2d->dev, "IRQ:%s/%s\n",
+		pend | NX_G2D_INTC_G2D_PEND ? "G2D" : "None",
+		pend | NX_G2D_INTC_EMPTY_PEND ? "EMPTY" : "None");
+
 	if (pend & NX_G2D_INTC_G2D_PEND)
-		pend &= ~NX_G2D_IRQ_G2D_ENB;
+		pend |= NX_G2D_IRQ_G2D_ENB;
 
 	if (pend & NX_G2D_INTC_EMPTY_PEND)
-		pend &= ~NX_G2D_IRQ_EMPTY_ENB;
+		pend |= NX_G2D_IRQ_EMPTY_ENB;
 
 	writel(pend, &reg->status);
 	complete(&g2d->complete);

@@ -75,15 +75,30 @@
 #define MUX_EXT_SRC_CLK0_NUM		5
 #define MUX_OSCCLK_IN_NUM		6
 
-static const struct nexell_fixed_factor_clock src_fixed_factor_clks[] __initconst = {
-	FFACTOR(CLK_PLL1_DIV, "pll1_div", "pll1", 1, 2, CLK_SET_RATE_PARENT),
-	FFACTOR(CLK_EXT_SRC, "ext_src", "oscclk", 1, 2, 0),
+/*
+ * MUX name must be one of clock, registerd by DT
+ */
+#ifndef CONFIG_CPU_FREQ
+PNAME(src_mux_p) = { "pll0", "pll1_div", "pll_cpu_div",
+	"pll_ddr0_div", "pll_ddr1_div", "ext_clk", "oscclk"};
+#else
+PNAME(src_mux_p) = { "pll0", "pll1_div",
+	"pll_ddr0_div", "pll_ddr1_div", "ext_clk", "oscclk"};
+
+#endif
+PNAME(snd_mux_p) = { "pll1_div", "pll_ddr1_div", "ext_clk" };
+
+static u32 src_mux_table[] = {
+	MUX_PLL0_CLK_NUM,
+	MUX_PLL1_CLK_NUM,
+#ifndef CONFIG_CPU_FREQ
+	MUX_PLL_CPU_DIV_NUM,
+#endif
+	MUX_PLL_DDR0_DIV_NUM,
+	MUX_PLL_DDR1_DIV_NUM,
+	MUX_EXT_SRC_CLK0_NUM,
+	MUX_OSCCLK_IN_NUM,
 };
-
-PNAME(src_mux_p) = { "pll0", "pll1_div", "div_cpu_pll",
-	"div_pll_ddr0", "div_pll_ddr1", "ext_src", "oscclk"};
-
-PNAME(snd_mux_p) = { "pll1_div", "div_pll_ddr1", "ext_src" };
 
 static u32 snd_mux_table[] = {
 	MUX_PLL1_CLK_NUM,
@@ -105,7 +120,7 @@ static u32 snd_mux_table[] = {
 #define COMP_BASE_SND(_id, cname, f) \
 	COMP_BASE(_id, NULL, cname, snd_mux_p, f)
 
-#define COMP_MUX_SRC(o)		COMP_MUX(o, 0, 4, 0)
+#define COMP_MUX_SRC(o)		COMP_MUX_T(o, 0, 4, src_mux_table, 0)
 #define COMP_MUX_SND(o)		COMP_MUX_T(o, 0, 4, snd_mux_table, 0)
 
 #define COMP_DIV_SRC(o) 	COMP_DIV(o + 0x60, 0, 8, 0)
@@ -205,17 +220,17 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 		COMP_DIV_SRC(I2C0_APB)
 		COMP_GATE_SRC(I2C0_APB)
 	}, {
-		COMP_BASE_SRC(CLK_SRC_SDMMC0_CORE, "src_sdmmc0_core")
+		COMP_BASE_SRC_F(CLK_SRC_SDMMC0_CORE, "src_sdmmc0_core", 0)
 		COMP_MUX_SRC(SDMMC0_CORE)
 		COMP_DIV_SRC(SDMMC0_CORE)
 		COMP_GATE_SRC(SDMMC0_CORE)
 	}, {
-		COMP_BASE_SRC(CLK_SRC_SDMMC1_CORE, "src_sdmmc1_core")
+		COMP_BASE_SRC_F(CLK_SRC_SDMMC1_CORE, "src_sdmmc1_core", 0)
 		COMP_MUX_SRC(SDMMC1_CORE)
 		COMP_DIV_SRC(SDMMC1_CORE)
 		COMP_GATE_SRC(SDMMC1_CORE)
 	}, {
-		COMP_BASE_SRC(CLK_SRC_SDMMC2_CORE, "src_sdmmc2_core")
+		COMP_BASE_SRC_F(CLK_SRC_SDMMC2_CORE, "src_sdmmc2_core", 0)
 		COMP_MUX_SRC(SDMMC2_CORE)
 		COMP_DIV_SRC(SDMMC2_CORE)
 		COMP_GATE_SRC(SDMMC2_CORE)
@@ -370,12 +385,12 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 		COMP_DIV_SRC(VIP0_PADOUT1)
 		COMP_GATE_SRC(VIP0_PADOUT1)
 	}, {
-		COMP_BASE_SRC(CLK_SRC_DPC0_X2, "src_dpc0_x2")
+		COMP_BASE_SRC_F(CLK_SRC_DPC0_X2, "src_dpc0_x2", 0)
 		COMP_MUX_SRC(DPC0_X2)
 		COMP_DIV_SRC_F(DPC0_X2, CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_GATE_SRC(DPC0_X2)
 	}, {
-		COMP_BASE_SRC(CLK_SRC_LVDS0_VCLK, "src_lvds0_vclk")
+		COMP_BASE_SRC_F(CLK_SRC_LVDS0_VCLK, "src_lvds0_vclk", 0)
 		COMP_MUX_SRC(LVDS0_VCLK)
 		COMP_DIV_SRC_F(LVDS0_VCLK, CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_GATE_SRC(LVDS0_VCLK)
@@ -976,9 +991,6 @@ static void __init nxp3220_cmu_init(struct device_node *np)
 		return;
 	}
 
-	/* Register CMU_SRC clocks */
-	nexell_clk_register_fixed_factor(ctx, src_fixed_factor_clks,
-					 ARRAY_SIZE(src_fixed_factor_clks));
 	nxp3220_clk_register_composite(ctx, src_clks, ARRAY_SIZE(src_clks));
 
 	nexell_clk_sleep_init(ctx->reg, &nxp3220_cmu_syscore_ops,

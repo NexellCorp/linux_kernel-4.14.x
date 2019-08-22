@@ -33,7 +33,6 @@
 
 #include "f_iap.h"
 #include "u_iap.h"
-#include "u_f.h"
 
 #define WRITE_BUFLEN (4096)
 #define READ_BUFLEN  (4096 * 2)
@@ -46,26 +45,22 @@
 #endif
 
 /* Platform specific Fixes for nvidia t3 board */
-//#define NVIDIA_T3
 #ifdef NVIDIA_T3
 #define ENABLE_INTERRUPT_EP
 #define NVIDIA_T3_DISCONN_FIX
 #endif
 
 /* Platform specific Fixes for Renesas */
-//#define RENESAS
 #ifdef RENESAS
 #define ENABLE_INTERRUPT_EP
 #endif
 
 /* Platform specific Fixes for TI J6 JellyBean */
-//#define TI_J6_JB
 #ifdef TI_J6_JB
 #define J6_JB_FIXES
 #endif
 
 /* Platform specific Fixes for nvidia k1 board */
-//#define NVIDIA_K1
 #ifdef NVIDIA_K1
 #define ENABLE_INTERRUPT_EP
 #endif
@@ -106,7 +101,7 @@ struct f_iap {
 	int online;
 	int error;
 	bool connected;
-        bool disconnected;
+	bool disconnected;
 	atomic_t read_excl;
 	struct list_head tx_idle;
 	int rx_done;
@@ -318,11 +313,11 @@ requeue_req:
 #ifdef RENESAS
 		status = wait_event_interruptible_timeout(ipodg->read_queue, (ipodg->rx_done == 1),WAIT_TIMEOUT);
 #else
-                status = wait_event_interruptible(ipodg->read_queue, (ipodg->rx_done == 1));
+		status = wait_event_interruptible(ipodg->read_queue, (ipodg->rx_done == 1));
 #endif
 
 		if (ipodg->req_out_ep->status < 0) {
-                        /* See if the device is still is connected state */
+			/* See if the device is still is connected state */
 			if (ipodg->connected) {
 				usb_ep_fifo_flush(ipodg->out_ep);
 				usb_ep_dequeue(ipodg->out_ep, ipodg->req_out_ep);
@@ -338,6 +333,7 @@ requeue_req:
 			DBG (ipodg->func.config->cdev, "Wait interrupt failed %d %d %d\n",
 					status, ipodg->req_out_ep->status, ipodg->rx_done);
 			if (status == -ERESTARTSYS && ipodg->rx_done == 1) {
+				printk(KERN_DEBUG "In read line = %d\n", __LINE__);
 				ipodg->req_out_ep->status = 0;
 			} else {
 				usb_ep_fifo_flush(ipodg->out_ep);
@@ -372,16 +368,6 @@ requeue_req:
 			status = -EFAULT;
 			goto done;
 		}
-#if 0
-		if (buffer[0] != 0xff) {
-			int i;
-			printk ("Data size: %d [", ipodg->req_out_ep->actual);
-			for (i = 0; i < 9; i++)
-				printk ("+%x+", buffer[i]);
-			printk ("]\n");
-		}
-#endif
-
 	} else {
 		ERROR (ipodg->func.config->cdev, "Read error\n");
 		status = -EIO;
@@ -735,6 +721,8 @@ static void iap_unbind(struct usb_configuration *c, struct usb_function *f)
 	schedule_work(&work);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 43)
 	giap_cleanup();
+#else
+	kfree(func_to_sS(f);
 #endif
 #ifdef NVIDIA_T3_DISCONN_FIX
 	printk(KERN_INFO "[IAP_GADGET]: In func:%s lineno: %d\n", __func__, __LINE__);
@@ -767,6 +755,10 @@ static void disable_ipod_out(struct f_iap *ss)
 	cancel_delayed_work_sync(&disconnect_work);
 	_android_dev->dev = NULL;
 #endif
+	ss->write_pending = 0;
+	wake_up_interruptible(&ss->write_queue);
+	ss->rx_done = 1;
+	wake_up_interruptible(&ss->read_queue);
 	schedule_work(&work);
 
 	VDBG(cdev, "%s disabled\n", ss->func.name);
@@ -781,12 +773,11 @@ static int enable_ipod_out(struct usb_composite_dev *cdev,struct usb_function *f
 	printk(KERN_ALERT "%s   %s \n",__FILE__,__func__);
 #if LINUX_VERSION_CODE > KERNEL_VERSION(3, 0, 35)
 	if (config_ep_by_speed(cdev->gadget,f,ss->in_ep) ||
-	     config_ep_by_speed(cdev->gadget,f,ss->out_ep)
+		config_ep_by_speed(cdev->gadget,f,ss->out_ep)
 #ifdef ENABLE_INTERRUPT_EP
-	     ||
-	     config_ep_by_speed(cdev->gadget,f,ss->intr_ep)
+		|| config_ep_by_speed(cdev->gadget,f,ss->intr_ep)
 #endif
-	   ) {
+	) {
 		goto fail;
 	}
 #else
@@ -841,6 +832,9 @@ static int enable_ipod_out(struct usb_composite_dev *cdev,struct usb_function *f
 		usb_composite_register_dev(_android_dev);
 	}
 #endif
+	ss->rx_done = 1;
+	wake_up_interruptible(&ss->read_queue);
+
 	DBG(cdev, "%s enabled\n", ss->func.name);
 fail :
 	return result;
@@ -857,6 +851,7 @@ static int iap_set_alt(struct usb_function *f,
 
 	/* readers may be blocked waiting for us to go online */
 	wake_up_interruptible(&ss->read_queue);
+	wake_up_interruptible(&ss->write_queue);
 	// we know alt is zero
 	if (ss->in_ep->driver_data)
 		disable_ipod_out(ss);
@@ -874,7 +869,10 @@ static void iap_disable(struct usb_function *f)
 	disable_ipod_out(ss);
 
 	wake_up_interruptible(&ss->read_queue);
-        return;
+
+	ss->rx_done = 1;
+	wake_up_interruptible(&ss->read_queue);
+	return;
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 43)
@@ -913,6 +911,7 @@ static struct usb_function *iap_alloc(struct usb_function_instance *fi)
 	ss->func.unbind = iap_unbind;
 	ss->func.set_alt = iap_set_alt;
 	ss->func.disable = iap_disable;
+	ss->func.suspend = iap_disable;
 	ss->func.setup = iap_setup;
 	ss->func.free_func = iap_free;
 

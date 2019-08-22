@@ -23,6 +23,8 @@
 
 #define	DRV_NAME		"nxp3220_nfc"
 
+#define	CHECK_RnB_INTERRUPT
+
 static int nx_wait_for_irq(struct nxp3220_nfc *nfc, int nr_int);
 
 #ifdef DEBUG
@@ -105,7 +107,7 @@ static void nx_nandc_set_irq_enable(void __iomem *regs, int nr_int, int enable)
 	dmb();
 }
 
-static void nx_nandc_set_irq_mask(void __iomem *regs, int nr_int, int enable)
+static void nx_nandc_set_irq_mask(void __iomem *regs, int nr_int, int unmask)
 {
 	const uint32_t IRQRDYMS_POS    = 1;
 	const uint32_t IRQRDYMS_MASK   = (1UL << IRQRDYMS_POS);
@@ -114,7 +116,7 @@ static void nx_nandc_set_irq_mask(void __iomem *regs, int nr_int, int enable)
 	const uint32_t IRQDMAMS_MASK   = (1UL << IRQDMAMS_POS);
 
 	uint32_t val;
-	int unmasked = !enable; /* 1: unmasked, 0: masked */
+	int unmasked = !unmask; /* 1: unmasked, 0: masked */
 
 	val = readl(regs + NFC_STATUS);
 	if (nr_int == 0) {
@@ -127,6 +129,25 @@ static void nx_nandc_set_irq_mask(void __iomem *regs, int nr_int, int enable)
 
 	writel(val, regs + NFC_STATUS);
 	dmb();
+}
+
+static int nx_nandc_get_irq_pending(void __iomem *regs, int nr_int)
+{
+	const u32 IRQRDY_POS    = 2;
+	const u32 IRQDMA_POS    = 6;
+	const u32 IRQRDY_MASK   = (1UL << IRQRDY_POS);
+	const u32 IRQDMA_MASK   = (1UL << IRQDMA_POS);
+	u32 IRQPEND_POS, IRQPEND_MASK;
+
+	if (nr_int == NX_NANDC_INT_RDY) {
+		IRQPEND_POS  = IRQRDY_POS;
+		IRQPEND_MASK = IRQRDY_MASK;
+	} else {
+		IRQPEND_POS  = IRQDMA_POS;
+		IRQPEND_MASK = IRQDMA_MASK;
+	}
+
+	return  (int)((readl(regs + NFC_STATUS) & IRQPEND_MASK) >> IRQPEND_POS);
 }
 
 static void nx_nandc_clear_irq_pending(void __iomem *regs, int nr_int)
@@ -204,11 +225,15 @@ static void nx_nandc_set_cs_enable(void __iomem *regs, uint32_t chipsel,
 
 static uint32_t nx_nandc_get_ready(void __iomem *regs)
 {
+#ifdef CHECK_RnB_INTERRUPT
+	return nx_nandc_get_irq_pending(regs, NX_NANDC_INT_RDY);
+#else
 	const uint32_t BIT_SIZE  = 1;
 	const uint32_t BIT_POS   = 28;
 	const uint32_t BIT_MASK  = ((1 << BIT_SIZE) - 1) << BIT_POS;
 
 	return readl(regs + NFC_STATUS) & BIT_MASK;
+#endif
 }
 
 static void __maybe_unused nx_nandc_set_randseed(void __iomem *regs, int seed)
@@ -401,10 +426,6 @@ static int nx_nandc_run_dma(struct nxp3220_nfc *nfc)
 
 	/* clear DMA interrupt pending */
 	nx_nandc_clear_irq_pending(regs, NX_NANDC_INT_DMA);
-	/* dma interrupt mask disable */
-	nx_nandc_set_irq_mask(regs, NX_NANDC_INT_DMA, 0);
-	/* ready interrupt enable */
-	nx_nandc_set_irq_enable(regs, NX_NANDC_INT_DMA, 1);
 
 	/* DMA run */
 	nx_nandc_set_dmamode(regs, NX_NANDC_DMA_MODE);
@@ -465,7 +486,6 @@ static void nand_cmd_ctrl(struct mtd_info *mtd, int cmd, unsigned int ctrl)
 		spin_lock_irqsave(&nfc->irq_lock, flags);
 
 		nx_nandc_clear_irq_pending(regs, NX_NANDC_INT_RDY);
-		nx_nandc_clear_irq_pending(regs, NX_NANDC_INT_DMA);
 
 		spin_unlock_irqrestore(&nfc->irq_lock, flags);
 	}

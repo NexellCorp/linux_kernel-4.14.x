@@ -15,8 +15,8 @@
 
 #define DRM_UT_GEM	0x80
 
-#define DRM_DEBUG_GEM(fmt, ...)                                 \
-        drm_printk(KERN_DEBUG, DRM_UT_GEM, fmt, ##__VA_ARGS__)
+#define DRM_DEBUG_GEM(fmt, ...) \
+	drm_printk(KERN_DEBUG, DRM_UT_GEM, fmt, ##__VA_ARGS__)
 
 static const char * const gem_type_name[] = {
 	[NEXELL_BO_DMA] = "dma, non-cachable",
@@ -107,8 +107,8 @@ static void nx_drm_gem_object_delete(struct nx_gem_object *nx_obj)
 
 	if (obj->name) {
 		/* if not removed at drm_gem_object_handle_free */
-                idr_remove(&drm->object_name_idr, obj->name);
-                obj->name = 0;
+		idr_remove(&drm->object_name_idr, obj->name);
+		obj->name = 0;
 	}
 
 	drm_gem_object_release(obj);
@@ -235,7 +235,7 @@ static struct page *__alloc_order_pages(struct device *dev,
 
 		/*
 		 * For debug status :
-		 * DRM_DEBUG_GEM("va:%p, i:%d order:%d,%d, size:%u\n",
+		 * DRM_DEBUG_GEM("va:0x%p, i:%d order:%d,%d, size:%u\n",
 		 * page_address(page), i, max_order, order,
 		 * order_to_size(order));
 		 */
@@ -291,7 +291,7 @@ out:
 	if (!cpu_addr)
 		return ERR_PTR(-ENOMEM);
 
-	DRM_DEBUG_GEM("map va:%p, size:%zu\n", cpu_addr, size);
+	DRM_DEBUG_GEM("map va:0x%p, size:%zu\n", cpu_addr, size);
 
 	return cpu_addr;
 }
@@ -327,7 +327,7 @@ static int nx_drm_gem_sys_alloc(struct nx_gem_object *nx_obj,
 		if (!nx_obj->dma_addr)
 			nx_obj->dma_addr = dma_addr;
 
-		DRM_DEBUG_GEM("[%3d] va:%p, pa:%pad, size:%zu, remain:%zu\n",
+		DRM_DEBUG_GEM("[%3d] va:0x%p, pa:%pad, size:%zu, remain:%zu\n",
 			i, page_address(page), &dma_addr, length, remaining);
 
 		i++;
@@ -352,7 +352,7 @@ static int nx_drm_gem_sys_alloc(struct nx_gem_object *nx_obj,
 	nx_obj->cpu_addr = __drm_gem_sys_remap(nx_obj, size);
 	nx_obj->size = size;
 
-	DRM_DEBUG_GEM("va:%p, sgt:%p, nents:%d\n",
+	DRM_DEBUG_GEM("va:0x%p, sgt:0x%p, nents:%d\n",
 		nx_obj->cpu_addr, sgt,  sgt->nents);
 
 	return 0;
@@ -378,7 +378,7 @@ static void nx_drm_gem_sys_free(struct nx_gem_object *nx_obj)
 	for_each_sg(sgt->sgl, sg, sgt->nents, i) {
 		struct page *page = sg_page(sg);
 
-		DRM_DEBUG_GEM("[%3d] %p, va:%p, pa:0x%lx, size:%ld\n",
+		DRM_DEBUG_GEM("[%3d] 0x%p, va:0x%p, pa:0x%lx, size:%ld\n",
 			i, page, page_address(page),
 			(unsigned long)phys_to_dma(nx_obj->base.dev->dev,
 			page_to_phys(page)),
@@ -406,7 +406,7 @@ static int nx_drm_gem_sys_mmap(struct nx_gem_object *nx_obj,
 		unsigned long remainder = vma->vm_end - addr;
 		unsigned long len = sg->length;
 
-		DRM_DEBUG_GEM("vma:0x%lx~0x%lx, va:%p, size:%ld\n",
+		DRM_DEBUG_GEM("vma:0x%lx~0x%lx, va:0x%p, size:%ld\n",
 			addr, vma->vm_end, page_address(page), len);
 
 		if (offset >= sg->length) {
@@ -484,7 +484,7 @@ static int nx_drm_gem_sys_contig_alloc(struct nx_gem_object *nx_obj,
 	/* cached flush */
 	__gem_page_dev_sync(drm->dev, page, size, DMA_BIDIRECTIONAL);
 
-	DRM_DEBUG_GEM("va:%p->%p, pa:%pad, size:%zu\n",
+	DRM_DEBUG_GEM("va:0x%p->0x%p, pa:%pad, size:%zu\n",
 		page_address(page), nx_obj->cpu_addr, &nx_obj->dma_addr, size);
 
 	return 0;
@@ -506,7 +506,7 @@ static void nx_drm_gem_sys_contig_free(struct nx_gem_object *nx_obj)
 	unsigned long pages = PAGE_ALIGN(nx_obj->size) >> PAGE_SHIFT;
 	int i;
 
-	DRM_DEBUG_GEM("va:%p, pa:%pad, size:%zu\n",
+	DRM_DEBUG_GEM("va:0x%p, pa:%pad, size:%zu\n",
 		page_address(page), &nx_obj->dma_addr, nx_obj->size);
 
 	vunmap(nx_obj->cpu_addr);
@@ -531,7 +531,7 @@ static int nx_drm_gem_sys_contig_mmap(struct nx_gem_object *nx_obj,
 	dma_addr = nx_obj->dma_addr;
 	size = vma->vm_end - vma->vm_start;
 
-	DRM_DEBUG_GEM("va:%p, pa:%pad, vma:0x%lx~0x%lx, size:%zu\n",
+	DRM_DEBUG_GEM("va:0x%p, pa:%pad, vma:0x%lx~0x%lx, size:%zu\n",
 		nx_obj->cpu_addr, &dma_addr, vma->vm_start, vma->vm_end, size);
 
 	nr_vma_pages = (size) >> PAGE_SHIFT;
@@ -578,8 +578,8 @@ static int nx_drm_gem_dma_alloc(struct nx_gem_object *nx_obj,
 	nx_obj->dma_addr = dma_addr;
 	nx_obj->size = size;
 
-	DRM_DEBUG_GEM("va:%p, pa:%pad, size:%zu\n",
-			cpu_addr, &dma_addr, size);
+	DRM_DEBUG_GEM(
+		"va:0x%p, pa:%pad, size:%zu\n", cpu_addr, &dma_addr, size);
 
 	return 0;
 
@@ -604,7 +604,7 @@ static void nx_drm_gem_dma_free(struct nx_gem_object *nx_obj)
 	dma_addr = nx_obj->dma_addr;
 	size = nx_obj->size;
 
-	DRM_DEBUG_GEM("va:%p, pa:%pad, size:%zu\n",
+	DRM_DEBUG_GEM("va:0x%p, pa:%pad, size:%zu\n",
 			cpu_addr, &dma_addr, nx_obj->size);
 
 	if (cpu_addr)
@@ -629,7 +629,7 @@ static int nx_drm_gem_dma_mmap(struct nx_gem_object *nx_obj,
 	dma_addr = nx_obj->dma_addr;
 	size = vma->vm_end - vma->vm_start;
 
-	DRM_DEBUG_GEM("va:%p, pa:%pad, vma:0x%lx~0x%lx, size:%zu\n",
+	DRM_DEBUG_GEM("va:0x%p, pa:%pad, vma:0x%lx~0x%lx, size:%zu\n",
 		cpu_addr, &dma_addr, vma->vm_start, vma->vm_end, size);
 
 	return dma_mmap_writecombine(drm->dev, vma, cpu_addr, dma_addr, size);
@@ -666,7 +666,7 @@ static void nx_drm_gem_buf_free(struct nx_gem_object *nx_obj)
 	struct drm_gem_object *obj = &nx_obj->base;
 	uint32_t flags = nx_obj->flags;
 
-	DRM_DEBUG_GEM("va:%p, pa:%pad, attach:%s\n",
+	DRM_DEBUG_GEM("va:0x%p, pa:%pad, attach:%s\n",
 		nx_obj->cpu_addr, &nx_obj->dma_addr,
 		obj->import_attach ? "o" : "x");
 
@@ -745,7 +745,7 @@ static int nx_drm_gem_buf_mmap(struct nx_gem_object *nx_obj,
 	uint32_t flags = nx_obj->flags;
 	int ret;
 
-	DRM_DEBUG_GEM("va:%p, pa:%pad, s:0x%lx, e:0x%lx, size:%zu\n",
+	DRM_DEBUG_GEM("va:0x%p, pa:%pad, s:0x%lx, e:0x%lx, size:%zu\n",
 		nx_obj->cpu_addr, &nx_obj->dma_addr,
 		vma->vm_start, vma->vm_end, nx_obj->size);
 
@@ -814,7 +814,7 @@ static void __gem_vma_list_add(struct vm_area_struct *vma)
 	list_add(&vma_list->list, &nx_obj->vmas);
 	mutex_unlock(&nx_obj->lock);
 
-	DRM_DEBUG_GEM("adding %p\n", vma);
+	DRM_DEBUG_GEM("adding 0x%p\n", vma);
 }
 
 static void __gem_vma_list_del(struct vm_area_struct *vma)
@@ -831,7 +831,7 @@ static void __gem_vma_list_del(struct vm_area_struct *vma)
 			continue;
 		list_del(&vma_list->list);
 		kfree(vma_list);
-		DRM_DEBUG_GEM("deleting %p\n", vma);
+		DRM_DEBUG_GEM("deleting 0x%p\n", vma);
 		break;
 	}
 	mutex_unlock(&nx_obj->lock);
@@ -1052,7 +1052,11 @@ static int nx_drm_gem_mmap_vma(struct file *filp, struct vm_area_struct *vma)
 
 	drm_gem_object_put_unlocked(obj);
 
-	DRM_DEBUG_GEM("exit\n");
+	DRM_DEBUG_GEM(
+		"exit pa:%pad, 0x%lx~0x%lx 0x%lx, pgoff 0x%lx\n",
+		&to_nx_gem_obj(obj)->dma_addr,
+		vma->vm_start, vma->vm_end, vma->vm_end - vma->vm_start,
+		vma->vm_pgoff);
 
 	return ret;
 }
@@ -1320,7 +1324,7 @@ int nx_drm_gem_dumb_create(struct drm_file *file_priv,
 	args->pitch = ALIGN(args->pitch, 8);
 	args->size = (uint64_t)args->pitch * args->height;
 
-	DRM_DEBUG_GEM("widht:%d, bpp:%d, pitch:%d, flags:0x%x, file:%p\n",
+	DRM_DEBUG_GEM("widht:%d, bpp:%d, pitch:%d, flags:0x%x, file:0x%p\n",
 		args->width, args->bpp, args->pitch, flags, file_priv);
 
 	/* create gem buffer */
@@ -1463,7 +1467,7 @@ struct sg_table *nx_drm_gem_prime_get_sg_table(struct drm_gem_object *obj)
 
 	noncontig = __gem_is_system_noncontig(nx_obj->flags);
 
-	DRM_DEBUG_GEM("enter sgt:%p %s [%s]\n",
+	DRM_DEBUG_GEM("enter sgt:0x%p %s [%s]\n",
 			sgt, noncontig ? "non-contig" : "contig",
 			gem_type_name[nx_obj->flags]);
 
@@ -1494,7 +1498,7 @@ struct sg_table *nx_drm_gem_prime_get_sg_table(struct drm_gem_object *obj)
 				PAGE_SIZE << compound_order(page), 0);
 			sg_dma_address(sg) = sg_phys(sg);
 
-			DRM_DEBUG_GEM("[%d] sg pa:0x%lx, va:%p, size:%d\n",
+			DRM_DEBUG_GEM("[%d] sg pa:0x%lx, va:0x%p, size:%d\n",
 				n++, (unsigned long)page_to_phys(page),
 				page_address(sg_page(sg)), sg_dma_len(sg));
 
@@ -1511,7 +1515,7 @@ struct sg_table *nx_drm_gem_prime_get_sg_table(struct drm_gem_object *obj)
 		sg_set_page(sg, phys_to_page(sg_phys(s)),
 					PAGE_ALIGN(obj->size), 0);
 
-		DRM_DEBUG_GEM("sg pa:%pad, va:%p size:%d\n",
+		DRM_DEBUG_GEM("sg pa:%pad, va:0x%p size:%d\n",
 			&nx_obj->dma_addr, nx_obj->cpu_addr, (int)obj->size);
 	}
 
@@ -1667,7 +1671,7 @@ out:
 
 	mutex_unlock(&drm->struct_mutex);
 
-	DRM_DEBUG_GEM("sync va:%p pa:%pad\n",
+	DRM_DEBUG_GEM("sync va:0x%p pa:%pad\n",
 			nx_obj->cpu_addr, &nx_obj->dma_addr);
 
 	return 0;
@@ -1697,7 +1701,7 @@ int nx_drm_gem_get_ioctl(struct drm_device *drm, void *data,
 	drm_gem_object_unreference(obj);
 	mutex_unlock(&drm->struct_mutex);
 
-	DRM_DEBUG_GEM("get dma pa:%pad, va:%p\n",
+	DRM_DEBUG_GEM("get dma pa:%pad, va:0x%p\n",
 			&nx_obj->dma_addr, nx_obj->cpu_addr);
 
 	return 0;
@@ -1712,7 +1716,7 @@ dma_addr_t nx_drm_gem_get_dma_addr(struct drm_device *drm, unsigned int handle,
 	mutex_lock(&drm->struct_mutex);
 	obj = drm_gem_object_lookup(file_priv, handle);
 	if (!obj) {
-		DRM_ERROR("failed to lookup gem object %d, file:%p\n",
+		DRM_ERROR("failed to lookup gem object %d, file:0x%p\n",
 			  handle, file_priv);
 		return 0;
 	}

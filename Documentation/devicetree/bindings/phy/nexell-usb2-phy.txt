@@ -15,6 +15,7 @@ Optional properties:
 	the bus to be powered.
 - ehci,vbus-gpio: If present, specifies a gpio that needs to be activated for
 	the bus to be powered.
+- phy-supply: supply for USB phy
 
 Example:
 

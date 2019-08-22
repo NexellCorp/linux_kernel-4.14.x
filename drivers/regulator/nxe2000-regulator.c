@@ -126,6 +126,9 @@ static int __nxe2000_set_voltage(struct device *parent,
 	int ret;
 	uint8_t vout_val;
 
+	dev_dbg(ri->dev, "%s: %d(%d)~%d(%d)\n",
+		ri->name, min_uV, ri->min_uV, max_uV, ri->max_uV);
+
 	if ((min_uV < ri->min_uV) || (max_uV > ri->max_uV))
 		return -EDOM;
 
@@ -488,6 +491,12 @@ nxe2000_regulator_preinit(struct device *parent, struct nxe2000_regulator *ri,
 			  struct nxe2000_regulator_platform_data *nxe2000_pdata)
 {
 	int ret = 0;
+
+	dev_dbg(ri->dev, "%s: %d~%d, init:%s (%d), sleep slots:%d\n",
+		ri->name, ri->min_uV, ri->max_uV,
+		nxe2000_pdata->init_enable ? "set" : "unset",
+		nxe2000_pdata->init_uV,
+		nxe2000_pdata->sleep_slots);
 
 	if ((nxe2000_pdata->init_uV > -1) && nxe2000_pdata->set_init_uV) {
 		ret = __nxe2000_set_voltage(parent, ri, nxe2000_pdata->init_uV,

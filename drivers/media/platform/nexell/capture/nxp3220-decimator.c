@@ -675,12 +675,13 @@ static struct platform_driver nx_decimator_driver = {
 	},
 };
 
-#ifdef CONFIG_DEFERRED_DECIMATOR
+#ifdef CONFIG_DEFERRED_UP_VIP
 static int __init nx_decimator_driver_init(void)
 {
 	return platform_driver_register(&nx_decimator_driver);
 }
-deferred_module_init(nx_decimator_driver_init)
+
+subsys_initcall(nx_decimator_driver_init);
 #else
 module_platform_driver(nx_decimator_driver);
 #endif

@@ -1165,7 +1165,6 @@ extern initcall_t __deferred_initcall_end[];
 static initcall_t *deferred_initcall_levels[] __initdata = {
 	__deferred_initcall0_start,
 	__deferred_initcall1_start,
-	__deferred_initcall2_start,
 	__deferred_initcall_end,
 };
 

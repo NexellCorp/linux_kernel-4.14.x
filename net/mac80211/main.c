@@ -1281,7 +1281,7 @@ static void __exit ieee80211_exit(void)
 }
 
 #ifdef CONFIG_DEFERRED_WIRELESS
-deferred_0_initcall(ieee80211_init);
+deferred_early_initcall(ieee80211_init);
 #else
 subsys_initcall(ieee80211_init);
 #endif

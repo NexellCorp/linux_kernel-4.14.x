@@ -43,6 +43,7 @@ struct nx_usb2_phy_pdata {
 	struct device *dev;
 	spinlock_t lock;
 	struct clk *clk_ahb, *clk_apb;
+	struct regulator *phy_supply;
 	atomic_t refcount;
 	const struct nx_usb2_phy_config *cfg;
 	struct nx_usb2_phy *phys[MAX_PHYS];
@@ -54,9 +55,18 @@ static int nx_usb2_phy_power_on(struct phy *phy)
 	struct nx_usb2_phy_pdata *pdata = p->pdata;
 	int ret = 0;
 
-	dev_dbg(p->pdata->dev, "Request power on '%s'\n", p->label);
+	dev_dbg(pdata->dev, "Request power on '%s'\n", p->label);
 
 	if (atomic_read(&pdata->refcount) == 0) {
+		if (pdata->phy_supply) {
+			ret = regulator_enable(pdata->phy_supply);
+			if (ret) {
+				dev_err(pdata->dev,
+					"Failed to enabling supply !!!\n");
+				return ret;
+			}
+		}
+
 		if (!IS_ERR(pdata->clk_ahb) &&
 		    !__clk_is_enabled(pdata->clk_ahb)) {
 			ret = clk_prepare_enable(pdata->clk_ahb);
@@ -86,7 +96,7 @@ static int nx_usb2_phy_power_off(struct phy *phy)
 	struct nx_usb2_phy_pdata *pdata = p->pdata;
 	int ret = 0;
 
-	dev_dbg(p->pdata->dev, "Request power off '%s'\n", p->label);
+	dev_dbg(pdata->dev, "Request power off '%s'\n", p->label);
 
 	if (p->power_off) {
 		ret = p->power_off(p);
@@ -102,6 +112,9 @@ static int nx_usb2_phy_power_off(struct phy *phy)
 
 			if (!IS_ERR(pdata->clk_apb))
 				clk_disable_unprepare(pdata->clk_apb);
+
+			if (pdata->phy_supply)
+				ret = regulator_enable(pdata->phy_supply);
 		}
 	}
 
@@ -204,6 +217,16 @@ static int nx_usb2_phy_probe(struct platform_device *pdev)
 		ret = clk_prepare_enable(pdata->clk_apb);
 		if (ret)
 			return ret;
+	}
+
+	pdata->phy_supply = devm_regulator_get(dev, "phy");
+	if (pdata->phy_supply) {
+		ret = regulator_enable(pdata->phy_supply);
+		if (ret) {
+			dev_err(pdata->dev,
+				"Failed to enabling supply !!!\n");
+			return ret;
+		}
 	}
 
 	dev_info(dev, "phy mapped PA %08lx to VA %p\n",

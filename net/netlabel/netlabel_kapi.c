@@ -1528,7 +1528,7 @@ init_failure:
 }
 
 #ifdef CONFIG_DEFERRED_WIRELESS
-deferred_0_initcall(netlbl_init);
+deferred_early_initcall(netlbl_init);
 #else
 subsys_initcall(netlbl_init);
 #endif

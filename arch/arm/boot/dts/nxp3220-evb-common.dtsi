@@ -207,7 +207,9 @@
 			thermal-sensors = <&tmuctrl_0>;
 			polling-delay-passive = <1000>;
 			polling-delay = <1000>;
+
 			trips {
+				/*
 				cpu_alert0: cpu-alert-0 {
 					temperature = <40000>;
 					hysteresis = <10000>;
@@ -228,6 +230,7 @@
 					hysteresis = <10000>;
 					type = "critical";
 				};
+				*/
 			};
 		};
 	};
@@ -256,8 +259,14 @@
 	status = "okay";
 };
 
+&deinterlacer {
+	status = "okay";
+};
+
 &drm {
         status = "okay";
+	color-key-disable;
+	alphablend-disable;
 };
 
 &drm_lvds {
@@ -283,6 +292,7 @@
 
 &dwmmc_0 {
 	cap-mmc-highspeed;
+	mmc-ddr-3_3v;
 	broken-cd;
 	non-removable;
 	nexell,drive_shift = <0x04>;

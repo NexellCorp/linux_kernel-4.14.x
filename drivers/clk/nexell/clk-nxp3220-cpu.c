@@ -18,12 +18,7 @@
 	__DIV(_id, NULL, cname, pname, o, 0, 8, 0, 0)
 
 /* FIXME: resolve div_sys_cpu_backup0 dependency chain */
-PNAME(cpu_mux_p)		= { "pll_cpu" };
-
-static const struct nexell_fixed_factor_clock cpu_fixed_factor_clks[] __initconst = {
-	FFACTOR(CLK_CPU_DIV_PLL, "div_cpu_pll", "pll_cpu", 1, 1,
-		CLK_SET_RATE_PARENT),
-};
+PNAME(cpu_mux_p) = { "pll_cpu_div" };
 
 static const struct nexell_mux_clock cpu_mux_clks[] __initconst = {
 	MUX(CLK_MUX_CPU_ARM, "mux_cpu_arm", cpu_mux_p, CPU_CPU0_ARM, 0, 4),
@@ -74,7 +69,7 @@ static const struct nexell_gate_clock cpu_gate_clks[] __initconst = {
 	GATE_CPU(CLK_CPU_AXIM_APB, "cpu_axim_apb", "div_cpu_apb",
 	     CPU_CPU0_ARM + 0x10, 10, 0, 0),
 
-	GATE_CPU(CLK_CPU_PLL_DIV, "cpu_pll_div", "div_cpu_pll",
+	GATE_CPU(CLK_CPU_PLL_DIV, "cpu_pll_div", "pll_cpu_div",
 	     PLL_CPU_DIV0 + 0x10, 0, 0, 0),
 	GATE_CPU(CLK_CPU_HPM, "cpu_hpm", "div_cpu_hpm",
 	     HPM_CPU0 + 0x10, 0, 0, 0),
@@ -141,8 +136,6 @@ static void __init nxp3220_cmu_cpu_init(struct device_node *np)
 	}
 
 	nexell_clk_register_mux(ctx, cpu_mux_clks, ARRAY_SIZE(cpu_mux_clks));
-	nexell_clk_register_fixed_factor(ctx, cpu_fixed_factor_clks,
-					 ARRAY_SIZE(cpu_fixed_factor_clks));
 	nexell_clk_register_div(ctx, cpu_div_clks, ARRAY_SIZE(cpu_div_clks));
 	nxp3220_clk_register_gate(ctx, cpu_gate_clks,
 				  ARRAY_SIZE(cpu_gate_clks));

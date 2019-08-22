@@ -24,6 +24,8 @@
 #include <linux/regmap.h>
 #include <linux/slab.h>
 #include <linux/of.h>
+ #include <linux/of_gpio.h>
+#include <linux/gpio/consumer.h>
 #include <sound/core.h>
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
@@ -46,6 +48,9 @@ struct alc5623_priv {
 	unsigned int sysclk;
 	unsigned int add_ctrl;
 	unsigned int jack_det_ctrl;
+	struct gpio_desc *amp_mute;
+	struct gpio_desc *amp_power;
+	int dac_volume;
 };
 
 static struct reg_default init_list[] = {
@@ -63,11 +68,11 @@ static struct reg_default init_list[] = {
 	{ALC5623_PWR_MANAG_ADD2,	0xa7f7},
 	{ALC5623_PWR_MANAG_ADD3,	0x96ca},
 	{ALC5623_DAI_CONTROL,		0x8000},
-	{ALC5623_STEREO_DAC_VOL,	0x4000},
+	{ALC5623_STEREO_DAC_VOL,	0x4000}, /* 0x4000 -> 0x4b0b */
 	{ALC5623_OUTPUT_MIXER_CTRL,	0x9f00},
 	{ALC5623_SPK_OUT_VOL,		0x0000},
 	{ALC5623_HP_OUT_VOL,		0x0000},
-	{ALC5623_MIC_ROUTING_CTRL,	0xf0e0},
+	{ALC5623_MIC_ROUTING_CTRL,	0xf0e0}, /* 0xe0e0 */
 	{ALC5623_MIC_CTRL,		0x0800},
 	{ALC5623_ADC_REC_MIXER,		0x3f3f},
 	{ALC5623_ADC_REC_GAIN,		0xf58b},
@@ -82,11 +87,21 @@ static inline int alc5623_reset(struct snd_soc_codec *codec)
 static void alc5623_reg_init(struct snd_soc_codec *codec)
 {
 	struct alc5623_priv *alc5623 = snd_soc_codec_get_drvdata(codec);
+	unsigned int val, mask;
 	int i;
 
-	for (i = 0; i < RT5623_INIT_REG_LEN; i++)
+	for (i = 0; i < RT5623_INIT_REG_LEN; i++) {
 		regmap_write(alc5623->regmap,
 			      init_list[i].reg, init_list[i].def);
+		if (alc5623->dac_volume != -1) {
+			mask = (((1 << 5) - 1) << 8) | (((1 << 5) - 1) << 0);
+			val = ((alc5623->dac_volume & ((1 << 5) - 1)) << 8) |
+				((alc5623->dac_volume & ((1 << 5) - 1)) << 0);
+
+			regmap_update_bits(alc5623->regmap,
+				      ALC5623_STEREO_DAC_VOL, mask, val);
+		}
+	}
 }
 
 #define ALC5623_ADD1_BIAS_ON_ADD (ALC5623_PWR_ADD1_MIC1_BIAS_EN \
@@ -841,11 +856,18 @@ static int alc5623_pcm_hw_params(struct snd_pcm_substream *substream,
 static int alc5623_mute(struct snd_soc_dai *dai, int mute)
 {
 	struct snd_soc_codec *codec = dai->codec;
+	struct alc5623_priv *alc5623 = snd_soc_codec_get_drvdata(codec);
 	u16 hp_mute = ALC5623_MISC_M_DAC_L_INPUT | ALC5623_MISC_M_DAC_R_INPUT;
 	u16 mute_reg = snd_soc_read(codec, ALC5623_MISC_CTRL) & ~hp_mute;
 
-	if (mute)
+	if (mute) {
 		mute_reg |= hp_mute;
+		if (alc5623->amp_mute)
+			gpiod_set_value_cansleep(alc5623->amp_mute, 0);
+	} else {
+		if (alc5623->amp_mute)
+			gpiod_set_value_cansleep(alc5623->amp_mute, 1);
+	}
 
 	return snd_soc_write(codec, ALC5623_MISC_CTRL, mute_reg);
 }
@@ -1147,6 +1169,22 @@ static int alc5623_i2c_probe(struct i2c_client *client,
 			ret = of_property_read_u32(np, "jack-det-ctrl", &val32);
 			if (!ret)
 				alc5623->jack_det_ctrl = val32;
+
+			alc5623->amp_mute = devm_gpiod_get_optional(&client->dev,
+					"amp-mute", GPIOD_OUT_HIGH);
+			if (!IS_ERR(alc5623->amp_mute))
+				gpiod_direction_output(alc5623->amp_mute, 0);
+
+			alc5623->amp_power = devm_gpiod_get_optional(&client->dev,
+					"amp-power", GPIOD_OUT_HIGH);
+			if (!IS_ERR(alc5623->amp_power))
+				gpiod_direction_output(alc5623->amp_power, 1);
+
+			ret = of_property_read_u32(np, "dac-volume", &val32);
+			if (!ret)
+				alc5623->dac_volume = val32;
+			else
+				alc5623->dac_volume = -1;
 		}
 	}
 

@@ -966,7 +966,7 @@ static int __init param_sysfs_init_split(void)
 
 	return 0;
 }
-deferred_0_initcall(param_sysfs_init_split);
+deferred_early_initcall(param_sysfs_init_split);
 #endif
 
 #endif /* CONFIG_SYSFS */

@@ -187,17 +187,12 @@ static struct platform_driver dw_mci_nexell_pltfm_driver = {
 		.pm		= &dw_mci_nexell_pmops,
 	},
 };
-#if defined(CONFIG_DEFERRED_NEXELL_MMC) || \
-	defined(CONFIG_DEFERRED_UP_NEXELL_MMC)
+#if defined(CONFIG_DEFERRED_UP_MMC)
 static int __init dw_mmc_nexell_init(void)
 {
 	return platform_driver_register(&dw_mci_nexell_pltfm_driver);
 }
-#if CONFIG_DEFERRED_LEVEL == 1
-early_device_initcall(dw_mmc_nexell_init)
-#elif CONFIG_DEFERRED_LEVEL == 2
 subsys_initcall(dw_mmc_nexell_init);
-#endif
 #else
 module_platform_driver(dw_mci_nexell_pltfm_driver);
 #endif

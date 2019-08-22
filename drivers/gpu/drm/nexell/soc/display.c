@@ -212,10 +212,10 @@ static void nx_display_sync_mode(struct nx_display *dp)
 	int efp = SYNC_VAL(dpp->evfront_porch, vm->vfront_porch);
 	int ebp = SYNC_VAL(dpp->evback_porch, vm->vback_porch);
 	int esw = SYNC_VAL(dpp->evsync_len, vm->vsync_len);
-	int eso = SYNC_VAL(dpp->evstart_offs, 0);
-	int eeo = SYNC_VAL(dpp->evend_offs, 0);
-	int vso = SYNC_VAL(dpp->vstart_offs, 0);
-	int veo = SYNC_VAL(dpp->vend_offs, 0);
+	int eso = SYNC_VAL(dpp->evstart_offs, 1);
+	int eeo = SYNC_VAL(dpp->evend_offs, 1);
+	int vso = SYNC_VAL(dpp->vstart_offs, 1);
+	int veo = SYNC_VAL(dpp->vend_offs, 1);
 
 	nx_dpc_set_sync(reg, INTERLACE(flags),
 			vm->hactive, vm->vactive/div,
@@ -232,9 +232,11 @@ static void nx_display_sync_mode(struct nx_display *dp)
 		"%s: crtc.%d: y:%4d, vfp:%3d, vbp:%3d, vsw:%3d, vi:%d\n",
 		 __func__, dp->module, vm->vactive/div, vm->vfront_porch,
 		 vm->vback_porch, vm->vsync_len, vs_pol);
-	dev_dbg(dp->dev, "%s: crtc.%d: offset vs:%d, ve:%d, es:%d, ee:%d\n",
+	dev_dbg(dp->dev,
+		"%s: crtc.%d: offset vs:%d, ve:%d, es:%d, ee:%d\n",
 		__func__, dp->module, vso, veo, eso, eeo);
-	dev_dbg(dp->dev, "%s: crtc.%d: even   ef:%d, eb:%d, es:%d]\n",
+	dev_dbg(dp->dev,
+		"%s: crtc.%d: even   ef:%d, eb:%d, es:%d]\n",
 		__func__, dp->module, efp, ebp, esw);
 }
 
@@ -439,6 +441,9 @@ static int nx_overlay_rgb_set_format(struct nx_overlay *ovl,
 	if (ovl->color.alphablend < MAX_ALPHA_VALUE)
 		alpha = true;
 
+	if (!ovl->alphablend_on)
+		alpha = false;
+
 	nx_mlc_set_layer_lock_size(reg, id, lock_size);
 	nx_mlc_set_layer_alpha(reg, id, ovl->color.alphablend, alpha);
 	nx_mlc_set_rgb_color_inv(reg, id, ovl->color.invertcolor, false);
@@ -531,6 +536,7 @@ static int nx_overlay_yuv_set_pos(struct nx_overlay *ovl,
 				  int dst_x, int dst_y, int dst_w, int dst_h,
 				  bool sync)
 {
+	struct nx_display *dp = ovl->dp;
 	struct nx_mlc_reg *reg = ovl->base;
 	int sx, sy, ex, ey;
 	int hf = 1, vf = 1;
@@ -569,6 +575,19 @@ static int nx_overlay_yuv_set_pos(struct nx_overlay *ovl,
 	if (ex == 0 || ey == 0 ||
 		(src_w == dst_w && src_h == dst_h))
 		hf = 0, vf = 0;
+
+	if (dp->video_scale_hf_max && src_w >= dp->video_scale_hf_max)
+		hf = 0;
+
+	if (dp->video_scale_vf_max && src_h >= dp->video_scale_vf_max)
+		vf = 0;
+
+	/* limitation: NV12/NV16/YUYV is not support veritical filter */
+	if (src_h > dst_h &&
+	   (ovl->format == NX_MLC_FMT_VID_YUYV ||
+	    ovl->format == NX_MLC_FMT_VID_422_CBCR ||
+	    ovl->format == NX_MLC_FMT_VID_420_CBCR))
+		vf = 0;
 
 	ovl->h_filter = hf;
 	ovl->v_filter = vf;
@@ -723,7 +742,7 @@ void nx_overlay_set_color(struct nx_overlay *ovl,
 
 		if (ovl->pixelbyte == 2) {
 			color = rgb888_to_rgb565((u32)color);
-			color = rgb565_to_rgb888((u16) color);
+			color = rgb565_to_rgb888((u16)color);
 		}
 
 		ovl->color.invertcolor = (on ? color : 0);
@@ -812,14 +831,11 @@ void nx_overlay_set_addr_yuv(struct nx_overlay *ovl,
 	}
 
 	lu_a += cl + (ct * lu_s);
+	cb_a = cb_a + xo + (yo * cb_s);
+	cr_a = cr_a + xo + (yo * cr_s);
 
-	if (ovl->format & FMT_VID_YUV_TO_YVU) {
-		cr_a = cb_a + xo + (yo * cb_s);
-		cb_a = cr_a + xo + (yo * cr_s);
-	} else {
-		cb_a = cb_a + xo + (yo * cb_s);
-		cr_a = cr_a + xo + (yo * cr_s);
-	}
+	if (ovl->format & FMT_VID_YUV_TO_YVU)
+		swap(cb_a, cr_a);
 
 	dev_dbg(ovl->dp->dev,
 		"%s: %s, lu:0x%x,%d, cb:0x%x,%d, cr:0x%x,%d : %d,%d\n",

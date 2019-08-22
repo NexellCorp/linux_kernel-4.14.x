@@ -17,12 +17,7 @@
 #define DIV_DDR(_id, cname, pname, o)	\
 	__DIV(_id, NULL, cname, pname, o, 0, 8, 0, 0)
 
-static const struct nexell_fixed_factor_clock ddr_fixed_factor_clks[] __initconst = {
-	FFACTOR(CLK_PLL_DDR0_DIV, "pll_ddr0_div", "pll_ddr0", 1, 2, 0),
-	FFACTOR(CLK_PLL_DDR1_DIV, "pll_ddr1_div", "pll_ddr1", 1, 2, CLK_SET_RATE_PARENT),
-};
-
-PNAME(ddr_mux_p)		= { "pll_ddr0_div", "pll_ddr1_div" };
+PNAME(ddr_mux_p) = { "pll_ddr0_div", "pll_ddr1_div" };
 
 static const struct nexell_mux_clock ddr_mux_clks[] __initconst = {
 	MUX(CLK_MUX_DDR, "mux_ddr", ddr_mux_p, DDR_DDR0, 0, 1),
@@ -78,8 +73,6 @@ static void __init nxp3220_cmu_ddr_init(struct device_node *np)
 		return;
 	}
 
-	nexell_clk_register_fixed_factor(ctx, ddr_fixed_factor_clks,
-					 ARRAY_SIZE(ddr_fixed_factor_clks));
 	nexell_clk_register_mux(ctx, ddr_mux_clks, ARRAY_SIZE(ddr_mux_clks));
 	nexell_clk_register_div(ctx, ddr_div_clks, ARRAY_SIZE(ddr_div_clks));
 	nxp3220_clk_register_gate(ctx, ddr_gate_clks,
