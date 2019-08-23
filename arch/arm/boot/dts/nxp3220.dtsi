@@ -772,10 +772,9 @@
 			interrupts = <GIC_SPI 27 IRQ_TYPE_NONE>;
 			interrupt-names = "int0";
 			assigned-clocks = <&cmu CLK_SRC_CAN0_CORE>,
-					  <&cmu CLK_CAN0_CORE>,
-					  <&pll_0 0>;
-			assigned-clock-parents = <&pll_0 0>, <0>, <0>;
-			assigned-clock-rates = <0>, <10000000>, <0>;
+					  <&cmu CLK_CAN0_CORE>;
+			assigned-clock-parents = <&pll_0 0>, <0>;
+			assigned-clock-rates = <0>, <200000000>;
 			clocks = <&cmu CLK_CAN0_APB>, <&cmu CLK_CAN0_CORE>;
 			clock-names = "hclk", "cclk";
 			pinctrl-names = "default";
@@ -791,10 +790,9 @@
 			interrupts = <GIC_SPI 29 IRQ_TYPE_NONE>;
 			interrupt-names = "int0";
 			assigned-clocks = <&cmu CLK_SRC_CAN1_CORE>,
-					  <&cmu CLK_CAN1_CORE>,
-					  <&pll_0 0>;
-			assigned-clock-parents = <&pll_0 0>, <0>, <0>;
-			assigned-clock-rates = <0>, <10000000>, <0>;
+					  <&cmu CLK_CAN1_CORE>;
+			assigned-clock-parents = <&pll_0 0>, <0>;
+			assigned-clock-rates = <0>, <200000000>;
 			clocks = <&cmu CLK_CAN1_APB>, <&cmu CLK_CAN1_CORE>;
 			clock-names = "hclk", "cclk";
 			pinctrl-names = "default";
