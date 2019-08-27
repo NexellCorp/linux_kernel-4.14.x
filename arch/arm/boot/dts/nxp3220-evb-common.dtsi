@@ -266,7 +266,6 @@
 &drm {
         status = "okay";
 	color-key-disable;
-	alphablend-disable;
 };
 
 &drm_lvds {
