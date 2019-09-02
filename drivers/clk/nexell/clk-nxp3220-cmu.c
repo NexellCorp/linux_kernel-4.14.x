@@ -140,7 +140,7 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 		COMP_DIV_SRC(SYS0_HSIF_AXI)
 		COMP_GATE_SRC(SYS0_HSIF_AXI)
 	}, {
-		COMP_BASE_SRC(CLK_SRC_CPU_BACKUP0, "src_cpu_backup0")
+		COMP_BASE_SRC_F(CLK_SRC_CPU_BACKUP0, "src_cpu_backup0", 0)
 		COMP_MUX_SRC(CPU_BACKUP0)
 		COMP_DIV_SRC(CPU_BACKUP0)
 		COMP_GATE_SRC(CPU_BACKUP0)
@@ -423,7 +423,7 @@ static const struct nexell_div_clock sys_div_clks[] __initconst = {
 	DIV_SYS(CLK_SYS_DIV_SYS0_HSIF_APB, "div_sys_sys0_hsif_apb",
 	    "div_sys_sys0_hsif_axi", SYS0_HSIF_AXI + 0x64),
 	DIV_SYS(CLK_SYS_DIV_CPU_BACKUP0, "div_sys_cpu_backup0",
-		"src_cpu_backup0", CPU_BACKUP0 + 0x64),
+		"src_cpu_backup0", CPU_BACKUP0 + 0x60),
 	DIV_SYS(CLK_SYS_DIV_CSSYS0_HCLK, "div_sys_cssys0_hclk",
 		"src_cssys0_hclk", CSSYS0_HCLK + 0x60),
 	DIV_SYS(CLK_SYS_DIV_BLK_CMU0_APB, "div_sys_blk_cmu0_apb",
@@ -672,7 +672,7 @@ static const struct nexell_gate_clock sys_gate_clks[] __initconst = {
 		  SYS0_HSIF_AXI + 0x10, 12, 0, 0),
 	GATE_SYS_NP(CLK_NANDC0_APB, "nandc0_apb", "div_sys_sys0_hsif_apb",
 		  SYS0_HSIF_AXI + 0x10, 13, 0, 0),
-	GATE_SYS_NP(CLK_CPU_BACKUP0, "cpu_backup0", "div_sys_cpu_backup0",
+	GATE_SYS(CLK_CPU_BACKUP0, "cpu_backup0", "div_sys_cpu_backup0",
 		  CPU_BACKUP0 + 0x10, 0, 0, 0),
 	GATE_SYS_NP(CLK_CSSYS0_HCLK, "cssys0_hclk",
 		 "div_sys_cssys0_hclk", CSSYS0_HCLK + 0x10, 0, 0, 0),
