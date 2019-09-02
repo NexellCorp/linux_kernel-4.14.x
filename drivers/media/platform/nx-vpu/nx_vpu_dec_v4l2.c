@@ -625,6 +625,13 @@ static void nx_vpu_dec_buf_queue(struct vb2_buffer *vb)
 						buf->planes.raw.y + ctx->luma_size;
 			}
 		}
+		else if (ctx->imgFourCC == V4L2_PIX_FMT_NV12) {
+			if (ctx->img_fmt.num_planes > 1) {
+				buf->planes.raw.cb =
+				dec_ctx->frame_buf[idx].phyAddr[1] =
+						buf->planes.raw.y + ctx->luma_size;
+			}
+		}
 		else {
 			if (ctx->img_fmt.num_planes > 1) {
 				buf->planes.raw.cb =
