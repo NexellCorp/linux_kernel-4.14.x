@@ -19,10 +19,11 @@
 
 /* FIXME: resolve div_sys_cpu_backup0 dependency chain */
 PNAME(cpu_mux_p) = { "pll_cpu_div" };
+PNAME(hpm_mux_p) = { "pll_cpu_div","cpu_backup0" };
 
 static const struct nexell_mux_clock cpu_mux_clks[] __initconst = {
-	MUX(CLK_MUX_CPU_ARM, "mux_cpu_arm", cpu_mux_p, CPU_CPU0_ARM, 0, 4),
-	MUX(CLK_MUX_CPU_HPM, "mux_cpu_hpm", cpu_mux_p, HPM_CPU0, 0, 4),
+	MUX(CLK_MUX_CPU_ARM, "mux_cpu_arm", cpu_mux_p, CPU_CPU0_ARM, 0, 1),
+	MUX(CLK_MUX_CPU_HPM, "mux_cpu_hpm", hpm_mux_p, HPM_CPU0, 0, 4),
 };
 
 static const struct nexell_div_clock cpu_div_clks[] __initconst = {
