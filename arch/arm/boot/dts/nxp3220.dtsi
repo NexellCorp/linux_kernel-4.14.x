@@ -542,7 +542,7 @@
 		ecid: ecid@20060000 {
 			compatible = "nexell,nxp3220-ecid";
 			reg = <0x20060000 0x1000>;
-			syscon_sys = <&sys_reg_sys>;
+			syscon = <&sys_reg_sys>;
 			clocks = <&cmu_cpu CLK_CPU_HPM>, <&cmu CLK_HPM_SYS0>;
 			clock-names = "cpu_hpm", "core_hpm";
 		};
