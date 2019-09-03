@@ -656,7 +656,7 @@ static int __init cpu_sys_id_setup(void)
 		return -ENXIO;
 	}
 
-	ecid_mod->core_reg = syscon_regmap_lookup_by_phandle(np, "syscon_sys");
+	ecid_mod->core_reg = syscon_regmap_lookup_by_phandle(np, "syscon");
 	if (IS_ERR(ecid_mod->core_reg)) {
 		pr_err("Failed no core hpm sysreg found !!!\n");
 		return PTR_ERR(ecid_mod->core_reg);
