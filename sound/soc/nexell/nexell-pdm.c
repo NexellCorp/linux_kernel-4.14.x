@@ -654,27 +654,22 @@ static int nx_pdm_sync_setup(struct nx_pdm_data *pdm)
 
 	freq = sys_clk ? sys_freq : pdm->ref_freq;
 	strobe = pdm->strobe_hz;
-
 	div = div_s64(freq, strobe);
 	mod = div_s64(freq * 1000, strobe);
 	mod %= 1000;
 
-	if (div > 1) {
+	/* CLK_DIVIDE_HIGH / CLK_DIVIDE_LOW defatul 1/1 */
+	if (div > 2) {
 		div += roundup(mod, 500)/1000;
 		dh = div / 2;
-		dl = div - dh;
+		dl = div - dh - 2;
 	}
 
 	val |= PDM_CLK_DIV_L(dl) | PDM_CLK_DIV_H(dh);
 	writel(val, &reg->pdm_clk);
 
-	if (sys_freq < 200000000)
-		dev_warn(pdm->dev,
-			"system clock more than 200Mhz (%lld Mhz)...\n",
-			div_s64(freq, 1000*1000));
-
 	dev_dbg(pdm->dev,
-		"freq: %s, %lld/%d, storbe %lld, div:%d, mod:%d, [%d:%d]\n",
+		"freq: %s, %lld/%d, strobe %lld, div:%d, mod:%d, [%d:%d]\n",
 		sys_clk ? "SYS" : "MCLK", freq, pdm->sys_freq,
 		strobe, div, mod, dh, dl);
 
@@ -1204,6 +1199,7 @@ static int nx_pdm_parse_of_dt(struct platform_device *pdev,
 	struct device_node *node = pdev->dev.of_node;
 	struct pdm_fir_cfg *fir = &pdm->fir;
 	struct pdm_cic_cfg *cic = &pdm->cic;
+	unsigned int assigned_freq = 0;
 	const __be32 *list;
 	int count, step, ret;
 
@@ -1217,7 +1213,7 @@ static int nx_pdm_parse_of_dt(struct platform_device *pdev,
 	of_property_read_u32(node, "strobe-hz", &pdm->strobe_hz);
 
 	if (of_property_read_bool(node, "assigned-core-freqeuncy"))
-		pdm->sys_freq = clk_get_rate(pdm->clk);
+		assigned_freq = clk_get_rate(pdm->clk);
 
 	step = nx_pdm_strobe_check(pdm->strobe_hz);
 	if (step < 0) {
@@ -1225,6 +1221,12 @@ static int nx_pdm_parse_of_dt(struct platform_device *pdev,
 			"Not support strobe %dhz clock\n", pdm->strobe_hz);
 		return -EINVAL;
 	}
+
+	/* CLK_DIVIDE_HIGH / CLK_DIVIDE_LOW defatul 1/1 */
+	if (!assigned_freq)
+		pdm->sys_freq = pdm->strobe_hz * 2;
+	else
+		pdm->sys_freq = assigned_freq;
 
 	if (pdm->ref_freq)
 		pdm->sync_type = pdm_sync_mclk;
@@ -1268,7 +1270,7 @@ static int nx_pdm_parse_of_dt(struct platform_device *pdev,
 	of_property_read_u32(node, "cic-pos-value", &cic->posv);
 	of_property_read_u32(node, "cic-neg-value", &cic->negv);
 
-	dev_info(&pdev->dev, "PDM: sysclk:%d: storbe:%d, sample rate:%d\n",
+	dev_info(&pdev->dev, "PDM: sysclk:%d: strobe:%d, sample rate:%d\n",
 		pdm->sync_type == pdm_sync_mclk ? pdm->ref_freq :
 		pdm->sys_freq, pdm->strobe_hz, pdm->sample_rate);
 	dev_info(&pdev->dev, "PDM: ref (iis.%d, sync:%s, rate:%d, freq:%d)\n",
@@ -1297,9 +1299,9 @@ static struct nx_pdm_data *nx_pdm_allocate(struct platform_device *pdev)
 
 	pdm->dev = &pdev->dev;
 	pdm->ref_iis = -1;
-	pdm->sys_freq = 12288000 * 10 * 2; /* 12.288*10*2, more than 200Mhz */
 	pdm->sample_rate = 0;
 	pdm->strobe_hz = 2048000;
+	pdm->sys_freq = pdm->strobe_hz * 2;
 	pdm->channel = 4;
 	pdm->num_pads = MAX_PDM_PADS;
 	pdm->sync_type = pdm_sync_none;
