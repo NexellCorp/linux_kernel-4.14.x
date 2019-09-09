@@ -250,9 +250,9 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 		COMP_DIV_SRC(PDM0_AXI)
 		COMP_GATE_SRC(PDM0_AXI)
 	}, {
-		COMP_BASE_SRC(CLK_SRC_PDM0_CORE, "src_pdm0_core")
-		COMP_MUX_SRC(PDM0_CORE)
-		COMP_DIV_SRC(PDM0_CORE)
+		COMP_BASE_SND(CLK_SRC_PDM0_CORE, "src_pdm0_core", CLK_DIVIDER_ROUND_CLOSEST)
+		COMP_MUX_SND(PDM0_CORE)
+		COMP_DIV_SRC_F(PDM0_CORE, CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_GATE_SRC(PDM0_CORE)
 	}, {
 		COMP_BASE_SRC(CLK_SRC_PWM0_APB, "src_pwm0_apb")
@@ -470,8 +470,9 @@ static const struct nexell_div_clock sys_div_clks[] __initconst = {
 		"src_spi0_core", SPI0_CORE + 0x60),
 	DIV_SYS(CLK_SYS_DIV_PDM0_AXI, "div_sys_pdm0_axi",
 		"src_pdm0_axi", PDM0_AXI + 0x60),
-	DIV_SYS(CLK_SYS_DIV_PDM0_CORE, "div_sys_pdm0_core",
-		"src_pdm0_core", PDM0_CORE + 0x60),
+	DIV_SYS_F(CLK_SYS_DIV_PDM0_CORE, "div_sys_pdm0_core",
+		"src_pdm0_core", PDM0_CORE + 0x60,
+		0, CLK_DIVIDER_ROUND_CLOSEST),
 	DIV_SYS(CLK_SYS_DIV_PWM0_APB, "div_sys_pwm0_apb",
 		"src_pwm0_apb", PWM0_APB + 0x60),
 	DIV_SYS(CLK_SYS_DIV_PWM0_TCLK0, "div_sys_pwm0_tclk0",
