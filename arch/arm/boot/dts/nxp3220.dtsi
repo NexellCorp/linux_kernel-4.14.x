@@ -852,14 +852,10 @@
 			reg = <0x20c00000 0x1000>, <0x20c04000 0x4000>;
 			reg-names = "pdm", "sram";
 			assigned-clocks = <&cmu CLK_SRC_PDM0_AXI>,
-					  <&cmu CLK_SRC_PDM0_CORE>,
-					  <&cmu CLK_PDM0_AXI>,
-					  <&cmu CLK_PDM0_CORE>;
-			assigned-clock-parents = <&pll_1_div 0>,
-						 <&pll_1_div 0>,
-						 <0>,
+					  <&cmu CLK_PDM0_AXI>;
+			assigned-clock-parents = <&pll_0 0>,
 						 <0>;
-			assigned-clock-rates = <0>, <0>, <200000000>, <0>;
+			assigned-clock-rates = <0>, <333333334>;
 			clocks = <&cmu CLK_PDM0_AXI>,
 			       <&cmu CLK_PDM0_CORE>;
 			clock-names = "axi", "core";
