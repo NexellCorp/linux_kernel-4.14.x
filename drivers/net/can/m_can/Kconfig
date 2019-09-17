@@ -1,5 +1,22 @@
 config CAN_M_CAN
+	prompt "M_CAN"
 	depends on HAS_IOMEM
-	tristate "Bosch M_CAN devices"
+	bool
+
+choice
+	prompt "devices"
+	depends on CAN_M_CAN
+
+config CAN_M_CAN_BOSCH
+	tristate "Bosch M_CAN"
 	---help---
 	  Say Y here if you want to support for Bosch M_CAN controller.
+
+config CAN_M_CAN_NXP3220
+	depends on ARCH_NXP3220_COMMON
+	tristate "NXP3220 M_CAN"
+	---help---
+	  Say Y here if you want to support for NXP3220 M_CAN controller
+	  based Bosch M_CAN.
+
+endchoice
