@@ -100,13 +100,13 @@
 		#size-cells = <0>;
 	};
 
-	snd_pdm_ref:snd_ref_pdm@0 {
+	snd_pdm_ref: snd_ref_pdm@0 {
 		#sound-dai-cells = <0>;
 		compatible = "nexell,snd-null-codec";
 		status = "okay";
 	};
 
-	snd_bt_codec:snd_bt_codec@0 {
+	snd_bt_codec: snd_bt_codec@0 {
 		#sound-dai-cells = <0>;
 		compatible = "nexell,snd-null-codec";
 		status = "okay";
@@ -184,8 +184,8 @@
 		simple-audio-card,dai-link@0 {
 			mclk-fs = <256>;
 			format = "i2s";
-			frame-master = <&sndcodec2>;
-			bitclock-master = <&sndcodec2>;
+			frame-master = <&sndcodec3>;
+			bitclock-master = <&sndcodec3>;
 
 			sndcpu3: cpu  {
 				sound-dai = <&i2s3 0>;
@@ -551,7 +551,6 @@
 /* PDM Reference IIS */
 &i2s3 {
 	frame-bit = <32>;
-	sample-rate = <48000>;
 	status = "okay";
 };
 
