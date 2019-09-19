@@ -100,13 +100,13 @@
 		#size-cells = <0>;
 	};
 
-	snd_pdm_ref:snd_ref_pdm@0 {
+	snd_pdm_ref: snd_ref_pdm@0 {
 		#sound-dai-cells = <0>;
 		compatible = "nexell,snd-null-codec";
 		status = "okay";
 	};
 
-	snd_bt_codec:snd_bt_codec@0 {
+	snd_bt_codec: snd_bt_codec@0 {
 		#sound-dai-cells = <0>;
 		compatible = "nexell,snd-null-codec";
 		status = "okay";
@@ -184,8 +184,8 @@
 		simple-audio-card,dai-link@0 {
 			mclk-fs = <256>;
 			format = "i2s";
-			frame-master = <&sndcodec2>;
-			bitclock-master = <&sndcodec2>;
+			frame-master = <&sndcodec3>;
+			bitclock-master = <&sndcodec3>;
 
 			sndcpu3: cpu  {
 				sound-dai = <&i2s3 0>;
@@ -309,7 +309,7 @@
 	disable-wp;
 	status = "disabled";
 };
-
+/*
 &dwmmc_2 {
 	cap-sd-highspeed;
 	cd-gpios = <&gpio_c 12 0>;
@@ -320,7 +320,7 @@
 	disable-wp;
 	status = "okay";
 };
-
+*/
 &dwc2otg {
 	status = "okay";
 	pinctrl-0 = <&otg_vbus_en>;
@@ -533,7 +533,9 @@
 
 &i2s0 {
 	frame-bit = <32>;
+	sample-rate = <48000>;
 	supply-mclk-always;
+	supply-lrck-always;
 	status = "okay";
 };
 
@@ -551,18 +553,19 @@
 /* PDM Reference IIS */
 &i2s3 {
 	frame-bit = <32>;
-	sample-rate = <48000>;
 	status = "okay";
 };
 
 &i2s3_bus {
 	nexell,pins = "gpioc-8", "gpioc-12";
-	nexell,pin-pull = <NX_PIN_PULL_UP>;
+/*	nexell,pin-pull = <NX_PIN_PULL_UP>; */
 };
 
 &pdm {
 	ref-iis = <3>;
-	sample-rate = <16000>;
+	ref-sample-rate = <48000>;
+	sample-rate = <64000>;
+/*	strobe-hz = <1024000>; */
 	status = "okay";
 };
 
