@@ -357,10 +357,6 @@
 	};
 };
 
-&ohci {
-	status = "okay";
-};
-
 &i2c_0 {
 	status = "okay";
 	#address-cells = <1>;
@@ -559,6 +555,18 @@
 	nexell,pin-pull = <NX_PIN_PULL_UP>;
 };
 
+&m_can0 {
+        status = "okay";
+};
+
+&m_can1 {
+        status = "okay";
+};
+
+&ohci {
+	status = "okay";
+};
+
 &pdm {
 	ref-iis = <3>;
 	sample-rate = <16000>;
@@ -642,6 +650,29 @@
 	status = "okay";
 };
 
+&spi_0 {
+	status = "okay";
+	pinctrl-0 = <&spi0_bus>, <&spi0_wp>, <&spi0_hold>;
+	cs-gpios = <&gpio_c 4 0>;
+
+	flash: m25p80 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "m25p80", "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <1000000>;
+		disable-4byte-address;
+		m25p,fast-read;
+		spi-cpol;
+		spi-cpha;
+
+		partition@0 {
+			label = "part0";
+			reg = <0x500000 0x7b00000>;
+		};
+	};
+};
+
 &vip {
 	status = "okay";
 };
@@ -679,27 +710,4 @@
 
 &vpu {
 	status = "okay";
-};
-
-&spi_0 {
-	status = "okay";
-	pinctrl-0 = <&spi0_bus>, <&spi0_wp>, <&spi0_hold>;
-	cs-gpios = <&gpio_c 4 0>;
-
-	flash: m25p80 {
-		#address-cells = <1>;
-		#size-cells = <1>;
-		compatible = "m25p80", "jedec,spi-nor";
-		reg = <0>;
-		spi-max-frequency = <1000000>;
-		disable-4byte-address;
-		m25p,fast-read;
-		spi-cpol;
-		spi-cpha;
-
-		partition@0 {
-			label = "part0";
-			reg = <0x500000 0x7b00000>;
-		};
-	};
 };
