@@ -218,7 +218,11 @@ static void __exit ofpart_parser_exit(void)
 	deregister_mtd_parser(&ofoldpart_parser);
 }
 
+#ifdef CONFIG_DEFERRED_UP_NAND
+fs_initcall(ofpart_parser_init);
+#else
 module_init(ofpart_parser_init);
+#endif
 module_exit(ofpart_parser_exit);
 
 MODULE_LICENSE("GPL");

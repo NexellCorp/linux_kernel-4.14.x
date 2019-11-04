@@ -178,6 +178,11 @@ config DEFERRED_UP_DRM
 	default y
 	depends on DEFERRED_LEVEL=2
 
+config DEFERRED_UP_NAND
+	bool "deferred initcall level up NAND"
+	select DEFERRED_UP_UBIFS
+	default y
+
 config DEFERRED_UP_MMC
 	bool "deferred initcall level up MMC"
 	default y
@@ -202,6 +207,13 @@ config DEFERRED_UP_FS
 	default y
 	depends on DEFERRED_LEVEL=2
 
+config DEFERRED_UP_UBIFS
+	bool "initcall initcall level up UBIFS"
+	select DEFERRED_UP_DEFLATE
+	select DEFERRED_UP_LZO
+	default y
+	depends on DEFERRED_UP_NAND
+
 config DEFERRED_UP_ADC
 	bool "initcall initcall level up ADC"
 	default y
@@ -216,5 +228,11 @@ config DEFERRED_UP_DEINTERLACER
 	bool "initcall initcall level up Deinterlacer"
 	default y
 	depends on DEFERRED_LEVEL=2
+
+config DEFERRED_UP_DEFLATE
+	bool "initcall initcall level up Deflate compression algorithm"
+
+config DEFERRED_UP_LZO
+	bool "initcall initcall level up LZO compression algorithm"
 
 endmenu

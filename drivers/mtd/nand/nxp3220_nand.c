@@ -1347,6 +1347,7 @@ static int nxp3220_nfc_remove(struct platform_device *pdev)
 	return 0;
 }
 
+#ifdef CONFIG_PM_SLEEP
 static int nxp3220_nfc_suspend(struct device *dev)
 {
 	struct nxp3220_nfc *nfc = dev_get_drvdata(dev);
@@ -1387,6 +1388,10 @@ static int nxp3220_nfc_resume(struct device *dev)
 
 	return 0;
 }
+#else
+static inline int nxp3220_nfc_suspend(struct device *dev) { return 0; }
+static inline int nxp3220_nfc_resume(struct device *dev) { return 0; }
+#endif
 
 static SIMPLE_DEV_PM_OPS(nxp3220_nfc_pm_ops,
 			 nxp3220_nfc_suspend, nxp3220_nfc_resume);
@@ -1407,7 +1412,15 @@ static struct platform_driver nxp3220_nfc_driver = {
 	.remove		= nxp3220_nfc_remove,
 };
 
+#ifdef CONFIG_DEFERRED_UP_NAND
+static int __init nxp3220_nfc_driver_init(void)
+{
+        return platform_driver_register(&nxp3220_nfc_driver);
+}
+fs_initcall(nxp3220_nfc_driver_init);
+#else
 module_platform_driver(nxp3220_nfc_driver);
+#endif
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Bon-gyu, KOO <freestyle@nexell.co.kr>");
