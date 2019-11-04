@@ -1282,7 +1282,11 @@ out:
 	pr_err("UBI error: cannot initialize UBI, error %d\n", err);
 	return err;
 }
+#ifdef CONFIG_DEFERRED_UP_NAND
+early_device_initcall(ubi_init);
+#else
 late_initcall(ubi_init);
+#endif
 
 static void __exit ubi_exit(void)
 {

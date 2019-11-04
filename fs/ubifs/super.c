@@ -2305,7 +2305,11 @@ out_slab:
 	return err;
 }
 /* late_initcall to let compressors initialize first */
+#ifdef CONFIG_DEFERRED_UP_UBIFS
+early_device_initcall(ubifs_init);
+#else
 late_initcall(ubifs_init);
+#endif
 
 static void __exit ubifs_exit(void)
 {

@@ -167,7 +167,11 @@ static void __exit lzo_mod_fini(void)
 	crypto_unregister_scomp(&scomp);
 }
 
+#ifdef CONFIG_DEFERRED_UP_LZO
+fs_initcall(lzo_mod_init);
+#else
 module_init(lzo_mod_init);
+#endif
 module_exit(lzo_mod_fini);
 
 MODULE_LICENSE("GPL");

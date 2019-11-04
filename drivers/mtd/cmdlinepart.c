@@ -399,7 +399,11 @@ static void __exit cmdline_parser_exit(void)
 	deregister_mtd_parser(&cmdline_parser);
 }
 
+#ifdef CONFIG_DEFERRED_UP_NAND
+fs_initcall(cmdline_parser_init);
+#else
 module_init(cmdline_parser_init);
+#endif
 module_exit(cmdline_parser_exit);
 
 MODULE_PARM_DESC(mtdparts, "Partitioning specification");
