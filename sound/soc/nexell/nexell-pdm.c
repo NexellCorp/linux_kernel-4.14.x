@@ -329,7 +329,7 @@ static int nx_pdm_pcm_submit(struct snd_pcm_substream *substream)
 	prtd->period_msec = 1000 / ((runtime->rate * runtime->frame_bits/8) /
 			snd_pcm_lib_period_bytes(substream));
 
-	writel(dma_size / MEM_BURST_SIZE, &reg->dma_size);
+	writel((dma_size / MEM_BURST_SIZE) - 1, &reg->dma_size);
 	writel(dma_addr, &reg->dma_addr0);
 	writel(dma_addr + period_bytes, &reg->dma_addr1);
 
