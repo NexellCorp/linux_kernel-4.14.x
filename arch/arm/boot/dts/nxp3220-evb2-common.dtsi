@@ -517,6 +517,10 @@
 	}; /* nxe1500@33 */
 }; /* &i2c_0 */
 
+&cpu0 {
+	cpu-supply = <&VCC_DCDC0>;
+};
+
 &i2s0 {
 	status = "okay";
 	frame-bit = <32>;
