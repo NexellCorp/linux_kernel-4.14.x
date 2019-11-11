@@ -24,6 +24,7 @@
 #include <linux/thermal.h>
 #include <linux/of_device.h>
 #include "../../drivers/base/power/opp/opp.h"
+#include "../../drivers/soc/nexell/nxp3220/cpu-sys.h"
 #include "cpufreq-dt.h"
 
 #define CMU_AXI_OFF 0x264
@@ -47,6 +48,87 @@ static struct freq_attr *cpufreq_dt_attr[] = {
 	NULL,   /* Extra space for boost-attr if required */
 	NULL,
 };
+
+/* ASV choice table based on HPM and IDS values */
+struct asv_table {
+	unsigned int hpm_limit; /* HPM value to decide target group */
+	unsigned int ids_limit; /* IDS value to decide target group */
+};
+
+/* ASV table has 19 levels */
+static struct asv_table nxp3220_limit[] = {
+	/* HPM, IDS */
+	{ 320, 3},		/*ASV0*/
+	{ 330, 4},		/*ASV1*/
+	{ 340, 5},		/*ASV2*/
+	{ 350, 6},		/*ASV3*/
+	{ 360, 7},		/*ASV4*/
+	{ 370, 9},		/*ASV5*/
+	{ 380, 11},		/*ASV6*/
+	{ 390, 13},		/*ASV7*/
+	{ 400, 16},		/*ASV8*/
+	{ 410, 19},		/*ASV9*/
+	{ 420, 24},		/*ASV10*/
+	{ 430, 29},		/*ASV11*/
+	{ 440, 35},		/*ASV12*/
+	{ 450, 43},		/*ASV13*/
+	{ 460, 52},		/*ASV14*/
+	{ 470, 63},		/*ASV15*/
+	{ 480, 77},		/*ASV16*/
+	{ 490, 93},		/*ASV17*/
+	{ 500, 113},	/*ASV18*/
+	{ 510, 137},	/*ASV19*/
+	{ 999, 999},	/* Reserved Group */
+};
+
+static u32 read_cpu_ids(void)
+{
+	u32 uid[4] = {0, };
+	int ret = 0;
+
+	u32 cpu_ids;
+
+	ret = nx_cpu_id_ecid(uid);
+	if (ret < 0)
+		return ret;
+
+	cpu_ids = (uid[1] >> 16) & 0xff;
+
+	return cpu_ids;
+}
+
+static int read_cpu_hpm(void)
+{
+	u16 hpm[8] = {0, };
+	int ret = 0;
+
+	ret = nx_cpu_hpm_ro(hpm);
+	if (ret < 0)
+		return ret;
+
+	return hpm[7];
+}
+
+static int find_asv_table_index(struct device *dev)
+{
+	int i, ids, hpm;
+	int ret = 0;
+
+	ids = read_cpu_ids();
+	hpm = read_cpu_hpm();
+
+	dev_info(dev, "hpm value: %d cpu_ids: %d\n\r", hpm, ids);
+	for (i = 0; i < ARRAY_SIZE(nxp3220_limit); i++) {
+		if ((ids <= nxp3220_limit[i].ids_limit) ||
+			(hpm <=	nxp3220_limit[i].hpm_limit)) {
+			ret = i;
+			break;
+		}
+	}
+
+	dev_info(dev, "chosen asv value: %d\n\r", ret);
+	return ret;
+}
 
 static int set_cmu_divider(void __iomem *base, unsigned long freq)
 {
@@ -152,7 +234,8 @@ static int nxp3220_set_opp_regulator(struct opp_table *opp_table,
 	}
 
 	/* Change frequency */
-	ret = nxp3220_set_opp_clk_only(dev, opp_table->clk, base, old_freq, freq);
+	ret = nxp3220_set_opp_clk_only(dev, opp_table->clk, base, old_freq,
+					freq);
 	if (ret)
 		goto restore_voltage;
 
@@ -191,7 +274,7 @@ static int nxp3220_pm_opp_set_rate(struct private_data *priv,
 	unsigned long freq, old_freq;
 	struct dev_pm_opp *old_opp, *opp;
 	struct clk *clk;
-	int ret, size;
+	int ret;
 	//	struct regulator *reg = regulator_get(dev, priv->reg_name);
 	struct regulator *reg = priv->cpu_reg;
 	void __iomem *base = priv->base;
@@ -244,15 +327,13 @@ static int nxp3220_pm_opp_set_rate(struct private_data *priv,
 		goto put_old_opp;
 	}
 
-	dev_dbg(dev, "%s: switching OPP: %lu Hz --> %lu Hz\n", __func__,
-		old_freq, freq);
-
 	if (!priv->cpu_reg) {
 		ret = nxp3220_set_opp_clk_only(dev, clk, base, old_freq, freq);
 	} else  {
-		ret = nxp3220_set_opp_regulator(opp_table, dev, reg, base, old_freq, freq,
-						 IS_ERR(old_opp) ? NULL : old_opp->supplies,
-						 opp->supplies);
+		ret = nxp3220_set_opp_regulator(opp_table, dev, reg, base,
+				old_freq, freq,
+				IS_ERR(old_opp) ? NULL : old_opp->supplies,
+				 opp->supplies);
 	}
 
 	dev_pm_opp_put(opp);
@@ -377,6 +458,7 @@ static int cpufreq_init(struct cpufreq_policy *policy)
 	unsigned int transition_latency;
 	bool fallback = false;
 	const char *name;
+	int index = 0;
 	int ret;
 
 	cpu_dev = get_cpu_device(policy->cpu);
@@ -426,6 +508,17 @@ static int cpufreq_init(struct cpufreq_policy *policy)
 		}
 
 	}
+
+
+	index = find_asv_table_index(cpu_dev);
+
+	if (index == 0) //N.A
+		index = 1;
+	else if (index >= 19) // over ASV19, into ASV19
+		index = 19;
+
+	index -= 1; // DT starts with 1, api index from 0.
+
 	/*
 	 * Initialize OPP tables for all policy->cpus. They will be shared by
 	 * all CPUs which have marked their CPUs shared with OPP bindings.
@@ -436,7 +529,7 @@ static int cpufreq_init(struct cpufreq_policy *policy)
 	 *
 	 * OPPs might be populated at runtime, don't check for error here
 	 */
-	dev_pm_opp_of_cpumask_add_table(policy->cpus);
+	dev_pm_opp_of_cpumask_add_table_indexed(policy->cpus, index);
 
 	/*
 	 * But we need OPP table to function so if it is not there let's
@@ -630,15 +723,18 @@ static int __init cpufreq_dt_platdev_init(void)
 		data = match->data;
 		goto create_pdev;
 	}
-
+#if 0
+	if (cpu0_node_has_opp_v2_prop())
+		goto create_pdev;
+#endif
 	of_node_put(np);
 	return -ENODEV;
 
 create_pdev:
 	of_node_put(np);
-	return PTR_ERR_OR_ZERO(platform_device_register_data(NULL, "cpufreq-nxp3220",
-			       -1, data,
-			       sizeof(struct cpufreq_dt_platform_data)));
+	return PTR_ERR_OR_ZERO(platform_device_register_data(NULL,
+			"cpufreq-nxp3220", -1, data,
+			sizeof(struct cpufreq_dt_platform_data)));
 }
 device_initcall(cpufreq_dt_platdev_init);
 static int dt_cpufreq_remove(struct platform_device *pdev)
