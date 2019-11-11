@@ -250,20 +250,17 @@ EXPORT_SYMBOL_GPL(dev_pm_opp_of_remove_table);
 
 /* Returns opp descriptor node for a device node, caller must
  * do of_node_put() */
-static struct device_node *_opp_of_get_opp_desc_node(struct device_node *np)
+static struct device_node *_opp_of_get_opp_desc_node(struct device_node *np,
+							int index)
 {
-	/*
-	 * There should be only ONE phandle present in "operating-points-v2"
-	 * property.
-	 */
-
-	return of_parse_phandle(np, "operating-points-v2", 0);
+	/* "operating-points-v2" can be an array for power domain providers */
+	return of_parse_phandle(np, "operating-points-v2", index);
 }
 
 /* Returns opp descriptor node for a device, caller must do of_node_put() */
 struct device_node *dev_pm_opp_of_get_opp_desc_node(struct device *dev)
 {
-	return _opp_of_get_opp_desc_node(dev->of_node);
+	return _opp_of_get_opp_desc_node(dev->of_node, 0);
 }
 EXPORT_SYMBOL_GPL(dev_pm_opp_of_get_opp_desc_node);
 
@@ -509,6 +506,42 @@ int dev_pm_opp_of_add_table(struct device *dev)
 }
 EXPORT_SYMBOL_GPL(dev_pm_opp_of_add_table);
 
+/**
+ * dev_pm_opp_of_add_table_indexed() - Initialize indexed opp table
+ *                                     from device tree
+ * @dev:       device pointer used to lookup OPP table.
+ * @index:     Index number.
+ *
+ * Register the initial OPP table with the OPP library for given device only
+ * using the "operating-points-v2" property.
+ *
+ * Return:
+ * 0           On success OR
+ *             Duplicate OPPs (both freq and volt are same) and opp->available
+ * -EEXIST     Freq are same and volt are different OR
+ *             Duplicate OPPs (both freq and volt are same) and !opp->available
+ * -ENOMEM     Memory allocation failure
+ * -ENODEV     when 'operating-points' property is not found or is invalid data
+ *             in device node.
+ * -ENODATA    when empty 'operating-points' property is found
+ * -EINVAL     when invalid entries are found in opp-v2 table
+ */
+int dev_pm_opp_of_add_table_indexed(struct device *dev, int index)
+{
+	struct device_node *opp_np;
+	int ret;
+
+	opp_np = _opp_of_get_opp_desc_node(dev->of_node, index);
+	if (!opp_np)
+		return -ENODEV;
+
+	ret = _of_add_opp_table_v2(dev, opp_np);
+	of_node_put(opp_np);
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(dev_pm_opp_of_add_table_indexed);
+
 /* CPU device specific helpers */
 
 /**
@@ -564,6 +597,48 @@ int dev_pm_opp_of_cpumask_add_table(const struct cpumask *cpumask)
 }
 EXPORT_SYMBOL_GPL(dev_pm_opp_of_cpumask_add_table);
 
+/**
+ * dev_pm_opp_of_cpumask_add_table_indexed() - Adds OPP table for @cpumask
+ * @cpumask:	cpumask for which OPP table needs to be added.
+ * @index:	Index number.
+ *
+ * This adds the OPP tables for CPUs present in the @cpumask.
+ */
+int dev_pm_opp_of_cpumask_add_table_indexed(const struct cpumask *cpumask
+						, int index)
+{
+	struct device *cpu_dev;
+	int cpu, ret = 0;
+
+	WARN_ON(cpumask_empty(cpumask));
+
+	for_each_cpu(cpu, cpumask) {
+		cpu_dev = get_cpu_device(cpu);
+		if (!cpu_dev) {
+			pr_err("%s: failed to get cpu%d device\n", __func__,
+			       cpu);
+			continue;
+		}
+
+		ret = dev_pm_opp_of_add_table_indexed(cpu_dev, index);
+		if (ret) {
+			/*
+			 * OPP may get registered dynamically, don't print error
+			 * message here.
+			 */
+			pr_debug("%s: couldn't find opp table for cpu:%d, %d\n",
+				 __func__, cpu, ret);
+
+			/* Free all other OPPs */
+			dev_pm_opp_of_cpumask_remove_table(cpumask);
+			break;
+		}
+	}
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(dev_pm_opp_of_cpumask_add_table_indexed);
+
 /*
  * Works only for OPP v2 bindings.
  *
@@ -613,7 +688,7 @@ int dev_pm_opp_of_get_sharing_cpus(struct device *cpu_dev,
 		}
 
 		/* Get OPP descriptor node */
-		tmp_np = _opp_of_get_opp_desc_node(cpu_np);
+		tmp_np = _opp_of_get_opp_desc_node(cpu_np, 0);
 		if (!tmp_np) {
 			pr_err("%pOF: Couldn't find opp node\n", cpu_np);
 			ret = -ENOENT;
