@@ -1056,9 +1056,8 @@ static int __ref kernel_init(void *unused)
 
 #ifdef CONFIG_QUICKBOOT_DEFERRED_INIT
 	kthread_run(deferred_init_thread, NULL, "deferred_init");
-
-	pr_alert("init\n");
 #endif
+	pr_alert("Execute init\n");
 
 	if (ramdisk_execute_command) {
 		ret = run_init_process(ramdisk_execute_command);
