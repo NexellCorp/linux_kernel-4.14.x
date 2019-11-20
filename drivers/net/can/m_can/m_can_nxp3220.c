@@ -847,7 +847,6 @@ static void m_can_echo_tx_event(struct net_device *dev)
 	u32 m_can_txefs;
 	u32 fgi = 0;
 	int i = 0;
-	unsigned int msg_mark;
 
 	struct m_can_priv *priv = netdev_priv(dev);
 	struct net_device_stats *stats = &dev->stats;
@@ -858,23 +857,18 @@ static void m_can_echo_tx_event(struct net_device *dev)
 	/* Get Tx Event fifo element count */
 	txe_count = (m_can_txefs & TXEFS_EFFL_MASK)
 			>> TXEFS_EFFL_SHIFT;
-
 	/* Get and process all sent elements */
 	for (i = 0; i < txe_count; i++) {
 		/* retrieve get index */
 		fgi = (m_can_read(priv, M_CAN_TXEFS) & TXEFS_EFGI_MASK)
 			>> TXEFS_EFGI_SHIFT;
 
-		/* get message marker */
-		msg_mark = (m_can_txe_fifo_read(priv, fgi, 4) &
-			    TX_EVENT_MM_MASK) >> TX_EVENT_MM_SHIFT;
-
 		/* ack txe element */
 		m_can_write(priv, M_CAN_TXEFA, (TXEFA_EFAI_MASK &
 						(fgi << TXEFA_EFAI_SHIFT)));
 
 		/* update stats */
-		stats->tx_bytes += can_get_echo_skb(dev, msg_mark);
+		stats->tx_bytes += can_get_echo_skb(dev, fgi);
 		stats->tx_packets++;
 	}
 }
