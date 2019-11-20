@@ -858,7 +858,6 @@ static void m_can_echo_tx_event(struct net_device *dev)
 	/* Get Tx Event fifo element count */
 	txe_count = (m_can_txefs & TXEFS_EFFL_MASK)
 			>> TXEFS_EFFL_SHIFT;
-
 	/* Get and process all sent elements */
 	for (i = 0; i < txe_count; i++) {
 		/* retrieve get index */
@@ -869,12 +868,16 @@ static void m_can_echo_tx_event(struct net_device *dev)
 		msg_mark = (m_can_txe_fifo_read(priv, fgi, 4) &
 			    TX_EVENT_MM_MASK) >> TX_EVENT_MM_SHIFT;
 
+		if (fgi != msg_mark)
+			dev_err(priv->device,
+				"[TXEvent] get:%d msg mark:%d index is different\n",
+				fgi, msg_mark);
 		/* ack txe element */
 		m_can_write(priv, M_CAN_TXEFA, (TXEFA_EFAI_MASK &
 						(fgi << TXEFA_EFAI_SHIFT)));
 
 		/* update stats */
-		stats->tx_bytes += can_get_echo_skb(dev, msg_mark);
+		stats->tx_bytes += can_get_echo_skb(dev, fgi);
 		stats->tx_packets++;
 	}
 }
