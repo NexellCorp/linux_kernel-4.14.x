@@ -554,7 +554,7 @@
 	};
 
 	button_key: button-key {
-		nexell,pins = "alive-0";
+		nexell,pins = "gpioc-7";
 		nexell,pin-function = <NX_PIN_FUNC0>;
 		nexell,pin-pull = <NX_PIN_PULL_UP>;
 		nexell,pin-strength = <NX_PIN_STR0>;
