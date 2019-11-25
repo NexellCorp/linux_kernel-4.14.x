@@ -121,6 +121,38 @@ static int can_update_sample_point(const struct can_bittiming_const *btc,
 	return best_sample_point;
 }
 
+static int can_pass_bittiming(struct net_device *dev, struct can_bittiming *bt,
+			      const struct can_bittiming_const *btc)
+{
+	unsigned int brp, tseg, tsegall  = 0;
+	struct can_priv *priv = netdev_priv(dev);
+	int ret = 0;
+
+	if (((bt->prop_seg + bt->phase_seg1) > btc->tseg1_max) ||
+			(bt->phase_seg2 > btc->tseg2_max)) {
+		netdev_err(dev, "[%s] time segments are invalid\n", __func__);
+		netdev_err(dev, "prop_seg:%d phase_seg 1-%d[%d~%d] 2-%d[%d~%d]\n",
+				bt->prop_seg, bt->phase_seg1, btc->tseg1_min,
+				btc->tseg1_max, bt->phase_seg2, btc->tseg2_min,
+				btc->tseg2_max);
+		return -EINVAL;
+	}
+
+	tseg = (btc->tseg1_max + btc->tseg2_max) * 2 + 1;
+	tsegall = CAN_CALC_SYNC_SEG + tseg / 2;
+	/* Compute all possible tseg choices (tseg=tseg1+tseg2) */
+	brp = priv->clock.freq / (tsegall * bt->bitrate) + tseg % 2;
+	/* choose brp step which is possible in system */
+	brp = (brp / btc->brp_inc) * btc->brp_inc;
+	if ((brp < btc->brp_min) || (brp > btc->brp_max)) {
+		netdev_err(dev, "[%s] brp is invalid:%d min:%d max:%d\n",
+				__func__, brp, btc->brp_inc, btc->brp_max);
+		ret = -EINVAL;
+	} else
+		bt->brp = brp;
+	return ret;
+}
+
 static int can_calc_bittiming(struct net_device *dev, struct can_bittiming *bt,
 			      const struct can_bittiming_const *btc)
 {
@@ -227,7 +259,6 @@ static int can_calc_bittiming(struct net_device *dev, struct can_bittiming *bt,
 
 	/* real bitrate */
 	bt->bitrate = priv->clock.freq / (bt->brp * (CAN_CALC_SYNC_SEG + tseg1 + tseg2));
-
 	return 0;
 }
 #else /* !CONFIG_CAN_CALC_BITTIMING */
@@ -318,6 +349,8 @@ static int can_get_bittiming(struct net_device *dev, struct can_bittiming *bt,
 	else if (!bt->tq && bt->bitrate && bitrate_const)
 		err = can_validate_bitrate(dev, bt, bitrate_const,
 					   bitrate_const_cnt);
+	else if (bt->tq && bt->bitrate && btc)
+		err = can_pass_bittiming(dev, bt, btc);
 	else
 		err = -EINVAL;
 
