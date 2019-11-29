@@ -1000,7 +1000,7 @@ error:
 	return ret;
 }
 
-#ifdef CONFIG_DEFERRED_UP_MMC
+#ifdef CONFIG_DEFERRED_UP_DRM
 early_device_initcall(drm_core_init);
 #else
 module_init(drm_core_init);
