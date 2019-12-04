@@ -63,9 +63,9 @@ config QUICKBOOT_DEFERRED_INIT
 
 config DEFERRED_LEVEL
 	int "level of deferred initcalls (1-2)"
-	depends on LATE_INIT_TO_DEFER
 	range 1 2
 	default 1
+	depends on LATE_INIT_TO_DEFER
 
 menu "Deferred initcall features"
 	depends on QUICKBOOT_DEFERRED_INIT
@@ -90,65 +90,78 @@ config DEFERRED_ADC
 	bool "deferred initcall adc"
 	default y
 	depends on DEFERRED_LEVEL=1
+	depends on NEXELL_ADC
 
 config DEFERRED_KEYPAD
 	bool "deferred initcall keypad"
 	default y
 	depends on DEFERRED_LEVEL=1
+	depends on INPUT_KEYBOARD
 
 config DEFERRED_BUFIO
 	bool "deferred initcall buffered IO"
 	default y
 	depends on DEFERRED_LEVEL=1
+	depends on DM_BUFIO
 
 config DEFERRED_NXE2000
 	bool "deferred initcall NXE2000"
 	default y
+	depends on MFD_NXE2000
 
 config DEFERRED_DWC_ETHERNET
 	bool "deferred initcall dwc ethernet"
 	default y
 	depends on DEFERRED_LEVEL=1
+	depends on DWMAC_DWC_QOS_ETH
 
 config DEFERRED_TMU
 	bool "deferred initcall TMU"
 	default y
 	depends on DEFERRED_LEVEL=1
+	depends on EXYNOS_THERMAL
 
 config DEFERRED_DWC_PLAT
 	bool "deferred initcall dwc platform"
 	default y
 	depends on DEFERRED_LEVEL=1
+	depends on USB_DWC2
 
 config DEFERRED_EHCI_PLAT
 	bool "deferred initcall ehci platform"
 	default y
 	depends on DEFERRED_LEVEL=1
+	depends on USB_EHCI_HCD_PLATFORM
 
 config DEFERRED_OHCI_PLAT
 	bool "deferred initcall ohci platform"
 	default y
 	depends on DEFERRED_LEVEL=1
+	depends on USB_OHCI_HCD_PLATFORM
 
 config DEFERRED_SLAB_SYSFS
 	bool "deferred initcall slab sysfs"
 	default y
 	depends on DEFERRED_LEVEL=1
+	depends on SLUB
 
 config DEFERRED_IPV6
 	bool "deferred initcall ipv6"
 	default y
 	depends on DEFERRED_LEVEL=1
+	depends on IPV6
 
 config DEFERRED_SOUND_I2S
 	bool "deferred initcall SOUND I2S"
 	default y
 	depends on DEFERRED_LEVEL=1
+	depends on SND_NEXELL_I2S
 
 config DEFERRED_SOUND_PDM
 	bool "deferred initcall SOUND PDM"
 	default y
 	depends on DEFERRED_LEVEL=1
+	depends on SND_NEXELL_PDM
 
 config DEFERRED_PARAM_SYSFS
 	bool "deferred initcall param sysfs"
@@ -157,11 +170,10 @@ config DEFERRED_PARAM_SYSFS
 config DEFERRED_WIRELESS
 	bool "deferred initcall wireless"
 	default y
+	depends on WIRELESS
 
 config DEFERRED_UP_BLOCK
 	bool "deferred initcall level up BLOCK"
-	default y
-	depends on DEFERRED_LEVEL=2
 
 config DEFERRED_UP_CRC32
 	bool "deferred initcall level up crc32"
@@ -177,30 +189,37 @@ config DEFERRED_UP_DRM
 	bool "deferred initcall level up DRM"
 	default y
 	depends on DEFERRED_LEVEL=2
+	depends on DRM
 
 config DEFERRED_UP_NAND
 	bool "deferred initcall level up NAND"
-	select DEFERRED_UP_UBIFS
 	default y
+	depends on MTD_NAND
+	select DEFERRED_UP_UBIFS
 
 config DEFERRED_UP_MMC
 	bool "deferred initcall level up MMC"
 	default y
+	depends on MMC
+	select DEFERRED_UP_BLOCK
 
 config DEFERRED_UP_PWM
 	bool "initcall initcall level up PWM"
 	default y
 	depends on DEFERRED_LEVEL=2
+	depends on PWM_NEXELL
 
 config DEFERRED_UP_SERIAL
 	bool "initcall initcall level up serial"
 	default y
 	depends on DEFERRED_LEVEL=2
+	depends on SERIAL_8250
 
 config DEFERRED_UP_BL
 	bool "initcall initcall level up backlight"
 	default y
 	depends on DEFERRED_LEVEL=2
+	depends on BACKLIGHT_PWM
 
 config DEFERRED_UP_FS
 	bool "initcall initcall level up FileSystem"
@@ -209,25 +228,34 @@ config DEFERRED_UP_FS
 
 config DEFERRED_UP_UBIFS
 	bool "initcall initcall level up UBIFS"
-	select DEFERRED_UP_DEFLATE
-	select DEFERRED_UP_LZO
 	default y
 	depends on DEFERRED_UP_NAND
+	select DEFERRED_UP_DEFLATE
+	select DEFERRED_UP_LZO
 
 config DEFERRED_UP_ADC
 	bool "initcall initcall level up ADC"
 	default y
 	depends on DEFERRED_LEVEL=2
+	depends on NEXELL_ADC
 
 config DEFERRED_UP_VIP
 	bool "initcall initcall level up VIP"
 	default y
 	depends on DEFERRED_LEVEL=2
+	depends on VIDEO_V4L2
 
 config DEFERRED_UP_DEINTERLACER
 	bool "initcall initcall level up Deinterlacer"
 	default y
 	depends on DEFERRED_LEVEL=2
+	depends on VIDEO_V4L2
+
+config DEFERRED_UP_TOUCH
+	bool "initcall initcall level up Touch"
+	default y
+	depends on DEFERRED_LEVEL=2
+	depends on INPUT_TOUCHSCREEN
 
 config DEFERRED_UP_DEFLATE
 	bool "initcall initcall level up Deflate compression algorithm"
