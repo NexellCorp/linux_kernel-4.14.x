@@ -491,15 +491,15 @@
 	};
 
 	pwm0_pin: pwm0 {
-		nexell,pins = "gpioc-1";
-		nexell,pin-function = <NX_PIN_FUNC2>;
+		nexell,pins = "gpioc-6";
+		nexell,pin-function = <NX_PIN_FUNC1>;
 		nexell,pin-pull = <NX_PIN_PULL_NONE>;
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
 
 	pwm1_pin: pwm1 {
-		nexell,pins = "gpioc-2";
-		nexell,pin-function = <NX_PIN_FUNC2>;
+		nexell,pins = "gpioc-7";
+		nexell,pin-function = <NX_PIN_FUNC1>;
 		nexell,pin-pull = <NX_PIN_PULL_NONE>;
 		nexell,pin-strength = <NX_PIN_STR0>;
 	};
