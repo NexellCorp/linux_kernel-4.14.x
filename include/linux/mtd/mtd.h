@@ -356,6 +356,9 @@ struct mtd_info {
 	struct device dev;
 	int usecount;
 	struct mtd_debug_info dbg;
+	/* partition info */
+	uint64_t part_offset;
+	const char *part_name;		/* identifier string */
 };
 
 int mtd_ooblayout_ecc(struct mtd_info *mtd, int section,

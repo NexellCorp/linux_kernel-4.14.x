@@ -74,6 +74,11 @@ static int part_read(struct mtd_info *mtd, loff_t from, size_t len,
 	int res;
 
 	stats = part->parent->ecc_stats;
+
+	/* partition info */
+	part->parent->part_offset = part->offset;
+	part->parent->part_name = mtd->name;
+
 	res = part->parent->_read(part->parent, from + part->offset, len,
 				  retlen, buf);
 	if (unlikely(mtd_is_eccerr(res)))
@@ -184,6 +189,11 @@ static int part_write(struct mtd_info *mtd, loff_t to, size_t len,
 		size_t *retlen, const u_char *buf)
 {
 	struct mtd_part *part = mtd_to_part(mtd);
+
+	/* partition info */
+	part->parent->part_offset = part->offset;
+	part->parent->part_name = mtd->name;
+
 	return part->parent->_write(part->parent, to + part->offset, len,
 				    retlen, buf);
 }
