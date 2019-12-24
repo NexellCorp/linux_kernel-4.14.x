@@ -49,6 +49,13 @@ struct nfc_cmd_time {
 	u32 whr;
 };
 
+struct nand_ecc_boot {
+	int sectsize;
+	int datasize;
+	int eccbyte;
+	int steps;
+};
+
 struct nxp3220_nfc {
 	void __iomem *regs;
 	struct nand_chip chip;
@@ -66,6 +73,7 @@ struct nxp3220_nfc {
 	int bchmode;
 	dma_addr_t dmaaddr;
 	unsigned char *dmabuf;
+	struct nand_ecc_boot ecc_boot; /* boot loader area */
 };
 
 enum NX_NANDC_INT {
@@ -110,5 +118,13 @@ enum NX_NANDC_BCH {
 	NX_NANDC_BCH_1024_40 = 9,
 	NX_NANDC_BCH_1024_60 = 10
 };
+
+struct nand_ecc_boot *nand_hw_ecc_get_boot_param(struct mtd_info *mtd,
+						 struct nand_chip *chip);
+int nand_hw_ecc_read_boot_page(struct mtd_info *mtd,
+			       struct nand_chip *chip, u8 *buf, int page);
+int nand_hw_ecc_write_boot_page(struct mtd_info *mtd,
+				struct nand_chip *chip,
+				const u8 *buf, int page);
 
 #endif /* __NXP3220_NAND_H__ */
