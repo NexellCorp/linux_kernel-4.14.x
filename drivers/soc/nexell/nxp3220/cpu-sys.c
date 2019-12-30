@@ -227,7 +227,7 @@ static int nx_cpu_id_guid(u32 guid[4])
 	return 0;
 }
 
-static int nx_cpu_id_ecid(u32 ecid[4])
+int nx_cpu_id_ecid(u32 ecid[4])
 {
 	if (wait_key_ready() < 0)
 		return -EBUSY;
@@ -237,7 +237,7 @@ static int nx_cpu_id_ecid(u32 ecid[4])
 	return 0;
 }
 
-static int nx_cpu_hpm_ro(u16 hpm[8])
+int nx_cpu_hpm_ro(u16 hpm[8])
 {
 	u32 _hpm[4];
 
