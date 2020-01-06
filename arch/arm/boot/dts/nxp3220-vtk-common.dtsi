@@ -314,6 +314,10 @@
 	};
 };
 
+&cpu0 {
+	cpu-supply = <&VCC_DCDC0>;
+};
+
 &i2s0 {
 	frame-bit = <32>;
 	sample-rate = <48000>;
