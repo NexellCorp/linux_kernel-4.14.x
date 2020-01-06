@@ -43,7 +43,7 @@
 			VCC_DCDC0: dcdc1 {
 					PMIC_PDATA_INIT( 0,
 					"nxe1500_dcdc1",
-					1000000, 1200000,
+					925000, 1212500,
 					1100000, 1, 0, 0x4)
 					regulator-always-on;
 					regulator-boot-on;
