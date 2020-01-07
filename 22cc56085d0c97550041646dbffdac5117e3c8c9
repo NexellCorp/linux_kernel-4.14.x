@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1259d971_f59f6349",
+        "filename": "drivers/cpufreq/nxp3220-cpufreq.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 729,
+      "author": {
+        "id": 1015645
+      },
+      "writtenOn": "2020-01-07T01:43:19Z",
+      "side": 1,
+      "message": "Delete it if you don\u0027t need it.",
+      "range": {
+        "startLine": 726,
+        "startChar": 0,
+        "endLine": 729,
+        "endChar": 6
+      },
+      "revId": "22cc56085d0c97550041646dbffdac5117e3c8c9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    }
+  ]
+}
