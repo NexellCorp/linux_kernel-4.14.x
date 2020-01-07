@@ -323,6 +323,7 @@ static void dwc2_set_default_params(struct dwc2_hsotg *hsotg)
 		p->g_rx_fifo_size = 2048;
 		p->g_np_tx_fifo_size = 1024;
 		dwc2_set_param_tx_fifo_sizes(hsotg);
+		p->g_con_susp = false;
 	}
 }
 
@@ -347,6 +348,7 @@ static void dwc2_get_device_properties(struct dwc2_hsotg *hsotg)
 		num = device_property_read_u32_array(hsotg->dev,
 						     "g-tx-fifo-size",
 						     NULL, 0);
+		p->g_con_susp = device_property_read_bool(hsotg->dev, "g-con-susp");
 
 		if (num > 0) {
 			num = min(num, 15);
