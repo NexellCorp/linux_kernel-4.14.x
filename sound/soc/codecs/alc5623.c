@@ -1001,6 +1001,8 @@ static int alc5623_resume(struct snd_soc_codec *codec)
 	if (ret != 0) {
 		dev_err(codec->dev, "Failed to sync register cache: %d\n",
 			ret);
+		alc5623_reset(codec);
+		alc5623_reg_init(codec);
 		regcache_cache_only(alc5623->regmap, true);
 		return ret;
 	}
