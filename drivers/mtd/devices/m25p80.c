@@ -381,10 +381,67 @@ static const struct of_device_id m25p_of_table[] = {
 };
 MODULE_DEVICE_TABLE(of, m25p_of_table);
 
+#ifdef CONFIG_PM
+static int m25p_suspend(struct device *dev)
+{
+	return 0;
+}
+EXPORT_SYMBOL(m25p_suspend);
+
+static int m25p_resume(struct device *dev)
+{
+	struct m25p *flash = dev_get_drvdata(dev);
+	struct flash_platform_data	*data;
+	char *flash_name = NULL;
+	struct spi_nor_hwcaps hwcaps = {
+		.mask = SNOR_HWCAPS_READ |
+			SNOR_HWCAPS_READ_FAST |
+			SNOR_HWCAPS_PP,
+	};
+	struct spi_nor *nor;
+	int ret;
+
+	nor = &flash->spi_nor;
+
+	data = dev_get_platdata(&flash->spi->dev);
+
+	if (data && data->type)
+		flash_name = data->type;
+	else if (!strcmp(flash->spi->modalias, "spi-nor"))
+		flash_name = NULL; /* auto-detect */
+	else
+		flash_name = flash->spi->modalias;
+
+	if (flash->spi->mode & SPI_RX_QUAD) {
+		hwcaps.mask |= SNOR_HWCAPS_READ_1_1_4;
+
+		if (flash->spi->mode & SPI_TX_QUAD)
+			hwcaps.mask |= (SNOR_HWCAPS_READ_1_4_4 |
+					SNOR_HWCAPS_PP_1_1_4 |
+					SNOR_HWCAPS_PP_1_4_4);
+	} else if (flash->spi->mode & SPI_RX_DUAL) {
+		hwcaps.mask |= SNOR_HWCAPS_READ_1_1_2;
+
+		if (flash->spi->mode & SPI_TX_DUAL)
+			hwcaps.mask |= SNOR_HWCAPS_READ_1_2_2;
+	}
+
+	ret = spi_nor_scan(&flash->spi_nor, flash_name, &hwcaps);
+
+	return ret;
+}
+EXPORT_SYMBOL(m25p_resume);
+
+static SIMPLE_DEV_PM_OPS(m25p_pm_ops, m25p_suspend, m25p_resume);
+#endif /* CONFIG_PM */
+
 static struct spi_driver m25p80_driver = {
 	.driver = {
 		.name	= "m25p80",
 		.of_match_table = m25p_of_table,
+#ifdef CONFIG_PM
+		.pm	= &m25p_pm_ops,
+#endif /* CONFIG_PM */
 	},
 	.id_table	= m25p_ids,
 	.probe	= m25p_probe,
