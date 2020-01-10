@@ -716,6 +716,10 @@ EXPORT_SYMBOL_GPL(dw_spi_suspend_host);
 int dw_spi_resume_host(struct dw_spi *dws)
 {
 	int ret;
+	struct chip_data *chip;
+
+	chip = spi_get_ctldata(dws->spi);
+	spi_set_clk(dws, chip->clk_div);
 
 	spi_hw_init(&dws->master->dev, dws);
 	ret = spi_master_resume(dws->master);

@@ -22,6 +22,7 @@
 #include <linux/regmap.h>
 #include <linux/mfd/syscon.h>
 
+#include <linux/pm_runtime.h>
 #include <linux/dma-mapping.h>
 #include <linux/dmaengine.h>
 #include <linux/interrupt.h>
@@ -474,6 +475,7 @@ static int nx_dw_spi_probe(struct platform_device *pdev)
 				   BIT(0), 0x1);
 		dws->slave = true;
 	}
+
 #ifdef SUPPORT_TO_RO_MODE
 	/* set chip info to support TR/RO/TO mode */
 	dws->chip_info = &nx_spi_chip;
@@ -484,6 +486,12 @@ static int nx_dw_spi_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, dws_nx);
 
+#ifdef CONFIG_PM
+	pm_runtime_get_noresume(&pdev->dev);
+	pm_runtime_set_active(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
+#endif /* CONFIG_PM */
+
 	dev_info(&pdev->dev, "It operates in %s Mode!\n",
 			dma_mode ? "DMA" : "IO");
 	return 0;
@@ -493,6 +501,12 @@ err_clk:
 
 err_pclk:
 	clk_disable_unprepare(dws_nx->pclk);
+
+#ifdef CONFIG_PM
+	pm_runtime_disable(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
+	pm_runtime_put_noidle(&pdev->dev);
+#endif /* CONFIG_PM */
 
 	return ret;
 }
@@ -511,10 +525,42 @@ static int nx_dw_spi_remove(struct platform_device *pdev)
 	clk_disable_unprepare(dws_nx->clk);
 	clk_disable_unprepare(dws_nx->pclk);
 
+#ifdef CONFIG_PM
+	pm_runtime_disable(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
+	pm_runtime_put_noidle(&pdev->dev);
+#endif /* CONFIG_PM */
+
 	kfree(dws_nx->dummypage);
 
 	return 0;
 }
+
+#ifdef CONFIG_PM
+static int nx_dw_spi_runtime_suspend_late(struct device *dev)
+{
+	struct dw_spi *dws = dev_get_drvdata(dev);
+
+	return dw_spi_suspend_host(dws);
+}
+EXPORT_SYMBOL(nx_dw_spi_runtime_suspend_late);
+
+static int nx_dw_spi_runtime_resume_early(struct device *dev)
+{
+	int ret = 0;
+	struct dw_spi *dws = dev_get_drvdata(dev);
+
+	ret = dw_spi_resume_host(dws);
+
+	return ret;
+}
+EXPORT_SYMBOL(nx_dw_spi_runtime_resume_early);
+
+static const struct dev_pm_ops nx_dw_spi_nexell_pmops = {
+	.suspend_late = nx_dw_spi_runtime_suspend_late,
+	.resume_early = nx_dw_spi_runtime_resume_early,
+};
+#endif /* CONFIG_PM */
 
 static const struct of_device_id nx_dw_spi_of_match[] = {
 	{ .compatible = "nexell,nxp3220-dw-spi", },
@@ -528,6 +574,9 @@ static struct platform_driver nx_dw_spi_driver = {
 	.driver		= {
 		.name	= "dw_spi_nx",
 		.of_match_table = nx_dw_spi_of_match,
+#ifdef CONFIG_PM
+		.pm		= &nx_dw_spi_nexell_pmops,
+#endif /* CONFIG_PM */
 	},
 };
 module_platform_driver(nx_dw_spi_driver);
