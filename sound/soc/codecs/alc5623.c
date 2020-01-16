@@ -985,6 +985,9 @@ static int alc5623_suspend(struct snd_soc_codec *codec)
 {
 	struct alc5623_priv *alc5623 = snd_soc_codec_get_drvdata(codec);
 
+	if (alc5623->amp_power)
+		gpiod_set_value_cansleep(alc5623->amp_power, 0);
+
 	regcache_cache_only(alc5623->regmap, true);
 
 	return 0;
@@ -1004,8 +1007,13 @@ static int alc5623_resume(struct snd_soc_codec *codec)
 		alc5623_reset(codec);
 		alc5623_reg_init(codec);
 		regcache_cache_only(alc5623->regmap, true);
+		if (alc5623->amp_power)
+			gpiod_set_value_cansleep(alc5623->amp_power, 1);
 		return ret;
 	}
+
+	if (alc5623->amp_power)
+		gpiod_set_value_cansleep(alc5623->amp_power, 1);
 
 	return 0;
 }
