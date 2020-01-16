@@ -28,10 +28,16 @@
 		#address-cells = <1>;
 		#size-cells = <1>;
 
-		reserved@0 {
-			label = "reserved";
+		bootsector@0 {
+			label = "bootsector";
 			reg = <0x0000000 0x500000>;
-			read-only;
+		     /*	read-only; */
+		};
+
+		env@500000 {
+			label = "env";
+			reg = <0x0500000 0x100000>;
+		     /*	read-only; */
 		};
 
 		boot@600000 {
@@ -40,7 +46,7 @@
 		};
 
 		misc@2600000 {
-			label = "boot";
+			label = "misc";
 			reg = <0x2600000 0x0800000>;
 		};
 
