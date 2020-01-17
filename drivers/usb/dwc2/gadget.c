@@ -4721,9 +4721,8 @@ int dwc2_hsotg_suspend(struct dwc2_hsotg *hsotg)
 	if (of_device_is_compatible(hsotg->dev->of_node,
 		 "nexell,nxp3220-dwc2otg")
 		&& !hsotg->params.g_con_susp) {
-		u32 usb_status = readl(hsotg->regs + GOTGCTL);
 
-		if (usb_status & GOTGCTL_BSESVLD) {
+		if (hsotg->connected) {
 			dev_warn(hsotg->dev, "usb device is still connected\n");
 			return -EBUSY;
 		}
