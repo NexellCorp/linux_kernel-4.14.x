@@ -136,6 +136,20 @@
 		status = "disabled";
 	};
 
+	pll0_u_consumer {
+		compatible = "linux,clock-userspace-consumer";
+		clocks = <&pll_0 0>;
+	};
+	pll1_u_consumer {
+		compatible = "linux,clock-userspace-consumer";
+		clocks = <&pll_1 0>;
+	};
+
+	pddr1_u_consumer {
+		compatible = "linux,clock-userspace-consumer";
+		clocks = <&pll_ddr1 0>;
+	};
+
 	soc: soc {
 		compatible = "simple-bus";
 		#address-cells = <1>;
