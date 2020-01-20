@@ -15,6 +15,7 @@ obj-$(CONFIG_COMMON_CLK)	+= clk-gpio.o
 ifeq ($(CONFIG_OF), y)
 obj-$(CONFIG_COMMON_CLK)	+= clk-conf.o
 endif
+obj-$(CONFIG_COMMON_CLK_USERSPACE_CONSUMER)	+= clk-userspace-consumer.o
 
 # hardware specific clock types
 # please keep this section sorted lexicographically by file path name
