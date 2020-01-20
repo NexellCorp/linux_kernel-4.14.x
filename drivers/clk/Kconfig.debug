@@ -1,0 +1,9 @@
+config COMMON_CLK_USERSPACE_CONSUMER
+	tristate "Userspace clock consumer support"
+	depends on COMMON_CLK_DEBUG
+	help
+	  There are some classes of devices that are controlled entirely
+	  from user space. Userspace consumer driver provides ability to
+	  control clock for such devices.
+
+	  If unsure, say no.
