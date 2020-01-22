@@ -733,7 +733,7 @@
 			reg = <0x20780000 0x1000>;
 			assigned-clocks = <&cmu CLK_SRC_I2S0_CORE>,
 					<&cmu CLK_I2S0_CORE>;
-			assigned-clock-parents = <&pll_1_div 0>, <0>;
+			assigned-clock-parents = <&pll_cpu_div 0>, <0>;
 			assigned-clock-rates = <0>, <12288000>;
 			clocks = <&cmu CLK_I2S0_CORE>, <&cmu CLK_I2S0_APB>;
 			clock-names = "i2s", "pclk";
@@ -750,7 +750,7 @@
 			reg = <0x20790000 0x1000>;
 			assigned-clocks = <&cmu CLK_SRC_I2S1_CORE>,
 					<&cmu CLK_I2S1_CORE>;
-			assigned-clock-parents = <&pll_1_div 0>, <0>;
+			assigned-clock-parents = <&pll_cpu_div 0>, <0>;
 			assigned-clock-rates = <0>, <12288000>;
 			clocks = <&cmu CLK_I2S1_CORE>, <&cmu CLK_I2S1_APB>;
 			clock-names = "i2s", "pclk";
@@ -767,7 +767,7 @@
 			reg = <0x207a0000 0x1000>;
 			assigned-clocks = <&cmu CLK_SRC_I2S2_CORE>,
 					<&cmu CLK_I2S2_CORE>;
-			assigned-clock-parents = <&pll_1_div 0>, <0>;
+			assigned-clock-parents = <&pll_cpu_div 0>, <0>;
 			assigned-clock-rates = <0>, <12288000>;
 			clocks = <&cmu CLK_I2S2_CORE>, <&cmu CLK_I2S2_APB>;
 			clock-names = "i2s", "pclk";
@@ -784,7 +784,7 @@
 			reg = <0x207b0000 0x1000>;
 			assigned-clocks = <&cmu CLK_SRC_I2S3_CORE>,
 					<&cmu CLK_I2S3_CORE>;
-			assigned-clock-parents = <&pll_1_div 0>, <0>;
+			assigned-clock-parents = <&pll_cpu_div 0>, <0>;
 			assigned-clock-rates = <0>, <12288000>;
 			clocks = <&cmu CLK_I2S3_CORE>, <&cmu CLK_I2S3_APB>;
 			clock-names = "i2s", "pclk";
