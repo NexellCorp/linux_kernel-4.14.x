@@ -87,11 +87,12 @@ PNAME(src_mux_p) = { "pll0", "pll1_div",
 
 #endif
 PNAME(snd_mux_p) = { "pll1_div", "pll_ddr1_div", "ext_clk" };
+PNAME(fxd_mux_p) = { "pll_cpu_div", "ext_clk" };
 
 static u32 src_mux_table[] = {
 	MUX_PLL0_CLK_NUM,
 	MUX_PLL1_CLK_NUM,
-#ifndef CONFIG_CPU_FREQ
+#if !defined CONFIG_CPU_FREQ && !defined CONFIG_COMMON_CLK_USERSPACE_CONSUMER
 	MUX_PLL_CPU_DIV_NUM,
 #endif
 	MUX_PLL_DDR0_DIV_NUM,
@@ -103,6 +104,11 @@ static u32 src_mux_table[] = {
 static u32 snd_mux_table[] = {
 	MUX_PLL1_CLK_NUM,
 	MUX_PLL_DDR1_DIV_NUM,
+	MUX_EXT_SRC_CLK0_NUM,
+};
+
+static u32 fxd_mux_table[] = {
+	MUX_PLL_CPU_DIV_NUM,
 	MUX_EXT_SRC_CLK0_NUM,
 };
 
@@ -120,8 +126,12 @@ static u32 snd_mux_table[] = {
 #define COMP_BASE_SND(_id, cname, f) \
 	COMP_BASE(_id, NULL, cname, snd_mux_p, f)
 
+#define COMP_BASE_FXD(_id, cname, f) \
+	COMP_BASE(_id, NULL, cname, fxd_mux_p, f)
+
 #define COMP_MUX_SRC(o)		COMP_MUX_T(o, 0, 4, src_mux_table, 0)
 #define COMP_MUX_SND(o)		COMP_MUX_T(o, 0, 4, snd_mux_table, 0)
+#define COMP_MUX_FXD(o)		COMP_MUX_T(o, 0, 4, fxd_mux_table, 0)
 
 #define COMP_DIV_SRC(o) 	COMP_DIV(o + 0x60, 0, 8, 0)
 #define COMP_DIV_SRC_F(o, f) 	COMP_DIV(o + 0x60, 0, 8, f)
@@ -195,23 +205,23 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 		COMP_DIV_SRC(UART0_APB)
 		COMP_GATE_SRC(UART0_APB)
 	}, {
-		COMP_BASE_SND(CLK_SRC_I2S0_CORE, "src_i2s0_core", CLK_DIVIDER_ROUND_CLOSEST)
-		COMP_MUX_SND(I2S0_CORE)
+		COMP_BASE_FXD(CLK_SRC_I2S0_CORE, "src_i2s0_core", CLK_DIVIDER_ROUND_CLOSEST)
+		COMP_MUX_FXD(I2S0_CORE)
 		COMP_DIV_SRC_F(I2S0_CORE, CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_GATE_SRC(I2S0_CORE)
 	}, {
-		COMP_BASE_SND(CLK_SRC_I2S1_CORE, "src_i2s1_core", CLK_DIVIDER_ROUND_CLOSEST)
-		COMP_MUX_SND(I2S1_CORE)
+		COMP_BASE_FXD(CLK_SRC_I2S1_CORE, "src_i2s1_core", CLK_DIVIDER_ROUND_CLOSEST)
+		COMP_MUX_FXD(I2S1_CORE)
 		COMP_DIV_SRC_F(I2S1_CORE, CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_GATE_SRC(I2S1_CORE)
 	}, {
-		COMP_BASE_SND(CLK_SRC_I2S2_CORE, "src_i2s2_core", CLK_DIVIDER_ROUND_CLOSEST)
-		COMP_MUX_SND(I2S2_CORE)
+		COMP_BASE_FXD(CLK_SRC_I2S2_CORE, "src_i2s2_core", CLK_DIVIDER_ROUND_CLOSEST)
+		COMP_MUX_FXD(I2S2_CORE)
 		COMP_DIV_SRC_F(I2S2_CORE, CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_GATE_SRC(I2S2_CORE)
 	}, {
-		COMP_BASE_SND(CLK_SRC_I2S3_CORE, "src_i2s3_core", CLK_DIVIDER_ROUND_CLOSEST)
-		COMP_MUX_SND(I2S3_CORE)
+		COMP_BASE_FXD(CLK_SRC_I2S3_CORE, "src_i2s3_core", CLK_DIVIDER_ROUND_CLOSEST)
+		COMP_MUX_FXD(I2S3_CORE)
 		COMP_DIV_SRC_F(I2S3_CORE, CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_GATE_SRC(I2S3_CORE)
 	}, {
