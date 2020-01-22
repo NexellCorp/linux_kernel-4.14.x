@@ -47,10 +47,20 @@
 	};
 
 	sound0: sound0 {
+		compatible = "simple-audio-card";
 		simple-audio-card,name = "nxp3220 Audio Card Null0";
 		status = "okay";
 
 		simple-audio-card,dai-link@0 {
+			mclk-fs = <256>;
+			format = "left_j";
+			frame-master = <&sndcpu0>;
+			bitclock-master = <&sndcpu0>;
+
+			sndcpu0: cpu  {
+				sound-dai = <&i2s0 0>;
+			};
+
 			sndcodec0: codec {
 				sound-dai = <&snd_null_codec0>;
 			};
@@ -58,10 +68,20 @@
 	};
 
 	sound1: sound1 {
+		compatible = "simple-audio-card";
 		simple-audio-card,name = "nxp3220 Audio Card Null1";
 		status = "okay";
 
 		simple-audio-card,dai-link@0 {
+			mclk-fs = <256>;
+			format = "left_j";
+			frame-master = <&sndcodec1>;
+			bitclock-master = <&sndcodec1>;
+
+			sndcpu1: cpu  {
+				sound-dai = <&i2s1 0>;
+			};
+
 			sndcodec1: codec {
 				sound-dai = <&snd_null_codec1>;
 			};
@@ -69,10 +89,20 @@
 	};
 
 	sound2: sound2 {
+		compatible = "simple-audio-card";
 		simple-audio-card,name = "nxp3220 Audio Card Null2";
 		status = "okay";
 
 		simple-audio-card,dai-link@0 {
+			mclk-fs = <256>;
+			format = "left_j";
+			frame-master = <&sndcpu2>;
+			bitclock-master = <&sndcpu2>;
+
+			sndcpu2: cpu  {
+				sound-dai = <&i2s2 0>;
+			};
+
 			sndcodec2: codec {
 				sound-dai = <&snd_null_codec2>;
 			};
@@ -80,10 +110,20 @@
 	};
 
 	sound3: sound3 {
+		compatible = "simple-audio-card";
 		simple-audio-card,name = "nxp3220 Audio Card Null3";
 		status = "okay";
 
 		simple-audio-card,dai-link@0 {
+			mclk-fs = <256>;
+			format = "left_j";
+			frame-master = <&sndcodec3>;
+			bitclock-master = <&sndcodec3>;
+
+			sndcpu3: cpu  {
+				sound-dai = <&i2s3 0>;
+			};
+
 			sndcodec3: codec {
 				sound-dai = <&snd_null_codec3>;
 			};
