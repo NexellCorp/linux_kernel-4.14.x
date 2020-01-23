@@ -250,7 +250,7 @@
 			clock-output-names = "pll1";
 		};
 
-		/* Audio sample rate 48Khz */
+		/* mm0_axi, typical 333MHz */
 		pll_1_div: pll1-div {
 			compatible = "nexell,fixed-factor-clock";
 			#clock-cells = <1>;
@@ -261,7 +261,7 @@
 			clock-output-names = "pll1_div";
 
 			assigned-clocks = <&pll_1 0>;
-			assigned-clock-rates = <1228800000>;
+			assigned-clock-rates = <2000000000>;
 		};
 
 		pll_cpu: pll-cpu {
@@ -312,7 +312,7 @@
 			clock-output-names = "pll_ddr1";
 		};
 
-		/* Audio sample rate 44.1Khz */
+		/* mm coda_0_core 250MHz */
 		pll_ddr1_div: pll-ddr1-div {
 			compatible = "nexell,fixed-factor-clock";
 			#clock-cells = <1>;
@@ -323,7 +323,7 @@
 			clock-output-names = "pll_ddr1_div";
 
 			assigned-clocks = <&pll_ddr1 0>;
-			assigned-clock-rates = <1354752000>;
+			assigned-clock-rates = <2000000000>;
 		};
 
 		adc: adc@20600000 {
@@ -363,7 +363,8 @@
 					  <&cmu CLK_SYS_DIV_I2C0_APB>,
 					  <&cmu CLK_SRC_HPM_SYS0>,
 					  <&cmu CLK_SRC_CPU_BACKUP0>,
-					  <&cmu CLK_CPU_BACKUP0>;
+					  <&cmu CLK_CPU_BACKUP0>,
+					  <&cmu CLK_SRC_CODA960_0_CORE>;
 
 			assigned-clock-parents = <&pll_0 0>,	/* SRC_SYS0_AXI */
 						 <0>,		/* SYS_DIV_SYS0_AXI */
@@ -384,7 +385,8 @@
 						 <0>,		/* SYS_DIV_I2C0_APB */
 						 <&pll_0 0>,	/* SRC_HPM_SYS0 */
 						 <&pll_ddr0_div 0>,	/* SRC CPU BACKUP0 */
-						 <0>;		/* CPU BACKUP0 */
+						 <0>,		/* CPU BACKUP0 */
+						 <&pll_ddr1_div 0>;     /* SRC_CODA_CORE */
 
 
 			assigned-clock-rates = <333333334>,     /* SRC_SYS0_AXI */
@@ -406,7 +408,8 @@
 					       <100000000>,	/* SYS_DIV_I2C0_APB */
 					       <500000000>,	/* SRC_HPM_SYS0 */
 					       <0>,		/* SRC CPU BACKUP0 */
-					       <400000000>;	/* CAU BACKUP0 */
+					       <400000000>,	/* CAU BACKUP0 */
+					       <250000000>;     /* SRC_MM_CODA_CORE */
 		};
 
 		cmu_cpu: clock-controller@22000000 {
