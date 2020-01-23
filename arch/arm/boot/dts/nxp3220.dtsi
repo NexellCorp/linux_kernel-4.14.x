@@ -350,6 +350,7 @@
 					  <&cmu CLK_SRC_TIMER0_TCLK0>,
 					  <&cmu CLK_SRC_TIMER0_TCLK1>,
 					  <&cmu CLK_SRC_TIMER0_TCLK2>,
+					  <&cmu CLK_SRC_TIMER0_TCLK3>,
 					  <&cmu CLK_SRC_I2C0_APB>,
 					  <&cmu CLK_SRC_USB0_AHB>,
 					  <&cmu CLK_SRC_SPI0_APB>,
@@ -366,17 +367,18 @@
 
 			assigned-clock-parents = <&pll_0 0>,	/* SRC_SYS0_AXI */
 						 <0>,		/* SYS_DIV_SYS0_AXI */
-						 <&pll_0 0>,	/* SRC_TIMER0_APB */
-						 <&pll_0 0>,	/* SRC_TIMER0_TCLK0 */
-						 <&pll_0 0>,	/* SRC_TIMER0_TCLK1 */
-						 <&pll_0 0>,	/* SRC_TIMER0_TCLK2 */
-						 <&pll_0 0>,	/* SRC_I2C0_APB */
-						 <&pll_0 0>,	/* SRC_USB0_AHB */
-						 <&pll_0 0>,	/* SRC_SPI0_APB */
-						 <&pll_0 0>,	/* SRC_SPI0_CORE */
-						 <&pll_0 0>,	/* SRC_PWM0_APB */
-						 <&pll_0 0>,	/* SRC_UART0_CORE */
-						 <&pll_0 0>,	/* SRC_UART0_APB */
+						 <&pll_cpu_div 0>,	/* SRC_TIMER0_APB */
+						 <&pll_cpu_div 0>,	/* SRC_TIMER0_TCLK0 */
+						 <&pll_cpu_div 0>,	/* SRC_TIMER0_TCLK1 */
+						 <&pll_cpu_div 0>,	/* SRC_TIMER0_TCLK2 */
+						 <&pll_cpu_div 0>,	/* SRC_TIMER0_TCLK3 */
+						 <&pll_cpu_div 0>,	/* SRC_I2C0_APB */
+						 <&pll_cpu_div 0>,	/* SRC_USB0_AHB */
+						 <&pll_cpu_div 0>,	/* SRC_SPI0_APB */
+						 <&pll_cpu_div 0>,	/* SRC_SPI0_CORE */
+						 <&pll_cpu_div 0>,	/* SRC_PWM0_APB */
+						 <&pll_cpu_div 0>,	/* SRC_UART0_CORE */
+						 <&pll_cpu_div 0>,	/* SRC_UART0_APB */
 						 <0>,		/* SYS_DIV_SYS0_HSIF_APB */
 						 <0>,		/* SYS_DIV_SYS0_HSIF_AXI */
 						 <0>,		/* SYS_DIV_I2C0_APB */
@@ -388,14 +390,15 @@
 			assigned-clock-rates = <333333334>,     /* SRC_SYS0_AXI */
 					       <333333334>,     /* SYS_DIV_SYS0_AXI */
 					       <100000000>,     /* SRC_TIMER0_APB */
-					       <0>,             /* SRC_TIMER0_TCLK0 */
-					       <0>,             /* SRC_TIMER0_TCLK1 */
-					       <0>,             /* SRC_TIMER0_TCLK2 */
+					       <100000000>,             /* SRC_TIMER0_TCLK0 */
+					       <100000000>,             /* SRC_TIMER0_TCLK1 */
+					       <100000000>,             /* SRC_TIMER0_TCLK2 */
+					       <100000000>,             /* SRC_TIMER0_TCLK3 */
 					       <0>,             /* SRC_I2C0_APB */
 					       <250000000>,     /* SRC_USB0_AHB */
 					       <0>,             /* SRC_SPI0_APB */
 					       <0>,             /* SRC_SPI0_CORE */
-					       <0>,             /* SRC_PWM0_APB */
+					       <166000000>,             /* SRC_PWM0_APB */
 					       <0>,             /* SRC_UART0_CORE */
 					       <0>,             /* SRC_UART0_APB */
 					       <125000000>,     /* SYS_DIV_SYS0_HSIF_APB */
@@ -706,11 +709,11 @@
 					  <&cmu CLK_SRC_PWM0_TCLK2>,
 					  <&cmu CLK_SRC_PWM0_TCLK3>,
 					  <&cmu CLK_PWM0_APB>,
-					  <&pll_0 0>;
+					  <&pll_cpu_div 0>;
 			assigned-clock-rates = <0>, <0>, <0>, <0>, <166000000>,
 					       <0>;
-			assigned-clock-parents = <&pll_0 0>, <&pll_0 0>,
-						 <&pll_0 0>, <&pll_0 0>,
+			assigned-clock-parents = <&pll_cpu_div 0>, <&pll_cpu_div 0>,
+						 <&pll_cpu_div 0>, <&pll_cpu_div 0>,
 						 <0>, <0>;
 			clocks = <&cmu CLK_PWM0_APB>,
 				 <&cmu CLK_PWM0_TCLK0>,
@@ -803,7 +806,7 @@
 			interrupt-names = "int0";
 			assigned-clocks = <&cmu CLK_SRC_CAN0_CORE>,
 					  <&cmu CLK_CAN0_CORE>;
-			assigned-clock-parents = <&pll_0 0>, <0>;
+			assigned-clock-parents = <&pll_cpu_div 0>, <0>;
 			assigned-clock-rates = <0>, <200000000>;
 			clocks = <&cmu CLK_CAN0_APB>, <&cmu CLK_CAN0_CORE>;
 			clock-names = "hclk", "cclk";
@@ -821,7 +824,7 @@
 			interrupt-names = "int0";
 			assigned-clocks = <&cmu CLK_SRC_CAN1_CORE>,
 					  <&cmu CLK_CAN1_CORE>;
-			assigned-clock-parents = <&pll_0 0>, <0>;
+			assigned-clock-parents = <&pll_cpu_div 0>, <0>;
 			assigned-clock-rates = <0>, <200000000>;
 			clocks = <&cmu CLK_CAN1_APB>, <&cmu CLK_CAN1_CORE>;
 			clock-names = "hclk", "cclk";
