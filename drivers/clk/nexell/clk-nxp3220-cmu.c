@@ -380,8 +380,8 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 		COMP_DIV_SRC(NANDC0_AXI)
 		COMP_GATE_SRC(NANDC0_AXI)
 	}, {
-		COMP_BASE_SRC_F(CLK_SRC_MM0_AXI, "src_mm0_axi", 0)
-		COMP_MUX_SRC(MM0_AXI)
+		COMP_BASE_SND(CLK_SRC_MM0_AXI, "src_mm0_axi", CLK_DIVIDER_ROUND_CLOSEST)
+		COMP_MUX_SND(MM0_AXI)
 		COMP_DIV_SRC(MM0_AXI)
 		COMP_GATE_SRC(MM0_AXI)
 	}, {
@@ -405,8 +405,8 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 		COMP_DIV_SRC_F(LVDS0_VCLK, CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_GATE_SRC(LVDS0_VCLK)
 	}, {
-		COMP_BASE_SRC_F(CLK_SRC_CODA960_0_CORE, "src_coda960_0_core", 0)
-		COMP_MUX_SRC(CODA960_0_CORE)
+		COMP_BASE_SND(CLK_SRC_CODA960_0_CORE, "src_coda960_0_core", CLK_DIVIDER_ROUND_CLOSEST)
+		COMP_MUX_SND(CODA960_0_CORE)
 		COMP_DIV_SRC(CODA960_0_CORE)
 		COMP_GATE_SRC(CODA960_0_CORE)
 	}, {
