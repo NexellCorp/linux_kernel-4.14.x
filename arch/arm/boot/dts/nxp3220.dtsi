@@ -150,6 +150,18 @@
 		clocks = <&pll_ddr1 0>;
 	};
 
+	coda_u_consumer {
+		compatible = "linux,clock-userspace-consumer";
+		clocks = <&cmu CLK_SRC_CODA960_0_CORE>;
+	};
+
+	mm_u_consumer {
+		compatible = "linux,clock-userspace-consumer";
+		clocks = <&cmu_mm CLK_MM_CODA960_AXI>,
+			 <&cmu_mm CLK_MM_CODA960_APB>,
+			 <&cmu_mm CLK_MM_CODA960_CORE>;
+	};
+
 	soc: soc {
 		compatible = "simple-bus";
 		#address-cells = <1>;
@@ -343,7 +355,6 @@
 			    <0x27010000 0x8000>;
 			#clock-cells = <1>;
 			#reset-cells = <1>;
-
 			assigned-clocks = <&cmu CLK_SRC_SYS0_AXI>,
 					  <&cmu CLK_SYS_DIV_SYS0_AXI>,
 					  <&cmu CLK_SRC_TIMER0_APB>,
