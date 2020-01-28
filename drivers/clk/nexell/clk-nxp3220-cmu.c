@@ -79,8 +79,8 @@
  * MUX name must be one of clock, registerd by DT
  */
 #ifndef CONFIG_CPU_FREQ
-PNAME(src_mux_p) = { "pll0", "pll1_div", "pll_cpu_div",
-	"pll_ddr0_div", "pll_ddr1_div", "ext_clk", "oscclk"};
+PNAME(src_mux_p) = { "pll0", "pll_cpu_div",
+	"pll_ddr0_div", "ext_clk", "oscclk"};
 #else
 PNAME(src_mux_p) = { "pll0", "pll1_div",
 	"pll_ddr0_div", "pll_ddr1_div", "ext_clk", "oscclk"};
@@ -91,12 +91,10 @@ PNAME(fxd_mux_p) = { "pll_cpu_div", "ext_clk" };
 
 static u32 src_mux_table[] = {
 	MUX_PLL0_CLK_NUM,
-	MUX_PLL1_CLK_NUM,
 #if !defined CONFIG_CPU_FREQ && !defined CONFIG_COMMON_CLK_USERSPACE_CONSUMER
 	MUX_PLL_CPU_DIV_NUM,
 #endif
 	MUX_PLL_DDR0_DIV_NUM,
-	MUX_PLL_DDR1_DIV_NUM,
 	MUX_EXT_SRC_CLK0_NUM,
 	MUX_OSCCLK_IN_NUM,
 };
@@ -382,7 +380,7 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 	}, {
 		COMP_BASE_SND(CLK_SRC_MM0_AXI, "src_mm0_axi", CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_MUX_SND(MM0_AXI)
-		COMP_DIV_SRC(MM0_AXI)
+		COMP_DIV_SRC_F(MM0_AXI, CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_GATE_SRC(MM0_AXI)
 	}, {
 		COMP_BASE_SRC_F(CLK_SRC_VIP0_PADOUT0, "src_vip0_padout0", 0)
@@ -407,7 +405,7 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 	}, {
 		COMP_BASE_SND(CLK_SRC_CODA960_0_CORE, "src_coda960_0_core", CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_MUX_SND(CODA960_0_CORE)
-		COMP_DIV_SRC(CODA960_0_CORE)
+		COMP_DIV_SRC_F(CODA960_0_CORE, CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_GATE_SRC(CODA960_0_CORE)
 	}, {
 		COMP_BASE_FXD(CLK_SRC_USB0_AHB, "src_usb0_ahb", CLK_DIVIDER_ROUND_CLOSEST)
