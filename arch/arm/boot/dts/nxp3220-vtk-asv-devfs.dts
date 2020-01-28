@@ -238,7 +238,7 @@ display-timing {
 			VCC_DCDC1: dcdc2 {
 					PMIC_PDATA_INIT( 1,
 					"nxe1500_dcdc2",
-					975000, 1000000,
+					600000, 1300000,
 					1000000, 1, 0, 0x4)
 					regulator-always-on;
 					regulator-boot-on;
