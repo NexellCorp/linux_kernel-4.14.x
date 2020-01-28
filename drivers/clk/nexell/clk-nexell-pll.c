@@ -368,7 +368,7 @@ static void __init nexell_clk_register_pll(struct device_node *np,
 	init.ops = &pll_ops;
 	init.parent_names = &parent_name;
 	init.num_parents = 1;
-	init.flags = CLK_SET_RATE_GATE;
+//	init.flags = CLK_SET_RATE_GATE;
 
 	pll->hw.init = &init;
 
