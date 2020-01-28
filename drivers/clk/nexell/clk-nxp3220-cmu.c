@@ -86,7 +86,8 @@ PNAME(src_mux_p) = { "pll0", "pll1_div",
 	"pll_ddr0_div", "pll_ddr1_div", "ext_clk", "oscclk"};
 
 #endif
-PNAME(snd_mux_p) = { "pll1_div", "pll_ddr1_div", "ext_clk" };
+PNAME(core_mux_p) = { "pll1_div", "ext_clk" };
+PNAME(coda_mux_p) = { "pll_ddr1_div", "ext_clk" };
 PNAME(fxd_mux_p) = { "pll_cpu_div", "ext_clk" };
 
 static u32 src_mux_table[] = {
@@ -98,9 +99,12 @@ static u32 src_mux_table[] = {
 	MUX_EXT_SRC_CLK0_NUM,
 	MUX_OSCCLK_IN_NUM,
 };
-
-static u32 snd_mux_table[] = {
+static u32 core_mux_table[] = {
 	MUX_PLL1_CLK_NUM,
+	MUX_EXT_SRC_CLK0_NUM,
+};
+
+static u32 coda_mux_table[] = {
 	MUX_PLL_DDR1_DIV_NUM,
 	MUX_EXT_SRC_CLK0_NUM,
 };
@@ -121,14 +125,18 @@ static u32 fxd_mux_table[] = {
 #define COMP_BASE_SRC_F(_id, cname, f) \
 	COMP_BASE(_id, NULL, cname, src_mux_p, f)
 
-#define COMP_BASE_SND(_id, cname, f) \
-	COMP_BASE(_id, NULL, cname, snd_mux_p, f)
+#define COMP_BASE_CORE(_id, cname, f) \
+	COMP_BASE(_id, NULL, cname, core_mux_p, f)
+
+#define COMP_BASE_CODA(_id, cname, f) \
+	COMP_BASE(_id, NULL, cname, coda_mux_p, f)
 
 #define COMP_BASE_FXD(_id, cname, f) \
 	COMP_BASE(_id, NULL, cname, fxd_mux_p, f)
 
 #define COMP_MUX_SRC(o)		COMP_MUX_T(o, 0, 4, src_mux_table, 0)
-#define COMP_MUX_SND(o)		COMP_MUX_T(o, 0, 4, snd_mux_table, 0)
+#define COMP_MUX_CORE(o)	COMP_MUX_T(o, 0, 4, core_mux_table, 0)
+#define COMP_MUX_CODA(o)	COMP_MUX_T(o, 0, 4, coda_mux_table, 0)
 #define COMP_MUX_FXD(o)		COMP_MUX_T(o, 0, 4, fxd_mux_table, 0)
 
 #define COMP_DIV_SRC(o) 	COMP_DIV(o + 0x60, 0, 8, 0)
@@ -378,8 +386,8 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 		COMP_DIV_SRC(NANDC0_AXI)
 		COMP_GATE_SRC(NANDC0_AXI)
 	}, {
-		COMP_BASE_SND(CLK_SRC_MM0_AXI, "src_mm0_axi", CLK_DIVIDER_ROUND_CLOSEST)
-		COMP_MUX_SND(MM0_AXI)
+		COMP_BASE_CORE(CLK_SRC_MM0_AXI, "src_mm0_axi", CLK_DIVIDER_ROUND_CLOSEST)
+		COMP_MUX_CORE(MM0_AXI)
 		COMP_DIV_SRC_F(MM0_AXI, CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_GATE_SRC(MM0_AXI)
 	}, {
@@ -403,8 +411,8 @@ static const struct nexell_composite_clock src_clks[] __initconst = {
 		COMP_DIV_SRC_F(LVDS0_VCLK, CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_GATE_SRC(LVDS0_VCLK)
 	}, {
-		COMP_BASE_SND(CLK_SRC_CODA960_0_CORE, "src_coda960_0_core", CLK_DIVIDER_ROUND_CLOSEST)
-		COMP_MUX_SND(CODA960_0_CORE)
+		COMP_BASE_CODA(CLK_SRC_CODA960_0_CORE, "src_coda960_0_core", CLK_DIVIDER_ROUND_CLOSEST)
+		COMP_MUX_CODA(CODA960_0_CORE)
 		COMP_DIV_SRC_F(CODA960_0_CORE, CLK_DIVIDER_ROUND_CLOSEST)
 		COMP_GATE_SRC(CODA960_0_CORE)
 	}, {
