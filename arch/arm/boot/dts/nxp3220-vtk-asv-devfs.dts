@@ -169,27 +169,11 @@
 	status = "okay";
 };
 
-&dp_green {
-	#if 0
-	nexell,pins = "gpioa-8", "gpioa-9", "gpioa-10", "gpioa-11",
-		"gpioa-12", "gpiod-0", "gpiod-1", "gpiod-2";
-	#else
-	nexell,pins = "gpioa-8", "gpioa-9", "gpioa-10", "gpioa-11", "gpioa-12";
-	#endif
-};
-
-&dp_red{
-	#if 0
-	nexell,pins = "gpiod-3", "gpiod-4", "gpiod-5", "gpiod-9"
-		"gpiod-6", "gpiod-7", "gpiod-8", "gpioa-18";
-	#else
-	nexell,pins = "gpiod-18";
-	#endif
-};
-
 &drm_rgb {
-status = "ok";
-display-timing {
+	status = "ok";
+	enable-gpios =  <&gpio_c 13 GPIO_ACTIVE_HIGH>,
+			<&gpio_c 5 GPIO_ACTIVE_HIGH>;
+	display-timing {
 		clock-frequency = <24500000>;
 		hactive = <800>;
 		hfront-porch = <8>;
