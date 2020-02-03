@@ -162,6 +162,11 @@
 			 <&cmu_mm CLK_MM_CODA960_CORE>;
 	};
 
+	sys0_u_consumer {
+		compatible = "linux,clock-userspace-consumer";
+		clocks = <&cmu CLK_SRC_SYS0_AXI>;
+	};
+
 	soc: soc {
 		compatible = "simple-bus";
 		#address-cells = <1>;
