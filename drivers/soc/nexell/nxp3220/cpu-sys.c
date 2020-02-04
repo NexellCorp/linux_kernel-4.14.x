@@ -389,7 +389,7 @@ static ssize_t sys_ro_show(struct device *pdev, struct device_attribute *attr,
 	return (s - buf);
 }
 
-static int read_cpu_hpm(void)
+int read_cpu_hpm(void)
 {
 	void __iomem *reg = (void __iomem *)SYSREG_CPU;
 	unsigned int ro_sel = ecid_mod->hpm.hpm_cpu_ro_sel;

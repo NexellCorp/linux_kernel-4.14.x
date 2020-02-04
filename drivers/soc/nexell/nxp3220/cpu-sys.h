@@ -10,4 +10,5 @@
 
 extern int nx_cpu_id_ecid(u32 ecid[4]);
 extern int nx_cpu_hpm_ro(u16 hpm[8]);
+extern int read_cpu_hpm(void);
 #endif /* __CPU_SYS_H */
