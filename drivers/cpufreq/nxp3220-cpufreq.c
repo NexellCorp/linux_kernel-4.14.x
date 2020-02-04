@@ -97,7 +97,7 @@ static u32 read_cpu_ids(void)
 	return cpu_ids;
 }
 
-static int read_cpu_hpm(void)
+static int read_cpu_ro_hpm(void)
 {
 	u16 hpm[8] = {0, };
 	int ret = 0;
@@ -111,13 +111,14 @@ static int read_cpu_hpm(void)
 
 static int find_asv_table_index(struct device *dev)
 {
-	int i, ids, hpm;
+	int i, ids, hpm, run_cpu_hpm;
 	int ret = 0;
 
 	ids = read_cpu_ids();
-	hpm = read_cpu_hpm();
+	hpm = read_cpu_ro_hpm();
+	run_cpu_hpm = read_cpu_hpm();
 
-	dev_info(dev, "hpm value: %d cpu_ids: %d\n\r", hpm, ids);
+	dev_info(dev, "hpm value: %d cpu_ids: %d runtime_cpu_hpm:%d\n\r", hpm, ids, run_cpu_hpm);
 	for (i = 0; i < ARRAY_SIZE(nxp3220_limit); i++) {
 		if ((ids <= nxp3220_limit[i].ids_limit) ||
 			(hpm <=	nxp3220_limit[i].hpm_limit)) {
