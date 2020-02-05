@@ -132,4 +132,20 @@ struct serial_rs485 {
 					   are a royal PITA .. */
 };
 
+/*
+ * Serial interface for controlling ISO7816 settings on chips with suitable
+ * support. Set with TIOCSISO7816 and get with TIOCGISO7816 if supported by
+ * your platform.
+ */
+
+struct serial_iso7816 {
+	__u32	flags;			/* ISO7816 feature flags */
+#define SER_ISO7816_RX_ENABLED	(1 << 0)
+#define SER_ISO7816_TX_ENABLED	(1 << 1)
+#define SER_ISO7816_ENABLED			(1 << 2)
+#define SER_ISO7816_TX_STATUS		(1 << 3)
+	__u32 status;			/* ISO7816 tx status return value */
+	__u32	reserved[2];
+};
+
 #endif /* _UAPI_LINUX_SERIAL_H */
