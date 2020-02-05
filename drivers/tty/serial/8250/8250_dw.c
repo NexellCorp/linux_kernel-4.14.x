@@ -374,6 +374,37 @@ static int dw8250_rs485_config(struct uart_port *p,
 	return 0;
 }
 
+/* Enable or disable the iso7816 support */
+/* Called with interrupts disabled */
+static int dw8250_iso7816_config(struct uart_port *port,
+				struct serial_iso7816 *iso7816conf)
+{
+	unsigned int ctrlreg = 0;
+
+	if (iso7816conf->flags & SER_ISO7816_TX_STATUS) {
+		unsigned int lsr = 0;
+
+		lsr = readb(port->membase + (UART_LSR << port->regshift));
+		lsr = (lsr & (UART_LSR_TEMT|UART_LSR_THRE)) >> 5;
+		port->iso7816.status = lsr;
+	} else {
+		if (iso7816conf->flags & SER_ISO7816_ENABLED)
+			ctrlreg |= SER_ISO7816_ENABLED;
+		if (iso7816conf->flags & SER_ISO7816_TX_ENABLED)
+			ctrlreg |= SER_ISO7816_TX_ENABLED;
+		if (iso7816conf->flags & SER_ISO7816_RX_ENABLED)
+			ctrlreg |= SER_ISO7816_RX_ENABLED;
+		port->iso7816.flags = ctrlreg;
+
+		if (port->iotype == UPIO_MEM32BE)
+			iowrite32be(ctrlreg, port->sysmembase);
+		else
+			writel(ctrlreg, port->sysmembase);
+	}
+
+	return 0;
+}
+
 /*
  * dw8250_fallback_dma_filter will prevent the UART from getting just any free
  * channel on platforms that have DMA engines, but don't have any channels
@@ -516,9 +547,37 @@ static int dw8250_probe(struct platform_device *pdev)
 	p->set_ldisc	= dw8250_set_ldisc;
 	p->set_termios	= dw8250_set_termios;
 	p->rs485_config = dw8250_rs485_config;
+	p->iso7816_config = dw8250_iso7816_config;
 
 	p->membase = devm_ioremap(dev, regs->start, resource_size(regs));
 	if (!p->membase)
+		return -ENOMEM;
+
+	switch (regs->start) {
+	case 0x20400000:
+	  p->sysmapbase = 0x20030000 + 0x13C;	// uart0ctrl
+		break;
+	case 0x20410000:
+	  p->sysmapbase = 0x20030000 + 0x138;	// uart1ctrl
+		break;
+	case 0x20420000:
+	  p->sysmapbase = 0x20030000 + 0x134;	// uart2ctrl
+		break;
+	case 0x20430000:
+	  p->sysmapbase = 0x20030000 + 0x130;	// uart3ctrl
+		break;
+	case 0x20440000:
+	  p->sysmapbase = 0x20030000 + 0x12C;	// uart4ctrl
+		break;
+	case 0x20450000:
+	  p->sysmapbase = 0x20030000 + 0x128;	// uart5ctrl
+		break;
+	case 0x20460000:
+	default:
+	  p->sysmapbase = 0x20030000 + 0x124;	// uart6ctrl
+	}
+	p->sysmembase = devm_ioremap(dev, p->sysmapbase, 4);
+	if (!p->sysmembase)
 		return -ENOMEM;
 
 	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
