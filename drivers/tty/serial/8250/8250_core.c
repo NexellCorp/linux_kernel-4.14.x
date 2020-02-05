@@ -983,6 +983,7 @@ int serial8250_register_8250_port(struct uart_8250_port *up)
 
 		uart->port.iobase       = up->port.iobase;
 		uart->port.membase      = up->port.membase;
+		uart->port.sysmembase   = up->port.sysmembase;
 		uart->port.irq          = up->port.irq;
 		uart->port.irqflags     = up->port.irqflags;
 		uart->port.uartclk      = up->port.uartclk;
@@ -993,6 +994,7 @@ int serial8250_register_8250_port(struct uart_8250_port *up)
 		uart->bugs		= up->bugs;
 		uart->port.mapbase      = up->port.mapbase;
 		uart->port.mapsize      = up->port.mapsize;
+		uart->port.sysmapbase   = up->port.sysmapbase;
 		uart->port.private_data = up->port.private_data;
 		uart->tx_loadsz		= up->tx_loadsz;
 		uart->capabilities	= up->capabilities;
@@ -1000,6 +1002,8 @@ int serial8250_register_8250_port(struct uart_8250_port *up)
 		uart->port.unthrottle	= up->port.unthrottle;
 		uart->port.rs485_config	= up->port.rs485_config;
 		uart->port.rs485	= up->port.rs485;
+		uart->port.iso7816_config	= up->port.iso7816_config;
+		uart->port.iso7816	= up->port.iso7816;
 		uart->port.mctrl	= up->port.mctrl;
 		uart->dma		= up->dma;
 		uart->em485		= up->em485;

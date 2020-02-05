@@ -1321,6 +1321,47 @@ static int uart_set_rs485_config(struct uart_port *port,
 	return 0;
 }
 
+static int uart_get_iso7816_config(struct uart_port *port,
+				   struct serial_iso7816 __user *iso7816_user)
+{
+	unsigned long flags;
+	struct serial_iso7816 iso7816;
+
+	spin_lock_irqsave(&port->lock, flags);
+	iso7816 = port->iso7816;
+	spin_unlock_irqrestore(&port->lock, flags);
+
+	if (copy_to_user(iso7816_user, &iso7816, sizeof(iso7816)))
+		return -EFAULT;
+
+	return 0;
+}
+
+static int uart_set_iso7816_config(struct uart_port *port,
+				   struct serial_iso7816 __user *iso7816_user)
+{
+	int ret;
+	unsigned long flags;
+	struct serial_iso7816 iso7816;
+
+	if (!port->iso7816_config)
+		return -ENOIOCTLCMD;
+
+	if (copy_from_user(&iso7816, iso7816_user, sizeof(*iso7816_user)))
+		return -EFAULT;
+
+	spin_lock_irqsave(&port->lock, flags);
+	ret = port->iso7816_config(port, &iso7816);
+	spin_unlock_irqrestore(&port->lock, flags);
+	if (ret)
+		return ret;
+
+	if (copy_to_user(iso7816_user, &port->iso7816, sizeof(port->iso7816)))
+		return -EFAULT;
+
+	return 0;
+}
+
 /*
  * Called via sys_ioctl.  We can use spin_lock_irq() here.
  */
@@ -1405,6 +1446,15 @@ uart_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned long arg)
 	case TIOCSRS485:
 		ret = uart_set_rs485_config(uport, uarg);
 		break;
+
+	case TIOCGISO7816:
+		ret = uart_get_iso7816_config(state->uart_port, uarg);
+		break;
+
+	case TIOCSISO7816:
+		ret = uart_set_iso7816_config(state->uart_port, uarg);
+		break;
+
 	default:
 		if (uport->ops->ioctl)
 			ret = uport->ops->ioctl(uport, cmd, arg);
