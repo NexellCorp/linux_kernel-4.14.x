@@ -28,8 +28,8 @@
  */
 
 #define	RTC_TIME_YEAR		(1970)		/* 1970.01.01 00:00:00 */
-#define RTC_TIME_MAX		0x69546780	/* 2025.12.31 00:00:00 */
-#define RTC_TIME_MIN		0x52c35a80	/* 2014.01.01 00:00:00 */
+#define RTC_TIME_MAX		0x7FE6C600	/* 2037.12.31 00:00:00 */
+#define RTC_TIME_MIN		0x5C2AAD80	/* 2019.01.01 00:00:00 */
 #define RTC_TIME_DFT		0x4a9c6400	/* 2009.09.01 00:00:00 */
 
 #define RTC_BUSY_CHECK_COUNT	150
@@ -227,10 +227,10 @@ static void nx_rtc_setup(struct nx_rtc *info)
 	rtc = nx_rtc_get_rtc_counter(info);
 	curr = rtc + info->rtc_time_offs;
 
-	if ((curr > RTC_TIME_MAX) || (curr < RTC_TIME_MIN)) {
-		/* set to select RTC clock */
-		nx_rtc_set_use_rtc(info, RTC_32768HZ);
+	/* set to select RTC clock */
+	nx_rtc_set_use_rtc(info, RTC_32768HZ);
 
+	if ((curr > RTC_TIME_MAX) || (curr < RTC_TIME_MIN)) {
 		/* set hw rtc */
 		ret = nx_rtc_set_rtc_counter(info, RTC_TIME_DFT -
 				info->rtc_time_offs);
