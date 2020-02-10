@@ -327,10 +327,12 @@ static bool nx_alive_get_input_value(void __iomem *base, u32 pin)
 	return nx_alive_getbit(base + ALIVE_PAD_IN, pin);
 }
 
+#ifdef CHECK_WAKEUP_SOURCE
 static u32 nx_alive_get_wakeup_status(void __iomem *base)
 {
 	return readl(base + ALIVE_SLEEP_WAKEUP_STATUS);
 }
+#endif
 
 static void nx_alive_clear_wakeup_status(void __iomem *base)
 {
@@ -1496,6 +1498,7 @@ static const char * const wake_event_name[] = {
 
 #define	WAKE_EVENT_NUM	ARRAY_SIZE(wake_event_name)
 
+#ifdef CHECK_WAKEUP_SOURCE
 static void print_wake_event(void)
 {
 	int i = 0;
@@ -1506,6 +1509,7 @@ static void print_wake_event(void)
 			pr_notice("WAKE SOURCE [%s]\n", wake_event_name[i]);
 	}
 }
+#endif
 
 static void nxp3220_resume(struct nexell_pinctrl_drv_data *drvdata)
 {
@@ -1529,8 +1533,9 @@ static void nxp3220_resume(struct nexell_pinctrl_drv_data *drvdata)
 	}
 
 	nxp3220_retention_resume(drvdata);
-
+#ifdef CHECK_WAKEUP_SOURCE
 	print_wake_event();
+#endif
 }
 
 static int nxp3220_base_init(struct nexell_pinctrl_drv_data *drvdata)
