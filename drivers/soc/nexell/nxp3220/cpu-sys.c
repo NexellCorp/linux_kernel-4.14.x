@@ -40,6 +40,15 @@
 #define HPM_SYNC_TO_APM	(1 << 12)
 #define HPM_DELAY_CODE	(0x3FF)
 
+struct nx_vddpwr_regs {
+	u32 reserved1[64];					// 0x000 ~ 0x0FC
+	u32 new_scratch[31];					// 0x100 ~ 0x17C
+};
+/*
+static struct nx_vddpwr_reg *scratch_reg = &(struct nx_vddpwr_reg) {
+	.base = NULL,
+};
+*/
 struct nx_ecid_regs {
 	u8 chipname[CHIPNAME_LEN]; /* 0x00 */
 	u32 __reserved_0x30;
@@ -75,6 +84,7 @@ struct nx_ecid_mod {
 	struct clk *cpu_hpm;
 	struct clk *core_hpm;
 	struct hpm_data hpm;
+	struct nx_vddpwr_regs *scratch_base;
 };
 
 static struct nx_ecid_mod *ecid_mod = &(struct nx_ecid_mod) {
@@ -87,6 +97,7 @@ static struct nx_ecid_mod *ecid_mod = &(struct nx_ecid_mod) {
 	.hpm.hpm_cpu_config = 3,
 	.hpm.hpm_core_ro_sel = 0,
 	.hpm.hpm_core_config = 3,
+	.scratch_base = NULL,
 };
 
 struct ecid_sys {
@@ -547,7 +558,8 @@ static ssize_t sys_cpu_hpm_show(struct device *pdev,
 
 	pr_debug("[%s : name =%s ]\n", __func__, at->name);
 
-	val = read_cpu_hpm();
+	val = ecid_mod->scratch_base->new_scratch[17];
+//	val = read_cpu_hpm();
 	if (val < 0)
 		return val;
 
@@ -565,7 +577,8 @@ static ssize_t sys_core_hpm_show(struct device *pdev,
 
 	pr_debug("[%s : name =%s ]\n", __func__, at->name);
 
-	val = read_core_hpm();
+	val = ecid_mod->scratch_base->new_scratch[16];
+//	val = read_core_hpm();
 	if (val < 0)
 		return val;
 
@@ -630,6 +643,7 @@ static int __init cpu_sys_id_setup(void)
 	const struct of_device_id *match;
 	struct device_node *np;
 	struct resource regs;
+	struct resource sct_regs;
 
 	struct kobject *kobj;
 	u32 uid[4] = { 0, };
@@ -652,6 +666,14 @@ static int __init cpu_sys_id_setup(void)
 	ecid_mod->base = (struct nx_ecid_regs *)
 		ioremap_nocache(regs.start, resource_size(&regs));
 	if (!ecid_mod->base) {
+		pr_err("failed to map ecid module registers\n");
+		return -ENXIO;
+	}
+
+	ecid_mod->scratch_base = (struct nx_vddpwr_regs *)
+		ioremap_nocache(0x2008c800, 0x200);
+
+	if (!ecid_mod->scratch_base) {
 		pr_err("failed to map ecid module registers\n");
 		return -ENXIO;
 	}
@@ -702,6 +724,8 @@ static int __init cpu_sys_id_setup(void)
 
 	pr_info("ECID: %08x:%08x:%08x:%08x\n", uid[0], uid[1], uid[2], uid[3]);
 	pr_info("LOT ID : %s\n", strlotid);
+	pr_info("Core runtime HPM : %d\n", ecid_mod->scratch_base->new_scratch[16]);
+	pr_info("ARM runtime HPM : %d\n", ecid_mod->scratch_base->new_scratch[17]);
 
 	return ret;
 }
