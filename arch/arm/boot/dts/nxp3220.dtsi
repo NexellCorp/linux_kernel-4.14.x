@@ -162,6 +162,11 @@
 			 <&cmu_mm CLK_MM_CODA960_CORE>;
 	};
 
+	sys0_h_u_consumer {
+		compatible = "linux,clock-userspace-consumer";
+		clocks = <&cmu CLK_SYS_DIV_SYS0_HSIF_AXI>;
+	};
+
 	sys0_u_consumer {
 		compatible = "linux,clock-userspace-consumer";
 		clocks = <&cmu CLK_SRC_SYS0_AXI>;
@@ -612,9 +617,9 @@
 					  <&cmu CLK_GMAC_RGMII0_AXI>,
 					  <&cmu CLK_GMAC_RGMII0_APB>,
 					  <&cmu CLK_GMAC_RGMII0_PTP_REF>,
-					  <&pll_0 0>;
-			assigned-clock-parents = <&pll_0 0>,
-						 <&pll_0 0>,
+					  <&pll_ddr1_div 0>;
+			assigned-clock-parents = <&pll_ddr1_div 0>,
+						 <&pll_ddr1_div 0>,
 						 <0>, <0>, <0>;
 			assigned-clock-rates = <25000000>,
 					       <125000000>,
@@ -645,8 +650,8 @@
 					  <&cmu CLK_GMAC_RMII0_AXI>,
 					  <&cmu CLK_GMAC_RMII0_APB>,
 					  <&cmu CLK_GMAC_RMII0_PTP_REF>,
-					  <&pll_0 0>;
-			assigned-clock-parents = <&pll_0 0>;
+					  <&pll_ddr1_div 0>;
+			assigned-clock-parents = <&pll_ddr1_div 0>;
 			assigned-clock-rates = <25000000>,
 					       <250000000>,
 					       <125000000>,
