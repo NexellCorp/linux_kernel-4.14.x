@@ -431,7 +431,7 @@ static int nx_drm_pm_resume(struct device *dev)
 
 static SIMPLE_DEV_PM_OPS(nx_drm_pm_ops, nx_drm_pm_suspend, nx_drm_pm_resume);
 
-static struct platform_driver nx_drm_drviver = {
+static struct platform_driver nx_drm_plat_driver = {
 	.probe = nx_drm_probe,
 	.remove = nx_drm_remove,
 	.driver = {
@@ -474,7 +474,7 @@ static int __init nx_drm_init(void)
 		list_add_tail(&drv->list, &nx_drm_load_list);
 	}
 
-	return platform_driver_register(&nx_drm_drviver);
+	return platform_driver_register(&nx_drm_plat_driver);
 }
 
 static void __exit nx_drm_exit(void)
@@ -483,7 +483,7 @@ static void __exit nx_drm_exit(void)
 	bool load;
 	int i;
 
-	platform_driver_unregister(&nx_drm_drviver);
+	platform_driver_unregister(&nx_drm_plat_driver);
 
 	for (i = 0; i < ARRAY_SIZE(nx_drm_platform_drvs); i++) {
 		drv = &nx_drm_platform_drvs[i];
