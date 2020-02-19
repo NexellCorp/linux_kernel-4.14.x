@@ -1222,4 +1222,5 @@
 };
 
 #include "nxp3220-asv.dtsi"
+#include "nxp3220-efuse.dtsi"
 #include "nxp3220-pinctrl.dtsi"
