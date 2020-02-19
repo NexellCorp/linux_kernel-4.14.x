@@ -118,7 +118,7 @@ static int find_asv_table_index(struct device *dev)
 	hpm = read_cpu_ro_hpm();
 	run_cpu_hpm = read_cpu_hpm();
 
-	dev_info(dev, "cpu_hpm: %d cpu_ids: %d runtime_cpu_hpm:%d\n\r",
+	dev_info(dev, "hpm: %d ids: %d runtime hpm:%d\n",
 			hpm, ids, run_cpu_hpm);
 	for (i = 0; i < ARRAY_SIZE(nxp3220_limit); i++) {
 		if ((ids <= nxp3220_limit[i].ids_limit) ||
@@ -128,7 +128,7 @@ static int find_asv_table_index(struct device *dev)
 		}
 	}
 
-	dev_info(dev, "chosen asv value: %d\n\r", ret);
+	dev_info(dev, "chosen asv value: %d\n", ret);
 	return ret;
 }
 
