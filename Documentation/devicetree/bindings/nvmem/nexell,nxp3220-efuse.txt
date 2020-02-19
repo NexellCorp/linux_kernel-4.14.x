@@ -1,0 +1,36 @@
+Nexell nxp3220 EFUSE Controller
+==============================
+
+The nxp3220 secure EFUSE provides secure ecid, boot key, boot hash ...
+User can read by nvmem interface and function call.
+
+Required properties:
+- compatible : "nexell,nxp3220-efuse"
+- reg : Offset and length of the register set for the controller device.
+- cell-name : efuse cell name for the nvmem inferface
+- cell-id : efuse cell id for the nvmem sys inferface
+
+Sys interface: /sys/bus/nvmem/devices/[cell-name][cell-id]
+	- /sys/bus/nvmem/devices/secid0
+	- /sys/bus/nvmem/devices/sboot_key0
+	.....
+
+Example:
+
+#define S_EFUSE_NODE_DATA(_reg, _size, _name, _id) \
+		compatible = "nexell,nxp3220-efuse"; \
+		reg = <_reg _size>; \
+		cell-name = _name; \
+		cell-id = <_id>; \
+		cell-secure;
+
+/{
+		sefuse_secid: efuse@20070100 { /* 128 bits */
+			S_EFUSE_NODE_DATA(0x20070100, 0x10, "secid", 0)
+		};
+
+		sefuse_bootkey0: efuse@20070110 { /* 128 bits */
+			S_EFUSE_NODE_DATA(0x20070110, 0x10, "sboot_key", 0)
+		};
+		.....
+}
