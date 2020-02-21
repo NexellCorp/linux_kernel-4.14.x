@@ -140,19 +140,12 @@
 		interrupt-parent = <&gic>;
 		ranges;
 
-		axim_qos: axim_qos  {
-			compatible = "syscon", "simple-mfd";
-			#address-cells = <1>;
-			#size-cells = <1>;
-			ranges;
-
-			axim_dpc: axim-dpc {
-				compatible = "nexell,nxp3220-axim-qos", "syscon";
-				reg = <0x251c0000 0x4>;
-				awqos-value = <0xf>;
-				arqos-value = <0xf>;
-				axqos-enb;
-			};
+		axim_qos_dpc: axim-qos-dpc {
+			compatible = "nexell,nxp3220-axim-qos", "syscon";
+			reg = <0x251c0000 0x4>;
+			awqos-value = <0xf>;
+			arqos-value = <0xf>;
+			axqos-enb;
 		};
 
 		amba {
@@ -878,26 +871,22 @@
 		};
 
 		sys_reg_sys: syscon@20030000 {
-			compatible = "nexell,system-reg", "syscon",
-				     "simple-mfd";
+			compatible = "nexell,system-reg", "syscon";
 			reg = <0x20030000 0x1000>;
 		};
 
 		sys_reg_usb: syscon@24030000 {
-			compatible = "nexell,system-reg","syscon",
-				     "simple-mfd";
+			compatible = "nexell,system-reg","syscon";
 			reg = <0x24030000 0x1000>;
 		};
 
 		sys_reg_mm: syscon@25030000 {
-			compatible = "nexell,system-reg","syscon",
-				     "simple-mfd";
+			compatible = "nexell,system-reg","syscon";
 			reg = <0x25030000 0x1000>;
 		};
 
 		sys_reg_hsifys: syscon@26030000 {
-			compatible = "nexell,system-reg","syscon",
-				     "simple-mfd";
+			compatible = "nexell,system-reg","syscon";
 			reg = <0x26030000 0x1000>;
 		};
 
