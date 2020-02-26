@@ -532,6 +532,7 @@
 			compatible = "nexell,nxp3220-ecid";
 			reg = <0x20060000 0x1000>;
 			syscon = <&sys_reg_sys>;
+			regmap = <&sys_sefuse>, <&sys_reg_hpm>;
 			clocks = <&cmu_cpu CLK_CPU_HPM>, <&cmu CLK_HPM_SYS0>;
 			clock-names = "cpu_hpm", "core_hpm";
 		};
@@ -868,6 +869,11 @@
 				mode-recovery	= <BOOT_RECOVERY>;
 				mode-dfu	= <BOOT_DFU>;
 			};
+		};
+
+		sys_reg_hpm: sys_reg_hpm@22030000{
+			compatible = "nexell,secure-regmap";
+			reg = <0x22030000 0x100>;
 		};
 
 		sys_reg_sys: syscon@20030000 {

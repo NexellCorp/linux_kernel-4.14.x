@@ -9,106 +9,87 @@
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/clk.h>
+#include <linux/slab.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/ctype.h>
 #include <linux/io.h>
-#include <linux/soc/nexell/sec_io.h>
 #include <linux/mfd/syscon.h>
 #include <linux/regmap.h>
 #include <linux/delay.h>
 
-#define CHIPNAME_LEN	48
-#define EFUSE_SECURE	(0x20070000)
+#define CHIPNAME_LEN		48
 
-#define HPM_IDS0	0x530
-#define HPM_IDS1	0x534
-#define HPM_IDS2	0x538
-#define HPM_IDS3	0x53C
+#define EFUSE_HPM_IDS0		0x530
+#define EFUSE_HPM_IDS1		0x534
+#define EFUSE_HPM_IDS2		0x538
+#define EFUSE_HPM_IDS3		0x53C
 
-#define SYSREG_CPU	(0x22030000)
-#define CPU_REG_HPM0 0x54
-#define CPU_REG_HPM1 0x58
-#define HPM_ENABLE	0x1
-#define HPM_SYNC_APM	(0x1  << 2)
-#define HPM_CONFIG	(0x1f << 4)
-#define HPM_RO_SEL	(0xf << 16)
-#define HPM_PREDELAY	(0xf  << 12)
+#define SYS_REG_HPM0		0x54
+#define SYS_REG_HPM1		0x58
 
-#define HPM_SYNC_TO_APM	(1 << 12)
-#define HPM_DELAY_CODE	(0x3FF)
+#define HPM_ENB			0x1
+#define HPM_SYNC_APM		(0x1 << 2)
+#define HPM_CONFIG		(0x1f << 4)
+#define HPM_RO_SEL		(0xf << 16)
+#define HPM_PREDELAY		(0xf << 12)
+#define HPM_SYNC_TO_APM		(1 << 12)
 
-struct nx_ecid_regs {
-	u8 chipname[CHIPNAME_LEN]; /* 0x00 */
+struct nx_ecid_reg {
+	u8 chipname[CHIPNAME_LEN];	/* 0x00 */
 	u32 __reserved_0x30;
-	u32 guid0; /* 0x34 */
-	u16 guid1; /* 0x38 */
-	u16 guid2; /* 0x3a */
-	u8 guid3[8]; /* 0x3c */
-	u32 ec0; /* 0x44 */
+	u32 guid0;			/* 0x34 */
+	u16 guid1;			/* 0x38 */
+	u16 guid2;			/* 0x3a */
+	u8 guid3[8];			/* 0x3c */
+	u32 ec0;			/* 0x44 */
 	u32 __reserved_0x48;
-	u32 ec2; /* 0x4c */
+	u32 ec2;			/* 0x4c */
 	u32 __reserved_0x50[(0x100 - 0x50) / 4];
-	u32 ecid[4]; /* 0x100 */
+	u32 ecid[4];			/* 0x100 */
 };
 
 struct nx_guid {
-	u32 guid0;
-	u16 guid1;
-	u16 guid2;
-	u8 guid3[8];
+	u32 id0;
+	u16 id1, id2;
+	u8 id3[8];
 };
 
-struct hpm_data {
-	unsigned int hpm_cpu_ro_sel;
-	unsigned int hpm_cpu_config;
-	unsigned int hpm_core_ro_sel;
-	unsigned int hpm_core_config;
+struct nx_hpm {
+	int cpu_ro_sel;
+	int cpu_cfg;
+	int core_ro_sel;
+	int core_cfg;
 };
 
-struct nx_ecid_mod {
-	struct nx_ecid_regs *base;
-	struct regmap *cpu_reg;
-	struct regmap *core_reg;
-	struct clk *cpu_hpm;
-	struct clk *core_hpm;
-	struct hpm_data hpm;
+struct nx_ecid {
+	struct device *dev;
+	struct nx_ecid_reg *reg;
+	struct regmap *sysreg;
+	struct regmap *sefuse;
+	struct regmap *shpm;
+	struct clk *clk_cpu;
+	struct clk *clk_core;
+	struct nx_hpm hpm;
 };
 
-static struct nx_ecid_mod *ecid_mod = &(struct nx_ecid_mod) {
-	.base = NULL,
-	.cpu_reg = NULL,
-	.core_reg = NULL,
-	.cpu_hpm = NULL,
-	.core_hpm = NULL,
-	.hpm.hpm_cpu_ro_sel = 0,
-	.hpm.hpm_cpu_config = 3,
-	.hpm.hpm_core_ro_sel = 0,
-	.hpm.hpm_core_config = 3,
+struct nx_ecid_attr {
+	struct nx_ecid *ecid;
+	struct device_attribute dev_attr;
 };
 
-struct ecid_sys {
-	struct kobject *kobj;
-	struct hpm_data hpm;
-};
-
-struct nxp3220_ecid_attribute {
-	struct ecid_sys *ecid;
-	struct device_attribute device_attr;
-};
-
-static unsigned int convertmsblsb(uint32_t data, int bits)
+static unsigned int convert_msblsb(uint32_t data, int bits)
 {
-	uint32_t result = 0;
-	uint32_t mask = 1;
+	uint32_t result = 0, mask = 1;
 	int i = 0;
 
 	for (i = 0; i < bits ; i++) {
 		if (data & (1 << i))
 			result |= mask << (bits - i - 1);
 	}
+
 	return result;
 }
 
@@ -121,8 +102,7 @@ static const char gst36Strtable[36] = {
 
 static void lotid_num2string(uint32_t lot_id, char str[6])
 {
-	uint32_t value[3];
-	uint32_t mad[3];
+	uint32_t value[3], mad[3];
 
 	value[0] = lot_id / 36;
 	mad[0] = lot_id % 36;
@@ -141,75 +121,21 @@ static void lotid_num2string(uint32_t lot_id, char str[6])
 	str[5] = '\0';
 }
 
-static int nx_ecid_get_key_ready(void)
+static inline int _key_ready(void __iomem *reg)
 {
-	const u32 ready_pos = 16; /* sense done */
-	const u32 ready_mask = 1ul << ready_pos;
-
-	u32 regval = ecid_mod->base->ec2;
-
-	return (int)((regval & ready_mask) >> ready_pos);
+	return (int)((readl(reg) & (1ul << 16)) >> 16);
 }
 
-static void nx_ecid_get_chip_name(u8 *chip_name)
-{
-	int i;
-	u8 *c = chip_name;
-
-	for (i = 0; i < CHIPNAME_LEN; i++)
-		c[i] = ecid_mod->base->chipname[i];
-
-	for (i = CHIPNAME_LEN - 1; i >= 0; i--) {
-		if (c[i] != '-')
-			break;
-		c[i] = 0;
-	}
-}
-
-static void nx_ecid_get_ecid(u32 ecid[4])
-{
-	ecid[0] = ecid_mod->base->ecid[0];
-	ecid[1] = ecid_mod->base->ecid[1];
-	ecid[2] = ecid_mod->base->ecid[2];
-	ecid[3] = ecid_mod->base->ecid[3];
-}
-
-static void nx_ecid_get_guid(struct nx_guid *guid)
-{
-	guid->guid0 = ecid_mod->base->guid0;
-	guid->guid1 = ecid_mod->base->guid1;
-	guid->guid2 = ecid_mod->base->guid2;
-	guid->guid3[0] = ecid_mod->base->guid3[0];
-	guid->guid3[1] = ecid_mod->base->guid3[1];
-	guid->guid3[2] = ecid_mod->base->guid3[2];
-	guid->guid3[3] = ecid_mod->base->guid3[3];
-	guid->guid3[4] = ecid_mod->base->guid3[4];
-	guid->guid3[5] = ecid_mod->base->guid3[5];
-	guid->guid3[6] = ecid_mod->base->guid3[6];
-	guid->guid3[7] = ecid_mod->base->guid3[7];
-}
-
-static void nx_efuse_get_hpm_ro(u32 hpm[4])
-{
-	void __iomem *reg = (void __iomem *)EFUSE_SECURE;
-
-	hpm[0] = sec_readl(reg + HPM_IDS0);
-	hpm[1] = sec_readl(reg + HPM_IDS1);
-	hpm[2] = sec_readl(reg + HPM_IDS2);
-	hpm[3] = sec_readl(reg + HPM_IDS2);
-}
-
-static int wait_key_ready(void)
+static int nx_ecid_key_ready(struct nx_ecid_reg *reg)
 {
 	unsigned long timeout = jiffies + msecs_to_jiffies(20);
 
-	while (!nx_ecid_get_key_ready()) {
+	while (!_key_ready(&reg->ec2)) {
 		if (time_after(jiffies, timeout)) {
-			if (nx_ecid_get_key_ready())
+			if (_key_ready(&reg->ec2))
 				break;
 
 			pr_err("Error: key not ready\n");
-
 			return -EINVAL;
 		}
 		cpu_relax();
@@ -217,76 +143,171 @@ static int wait_key_ready(void)
 	return 0;
 }
 
-static int nx_cpu_id_guid(u32 guid[4])
+static int nx_ecid_get_chip_name(struct nx_ecid *ecid, u8 *chip_name)
 {
-	if (wait_key_ready() < 0)
+	struct nx_ecid_reg *reg = ecid->reg;
+	u8 *c = chip_name;
+	int i;
+
+	if (nx_ecid_key_ready(reg) < 0)
 		return -EBUSY;
 
-	nx_ecid_get_guid((struct nx_guid *)guid);
+	for (i = 0; i < CHIPNAME_LEN; i++)
+		c[i] = readb(&reg->chipname[i]);
+
+	for (i = CHIPNAME_LEN - 1; i >= 0; i--) {
+		if (c[i] != '-')
+			break;
+		c[i] = 0;
+	}
 
 	return 0;
 }
 
-int nx_cpu_id_ecid(u32 ecid[4])
+static int nx_ecid_get_ecid(struct nx_ecid *ecid, u32 id[4])
 {
-	if (wait_key_ready() < 0)
+	struct nx_ecid_reg *reg = ecid->reg;
+
+	if (nx_ecid_key_ready(reg) < 0)
 		return -EBUSY;
 
-	nx_ecid_get_ecid(ecid);
+	id[0] = readl(&reg->ecid[0]);
+	id[1] = readl(&reg->ecid[1]);
+	id[2] = readl(&reg->ecid[2]);
+	id[3] = readl(&reg->ecid[3]);
 
 	return 0;
 }
 
-int nx_cpu_hpm_ro(u16 hpm[8])
+static int nx_ecid_get_guid(struct nx_ecid *ecid, struct nx_guid *guid)
 {
-	u32 _hpm[4];
+	struct nx_ecid_reg *reg = ecid->reg;
 
-	if (wait_key_ready() < 0)
+	if (nx_ecid_key_ready(reg) < 0)
 		return -EBUSY;
 
-	nx_efuse_get_hpm_ro(_hpm);
+	guid->id0 = readl(&reg->guid0);
+	guid->id1 = readw(&reg->guid1);
+	guid->id2 = readw(&reg->guid2);
 
-	hpm[0] = (_hpm[0] >> 0) & 0x3ff;
-	hpm[1] = (_hpm[0] >> 10) & 0x3ff;
-	hpm[2] = (_hpm[0] >> 20) & 0x3ff;
-	hpm[3] = ((_hpm[0] >> 30) & 0x3) | ((_hpm[1] & 0xff) << 2);
-	hpm[4] = (_hpm[1] >> 8) & 0x3ff;
-	hpm[5] = (_hpm[1] >> 18) & 0x3ff;
-	hpm[6] = ((_hpm[1] >> 28) & 0xf) | ((_hpm[2] & 0x3f) << 4);
-	hpm[7] = (_hpm[2] >> 6) & 0x3ff;
+	guid->id3[0] = readb(&reg->guid3[0]);
+	guid->id3[1] = readb(&reg->guid3[1]);
+	guid->id3[2] = readb(&reg->guid3[2]);
+	guid->id3[3] = readb(&reg->guid3[3]);
+	guid->id3[4] = readb(&reg->guid3[4]);
+	guid->id3[5] = readb(&reg->guid3[5]);
+	guid->id3[6] = readb(&reg->guid3[6]);
+	guid->id3[7] = readb(&reg->guid3[7]);
 
 	return 0;
 }
 
-static int nx_cpu_id_string(u8 *chipname)
+static int nx_ecid_get_hpm_ro(struct nx_ecid *ecid, u16 hpm[8])
 {
-	if (wait_key_ready() < 0)
+	struct regmap *map = ecid->sefuse;
+	u32 buf[4] = { 0, };
+
+	if (nx_ecid_key_ready(ecid->reg) < 0)
 		return -EBUSY;
 
-	nx_ecid_get_chip_name(chipname);
+	regmap_read(map, EFUSE_HPM_IDS0, &buf[0]);
+	regmap_read(map, EFUSE_HPM_IDS1, &buf[1]);
+	regmap_read(map, EFUSE_HPM_IDS2, &buf[2]);
+	regmap_read(map, EFUSE_HPM_IDS2, &buf[3]);
+
+	hpm[0] = (buf[0] >> 0) & 0x3ff;
+	hpm[1] = (buf[0] >> 10) & 0x3ff;
+	hpm[2] = (buf[0] >> 20) & 0x3ff;
+	hpm[3] = ((buf[0] >> 30) & 0x3) | ((buf[1] & 0xff) << 2);
+	hpm[4] = (buf[1] >> 8) & 0x3ff;
+	hpm[5] = (buf[1] >> 18) & 0x3ff;
+	hpm[6] = ((buf[1] >> 28) & 0xf) | ((buf[2] & 0x3f) << 4);
+	hpm[7] = (buf[2] >> 6) & 0x3ff;
 
 	return 0;
 }
 
-/* Notify cpu GUID: /sys/devices/platform/cpu,  guid, uuid,  name  */
-static ssize_t sys_id_show(struct device *pdev, struct device_attribute *attr,
-			   char *buf)
+static int nx_ecid_get_cpu_hpm(struct nx_ecid *ecid)
 {
+	struct regmap *map = ecid->shpm;
+	int sel = ecid->hpm.cpu_ro_sel;
+	int cfg = ecid->hpm.cpu_cfg;
+	int val, ret;
+
+	if (!IS_ERR(ecid->clk_cpu))
+		clk_prepare_enable(ecid->clk_cpu);
+
+	regmap_write(map, SYS_REG_HPM0, 0);
+	val = (sel << 16) | (cfg << 4) | 0x05;
+	regmap_write(map, SYS_REG_HPM0, val);
+
+	do {
+		ret = regmap_read(map, SYS_REG_HPM1, &val);
+		if (ret)
+			break;
+	} while (!(val & HPM_SYNC_TO_APM));
+
+	regmap_read(map, SYS_REG_HPM1, &val);
+
+	if (!IS_ERR(ecid->clk_cpu))
+		clk_disable_unprepare(ecid->clk_cpu);
+
+	return val & 0x3ff;
+}
+
+static int nx_ecid_get_core_hpm(struct nx_ecid *ecid)
+{
+	struct regmap *map = ecid->sysreg;
+	int sel = ecid->hpm.core_ro_sel;
+	int cfg = ecid->hpm.core_cfg;
+	int val;
+
+	if (!IS_ERR(ecid->clk_core))
+		clk_prepare_enable(ecid->clk_core);
+
+	regmap_update_bits(map, 0x404, HPM_ENB, 0);
+	regmap_update_bits(map, 0x404, HPM_CONFIG, cfg << 4);
+	regmap_update_bits(map, 0x404, HPM_RO_SEL, sel << 16);
+	regmap_update_bits(map, 0x404, HPM_PREDELAY, 0);
+	regmap_update_bits(map, 0x404, HPM_SYNC_APM, 0);
+
+	regmap_update_bits(map, 0x404, HPM_SYNC_APM, 1<<2);
+	regmap_read(map, 0x404, &val);
+	regmap_update_bits(map, 0x404, HPM_ENB, 1);
+
+	regmap_read(map, 0x404, &val);
+
+	do {
+		regmap_read(map, 0x408, &val);
+	} while (!(val & HPM_SYNC_TO_APM));
+
+	if (!IS_ERR(ecid->clk_core))
+		clk_disable_unprepare(ecid->clk_core);
+
+	return val & 0x3ff;
+}
+
+/*
+ * Notify ecid GUID: /sys/devices/platform/cpu/ guid, uuid, name
+ */
+static ssize_t sys_ecid_show(struct device *dev,
+			     struct device_attribute *attr, char *buf)
+{
+	struct nx_ecid_attr *p = container_of(attr, typeof(*p), dev_attr);
+	struct nx_ecid *ecid = p->ecid;
 	struct attribute *at = &attr->attr;
 	char *s = buf;
-	u32 uid[4] = {0, };
+	u32 id[4] = {0, };
 	u8 chipname[CHIPNAME_LEN + 1] = {0, };
 	int string = 0;
-	int ret = 0;
-
-	pr_debug("[%s : name =%s ]\n", __func__, at->name);
+	int ret;
 
 	if (!strncmp(at->name, "uuid", 4)) {
-		ret = nx_cpu_id_ecid(uid);
+		ret = nx_ecid_get_ecid(ecid, id);
 	} else if (!strncmp(at->name, "guid", 4)) {
-		ret = nx_cpu_id_guid(uid);
+		ret = nx_ecid_get_guid(ecid, (struct nx_guid *)id);
 	} else if (!strncmp(at->name, "name", 4)) {
-		ret = nx_cpu_id_string(chipname);
+		ret = nx_ecid_get_chip_name(ecid, chipname);
 		string = 1;
 	} else {
 		return -EINVAL;
@@ -311,43 +332,38 @@ static ssize_t sys_id_show(struct device *pdev, struct device_attribute *attr,
 		}
 	} else {
 		s += snprintf(s, 36, "%08x:%08x:%08x:%08x\n",
-				uid[0], uid[1], uid[2], uid[3]);
+			      id[0], id[1], id[2], id[3]);
 	}
 
 	if (s != buf)
-		*(s-1) = '\n';
+		*(s - 1) = '\n';
 
 	return (s - buf);
 }
 
-static ssize_t sys_ids_show(struct device *pdev, struct device_attribute *attr,
-			    char *buf)
+static ssize_t sys_asv_ids_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
 {
-	struct attribute *at = &attr->attr;
+	struct nx_ecid_attr *p = container_of(attr, typeof(*p), dev_attr);
+	struct nx_ecid *ecid = p->ecid;
 	char *s = buf;
-	u32 uid[4] = {0, };
-	int ret = 0;
-
-	u32 cpu_ids;
-	u32 core_ids;
+	u32 id[4] = {0, };
+	u32 cpu_ids, core_ids;
 	int cpu_frac, cpu_inte;
 	int core_frac, core_inte;
-	int len;
+	int len, ret;
 
-	pr_debug("[%s : name =%s ]\n", __func__, at->name);
-
-	ret = nx_cpu_id_ecid(uid);
+	ret = nx_ecid_get_ecid(ecid, id);
 	if (ret < 0)
 		return ret;
 
-	cpu_ids = (uid[1] >> 16) & 0xff;
-	core_ids = (uid[1] >> 24) & 0xff;
+	cpu_ids = (id[1] >> 16) & 0xff;
+	cpu_frac = ((id[1] >> 16) & 0x3) * 25;
+	cpu_inte = ((id[1] >> 18) & 0x3f);
 
-	cpu_frac = ((uid[1] >> 16) & 0x3) * 25;
-	cpu_inte = ((uid[1] >> 18) & 0x3f);
-
-	core_frac = ((uid[1] >> 24) & 0x3) * 25;
-	core_inte = ((uid[1] >> 26) & 0x3f);
+	core_ids = (id[1] >> 24) & 0xff;
+	core_frac = ((id[1] >> 24) & 0x3) * 25;
+	core_inte = ((id[1] >> 26) & 0x3f);
 
 	s += snprintf(s, 7, "%02x:%02x ", cpu_ids, core_ids);
 	len = snprintf(NULL, 0, "cpu: %2d.%02d mA, ", cpu_inte, cpu_frac);
@@ -361,18 +377,16 @@ static ssize_t sys_ids_show(struct device *pdev, struct device_attribute *attr,
 	return (s - buf);
 }
 
-static ssize_t sys_ro_show(struct device *pdev, struct device_attribute *attr,
-			   char *buf)
+static ssize_t sys_asv_ro_show(struct device *pdev,
+			       struct device_attribute *attr, char *buf)
 {
-	struct attribute *at = &attr->attr;
+	struct nx_ecid_attr *p = container_of(attr, typeof(*p), dev_attr);
+	struct nx_ecid *ecid = p->ecid;
 	char *s = buf;
 	u16 hpm[8] = {0, };
-	int ret = 0;
-	int len = 0;
+	int len, ret;
 
-	pr_debug("[%s : name =%s ]\n", __func__, at->name);
-
-	ret = nx_cpu_hpm_ro(hpm);
+	ret = nx_ecid_get_hpm_ro(ecid, hpm);
 	if (ret < 0)
 		return ret;
 
@@ -389,165 +403,15 @@ static ssize_t sys_ro_show(struct device *pdev, struct device_attribute *attr,
 	return (s - buf);
 }
 
-int read_cpu_hpm(void)
-{
-	void __iomem *reg = (void __iomem *)SYSREG_CPU;
-	unsigned int ro_sel = ecid_mod->hpm.hpm_cpu_ro_sel;
-	unsigned int config = ecid_mod->hpm.hpm_cpu_config;
-
-	int val;
-
-	clk_prepare_enable(ecid_mod->cpu_hpm);
-
-	sec_writel(reg + CPU_REG_HPM0, 0);
-	val = (ro_sel << 16) | (config << 4) | 0x05;
-	sec_writel(reg + CPU_REG_HPM0, val);
-
-	do {
-		val = sec_readl(reg + CPU_REG_HPM1);
-	} while (!(val & HPM_SYNC_TO_APM));
-
-	val = sec_readl(reg + CPU_REG_HPM1);
-
-	clk_disable_unprepare(ecid_mod->cpu_hpm);
-
-	return val & 0x3ff;
-}
-
-static int read_core_hpm(void)
-{
-	int val;
-	unsigned int ro_sel = ecid_mod->hpm.hpm_core_ro_sel;
-	unsigned int config = ecid_mod->hpm.hpm_core_config;
-
-	clk_prepare_enable(ecid_mod->core_hpm);
-
-	regmap_update_bits(ecid_mod->core_reg, 0x404, HPM_ENABLE, 0);
-	regmap_update_bits(ecid_mod->core_reg, 0x404, HPM_CONFIG, config << 4);
-	regmap_update_bits(ecid_mod->core_reg, 0x404, HPM_RO_SEL, ro_sel << 16);
-	regmap_update_bits(ecid_mod->core_reg, 0x404, HPM_PREDELAY, 0);
-	regmap_update_bits(ecid_mod->core_reg, 0x404, HPM_SYNC_APM, 0);
-
-	regmap_update_bits(ecid_mod->core_reg, 0x404, HPM_SYNC_APM, 1<<2);
-	regmap_read(ecid_mod->core_reg, 0x404, &val);
-	regmap_update_bits(ecid_mod->core_reg, 0x404, HPM_ENABLE, 1);
-
-	regmap_read(ecid_mod->core_reg, 0x404, &val);
-	do {
-		regmap_read(ecid_mod->core_reg, 0x408, &val);
-	} while (!(val & HPM_SYNC_TO_APM));
-
-	clk_disable_unprepare(ecid_mod->core_hpm);
-	return val & 0x3ff;
-}
-
-static ssize_t read_core_hpm_ro_sel(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct attribute *at = &attr->attr;
-	char *s = buf;
-	//unsigned int ro_sel = ecid_mod->hpm.hpm_core_ro_sel;
-
-	pr_debug("[%s : name =%s ]\n", __func__, at->name);
-
-	s += snprintf(s, 6, "%03d\n", ecid_mod->hpm.hpm_core_ro_sel);
-
-	return (s - buf);
-
-}
-
-static ssize_t set_core_hpm_ro_sel(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	int status;
-
-	status = kstrtouint(buf, 0, &ecid_mod->hpm.hpm_core_ro_sel);
-
-	return count;
-}
-
-static ssize_t read_core_hpm_config(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct attribute *at = &attr->attr;
-	char *s = buf;
-
-	pr_debug("[%s : name =%s ]\n", __func__, at->name);
-
-	s += snprintf(s, 6, "%03d\n", ecid_mod->hpm.hpm_core_config);
-
-	return (s - buf);
-
-}
-
-static ssize_t set_core_hpm_config(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	int status;
-
-	status = kstrtouint(buf, 0, &ecid_mod->hpm.hpm_core_config);
-
-	return count;
-}
-
-static ssize_t read_cpu_hpm_config(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct attribute *at = &attr->attr;
-	char *s = buf;
-
-	pr_debug("[%s : name =%s ]\n", __func__, at->name);
-
-	s += snprintf(s, 6, "%03d\n", ecid_mod->hpm.hpm_cpu_config);
-
-	return (s - buf);
-
-}
-
-static ssize_t set_cpu_hpm_config(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	int status;
-
-	status = kstrtouint(buf, 0, &ecid_mod->hpm.hpm_cpu_config);
-
-	return count;
-}
-
-static ssize_t read_cpu_hpm_ro_sel(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct attribute *at = &attr->attr;
-	char *s = buf;
-
-	pr_debug("[%s : name =%s ]\n", __func__, at->name);
-
-	s += snprintf(s, 6, "%03d\n", ecid_mod->hpm.hpm_cpu_ro_sel);
-
-	return (s - buf);
-
-}
-
-static ssize_t set_cpu_hpm_ro_sel(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	int status;
-
-	status = kstrtouint(buf, 0, &ecid_mod->hpm.hpm_cpu_ro_sel);
-
-	return count;
-}
-
 static ssize_t sys_cpu_hpm_show(struct device *pdev,
-		struct device_attribute *attr, char *buf)
+				struct device_attribute *attr, char *buf)
 {
-	struct attribute *at = &attr->attr;
+	struct nx_ecid_attr *p = container_of(attr, typeof(*p), dev_attr);
+	struct nx_ecid *ecid = p->ecid;
 	char *s = buf;
 	int val;
 
-	pr_debug("[%s : name =%s ]\n", __func__, at->name);
-
-	val = read_cpu_hpm();
+	val = nx_ecid_get_cpu_hpm(ecid);
 	if (val < 0)
 		return val;
 
@@ -557,15 +421,14 @@ static ssize_t sys_cpu_hpm_show(struct device *pdev,
 }
 
 static ssize_t sys_core_hpm_show(struct device *pdev,
-		struct device_attribute *attr, char *buf)
+				 struct device_attribute *attr, char *buf)
 {
-	struct attribute *at = &attr->attr;
+	struct nx_ecid_attr *p = container_of(attr, typeof(*p), dev_attr);
+	struct nx_ecid *ecid = p->ecid;
 	char *s = buf;
 	int val;
 
-	pr_debug("[%s : name =%s ]\n", __func__, at->name);
-
-	val = read_core_hpm();
+	val = nx_ecid_get_core_hpm(ecid);
 	if (val < 0)
 		return val;
 
@@ -574,142 +437,320 @@ static ssize_t sys_core_hpm_show(struct device *pdev,
 	return (s - buf);
 }
 
-static struct device_attribute __guid__ =
-			__ATTR(guid, 0444, sys_id_show, NULL);
-static struct device_attribute __uuid__ =
-			__ATTR(uuid, 0444, sys_id_show, NULL);
-static struct device_attribute __name__ =
-			__ATTR(name, 0444, sys_id_show, NULL);
-static struct device_attribute __ids__ =
-			__ATTR(ids, 0444, sys_ids_show, NULL);
-static struct device_attribute __ro__ =
-			__ATTR(ro, 0444, sys_ro_show, NULL);
-static struct device_attribute __cpu_hpm__ =
-			__ATTR(cpu_hpm, 0444, sys_cpu_hpm_show, NULL);
-static struct device_attribute __core_hpm__ =
-			__ATTR(core_hpm, 0444, sys_core_hpm_show, NULL);
-static struct device_attribute __cpu_ro_sel__ =
-			__ATTR(cpu_ro_sel, 0644, read_cpu_hpm_ro_sel,
-					set_cpu_hpm_ro_sel);
-static struct device_attribute __cpu_config__ =
-			__ATTR(cpu_config, 0644, read_cpu_hpm_config,
-					set_cpu_hpm_config);
-static struct device_attribute __core_ro_sel__ =
-			__ATTR(core_ro_sel, 0644, read_core_hpm_ro_sel,
-					set_core_hpm_ro_sel);
-static struct device_attribute __core_config__ =
-			__ATTR(core_config, 0644, read_core_hpm_config,
-					set_core_hpm_config);
+static ssize_t sys_cpu_ro_sel_show(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct nx_ecid_attr *p = container_of(attr, typeof(*p), dev_attr);
+	struct nx_ecid *ecid = p->ecid;
+	char *s = buf;
 
-static struct attribute *sys_attrs[] = {
-	&__guid__.attr,
-	&__uuid__.attr,
-	&__name__.attr,
-	&__ids__.attr,
-	&__ro__.attr,
-	&__cpu_hpm__.attr,
-	&__core_hpm__.attr,
-	&__cpu_ro_sel__.attr,
-	&__cpu_config__.attr,
-	&__core_ro_sel__.attr,
-	&__core_config__.attr,
+	s += snprintf(s, 6, "%03d\n", ecid->hpm.cpu_ro_sel);
+
+	return (s - buf);
+}
+
+static ssize_t sys_cpu_ro_sel_store(struct device *dev,
+				    struct device_attribute *attr,
+				    const char *buf, size_t count)
+{
+	struct nx_ecid_attr *p = container_of(attr, typeof(*p), dev_attr);
+	struct nx_ecid *ecid = p->ecid;
+	int ret;
+
+	ret = kstrtouint(buf, 0, &ecid->hpm.cpu_ro_sel);
+
+	return count;
+}
+
+static ssize_t sys_core_ro_sel_show(struct device *dev,
+				    struct device_attribute *attr, char *buf)
+{
+	struct nx_ecid_attr *p = container_of(attr, typeof(*p), dev_attr);
+	struct nx_ecid *ecid = p->ecid;
+	char *s = buf;
+
+	s += snprintf(s, 6, "%03d\n", ecid->hpm.core_ro_sel);
+
+	return (s - buf);
+
+}
+
+static ssize_t sys_core_ro_sel_store(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	struct nx_ecid_attr *p = container_of(attr, typeof(*p), dev_attr);
+	struct nx_ecid *ecid = p->ecid;
+	int ret;
+
+	ret = kstrtouint(buf, 0, &ecid->hpm.core_ro_sel);
+
+	return count;
+}
+
+static ssize_t sys_cpu_config_show(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct nx_ecid_attr *p = container_of(attr, typeof(*p), dev_attr);
+	struct nx_ecid *ecid = p->ecid;
+	char *s = buf;
+
+	s += snprintf(s, 6, "%03d\n", ecid->hpm.cpu_cfg);
+
+	return (s - buf);
+
+}
+
+static ssize_t sys_cpu_config_store(struct device *dev,
+				    struct device_attribute *attr,
+				    const char *buf, size_t count)
+{
+	struct nx_ecid_attr *p = container_of(attr, typeof(*p), dev_attr);
+	struct nx_ecid *ecid = p->ecid;
+	int ret;
+
+	ret = kstrtouint(buf, 0, &ecid->hpm.cpu_cfg);
+
+	return count;
+}
+
+static ssize_t sys_core_config_show(struct device *dev,
+				    struct device_attribute *attr, char *buf)
+{
+	struct nx_ecid_attr *p = container_of(attr, typeof(*p), dev_attr);
+	struct nx_ecid *ecid = p->ecid;
+	char *s = buf;
+
+	s += snprintf(s, 6, "%03d\n", ecid->hpm.core_cfg);
+
+	return (s - buf);
+
+}
+
+static ssize_t sys_core_config_store(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	struct nx_ecid_attr *p = container_of(attr, typeof(*p), dev_attr);
+	struct nx_ecid *ecid = p->ecid;
+	int ret;
+
+	ret = kstrtouint(buf, 0, &ecid->hpm.core_cfg);
+
+	return count;
+}
+
+#define CPUID_ATTR(_name, _mode, _show, _store)			\
+	struct nx_ecid_attr dev_attr_##_name = {		\
+		.dev_attr = __ATTR(_name, _mode, _show, _store), \
+	}
+
+#define CPUID_ATTR_PTR(_name) (&dev_attr_##_name.dev_attr.attr)
+
+static CPUID_ATTR(guid, 0444, sys_ecid_show, NULL);
+static CPUID_ATTR(uuid, 0444, sys_ecid_show, NULL);
+static CPUID_ATTR(name, 0444, sys_ecid_show, NULL);
+static CPUID_ATTR(ids, 0444, sys_asv_ids_show, NULL);
+static CPUID_ATTR(ro, 0444, sys_asv_ro_show, NULL);
+static CPUID_ATTR(cpu_hpm, 0444, sys_cpu_hpm_show, NULL);
+static CPUID_ATTR(core_hpm, 0444, sys_core_hpm_show, NULL);
+static CPUID_ATTR(cpu_ro_sel, 0644, sys_cpu_ro_sel_show,
+				    sys_cpu_ro_sel_store);
+static CPUID_ATTR(cpu_config, 0644, sys_cpu_config_show,
+				    sys_cpu_config_store);
+static CPUID_ATTR(core_ro_sel, 0644, sys_core_ro_sel_show,
+				     sys_core_ro_sel_store);
+static CPUID_ATTR(core_config, 0644, sys_core_config_show,
+				     sys_core_config_store);
+
+static struct attribute *cpuid_attrs[] = {
+	CPUID_ATTR_PTR(guid),
+	CPUID_ATTR_PTR(uuid),
+	CPUID_ATTR_PTR(name),
+	CPUID_ATTR_PTR(ids),
+	CPUID_ATTR_PTR(ro),
+	CPUID_ATTR_PTR(cpu_hpm),
+	CPUID_ATTR_PTR(core_hpm),
+	CPUID_ATTR_PTR(cpu_ro_sel),
+	CPUID_ATTR_PTR(cpu_config),
+	CPUID_ATTR_PTR(core_ro_sel),
+	CPUID_ATTR_PTR(core_config),
 	NULL,
 };
 
-static struct attribute_group sys_attr_group = {
-	.attrs = (struct attribute **)sys_attrs,
+static struct attribute_group cpuid_attr_group = {
+	.attrs = (struct attribute **)cpuid_attrs,
 };
 
-static const struct of_device_id nxp3220_ecid_match[] = {
-	{ .compatible = "nexell,nxp3220-ecid" },
-	{ /* sentinel */ }
-};
+/*
+ * Export functions
+ */
+static struct nx_ecid *_ecid_ptr;
 
-static int __init cpu_sys_id_setup(void)
+int read_cpu_hpm(void)
 {
-	const struct of_device_id *match;
-	struct device_node *np;
-	struct resource regs;
+	return nx_ecid_get_cpu_hpm(_ecid_ptr);
+}
 
-	struct kobject *kobj;
-	u32 uid[4] = { 0, };
-	int ret = 0;
-	u32 lotid;
-	char strlotid[6];
+int nx_cpu_id_ecid(u32 id[4])
+{
+	return nx_ecid_get_ecid(_ecid_ptr, id);
+}
 
-	np = of_find_matching_node_and_match(NULL, nxp3220_ecid_match, &match);
-	if (!np) {
-		pr_err("DT node not found. Failed to access ecid.\n");
-		return -ENXIO;
+int nx_cpu_hpm_ro(u16 hpm[8])
+{
+	return nx_ecid_get_hpm_ro(_ecid_ptr, hpm);
+}
+
+/*
+ * Regisetr driver
+ */
+static struct kobject *nx_ecid_kobj;
+
+static int nx_ecid_sysfs_create(struct device *dev, struct nx_ecid *ecid,
+				    struct attribute_group *group)
+{
+	struct device_attribute *d_attr;
+	struct nx_ecid_attr *p_attr;
+	int i, ret;
+
+	for (i = 0; i < ARRAY_SIZE(cpuid_attrs) - 1; i++) {
+		d_attr = container_of(cpuid_attrs[i], typeof(*d_attr), attr);
+		p_attr = container_of(d_attr, typeof(*p_attr), dev_attr);
+		p_attr->ecid = ecid;
 	}
 
-	if (of_address_to_resource(np, 0, &regs) < 0) {
-		pr_err("failed to get ecid registers\n");
-		of_node_put(np);
-		return -ENXIO;
-	}
+	ret = sysfs_create_group(nx_ecid_kobj, group);
+	if (ret)
+		kobject_del(nx_ecid_kobj);
 
-	ecid_mod->base = (struct nx_ecid_regs *)
-		ioremap_nocache(regs.start, resource_size(&regs));
-	if (!ecid_mod->base) {
-		pr_err("failed to map ecid module registers\n");
-		return -ENXIO;
-	}
+	return ret;
+}
 
-	ecid_mod->core_reg = syscon_regmap_lookup_by_phandle(np, "syscon");
-	if (IS_ERR(ecid_mod->core_reg)) {
-		pr_err("Failed no core hpm sysreg found !!!\n");
-		return PTR_ERR(ecid_mod->core_reg);
-	}
+static int nx_ecid_dt_parse(struct platform_device *pdev, struct nx_ecid *ecid)
+{
+	struct device *dev = &pdev->dev;
+	struct platform_device *plat_dev;
+	struct device_node *node, *np;
+	struct resource *res;
 
-	ecid_mod->cpu_hpm = of_clk_get_by_name(np, "cpu_hpm");
-	if (IS_ERR(ecid_mod->cpu_hpm)) {
-		pr_err("Failed no clock found 'cpu_hpm'\n");
-		return PTR_ERR(ecid_mod->cpu_hpm);
-	}
+	node = dev_of_node(dev);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 
-	ecid_mod->core_hpm = of_clk_get_by_name(np, "core_hpm");
-	if (IS_ERR(ecid_mod->core_hpm)) {
-		pr_err("Failed no clock found 'core_hpm'\n");
-		return PTR_ERR(ecid_mod->core_hpm);
-	}
+	ecid->reg = devm_ioremap_resource(dev, res);
+	if (IS_ERR(ecid->reg))
+		return PTR_ERR(ecid->reg);
 
-	clk_set_rate(ecid_mod->cpu_hpm, 400000000);
-	clk_set_rate(ecid_mod->core_hpm, 500000000);
+	ecid->sysreg = syscon_regmap_lookup_by_phandle(node, "syscon");
+	if (IS_ERR(ecid->sysreg))
+		return PTR_ERR(ecid->sysreg);
+
+	np = of_parse_phandle(node, "regmap", 0);
+	if (!np)
+		return -EINVAL;
+
+	plat_dev = of_find_device_by_node(np);
+	if (plat_dev)
+		ecid->sefuse = dev_get_regmap(&plat_dev->dev, NULL);
+
 	of_node_put(np);
 
-	/*
-	 * create interfaces
-	 */
-	kobj = kobject_create_and_add("cpu", &platform_bus.kobj);
-	if (!kobj) {
-		pr_err("Failed create cpu kernel object ....\n");
-		return -ret;
-	}
+	if (!ecid->sefuse)
+		return -EINVAL;
 
-	ret = sysfs_create_group(kobj, &sys_attr_group);
-	if (ret) {
-		pr_err("Failed create cpu sysfs group ...\n");
-		kobject_del(kobj);
-		return -ret;
-	}
+	np = of_parse_phandle(node, "regmap", 1);
+	if (!np)
+		return -EINVAL;
 
-	if (nx_cpu_id_ecid(uid) < 0)
+	plat_dev = of_find_device_by_node(np);
+	if (plat_dev)
+		ecid->shpm = dev_get_regmap(&plat_dev->dev, NULL);
+
+	of_node_put(np);
+
+	if (!ecid->shpm)
+		return -EINVAL;
+
+	ecid->clk_cpu = of_clk_get_by_name(node, "cpu_hpm");
+	if (IS_ERR(ecid->clk_cpu))
+		return PTR_ERR(ecid->clk_cpu);
+
+	ecid->clk_core = of_clk_get_by_name(node, "core_hpm");
+	if (IS_ERR(ecid->clk_core))
+		return PTR_ERR(ecid->clk_core);
+
+	return 0;
+}
+
+static int nx_ecid_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct nx_ecid *ecid;
+	u32 id[4] = { 0, };
+	u32 lotid;
+	char strlotid[6];
+	int ret;
+
+	ecid = devm_kzalloc(dev, sizeof(*ecid), GFP_KERNEL);
+	if (!ecid)
+		return -ENOMEM;
+
+	ret = nx_ecid_dt_parse(pdev, ecid);
+	if (!ecid)
+		return ret;
+
+	ret = nx_ecid_sysfs_create(dev, ecid, &cpuid_attr_group);
+	if (ret)
+		return ret;
+
+	ecid->dev = dev;
+	ecid->hpm.cpu_ro_sel = 0;
+	ecid->hpm.cpu_cfg = 3;
+	ecid->hpm.core_ro_sel = 0;
+	ecid->hpm.core_cfg = 3;
+	_ecid_ptr = ecid; /* global */
+
+	if (nx_ecid_get_ecid(ecid, id) < 0)
 		pr_err("FAIL: cannot get ecid !!!\n");
 
-	lotid = convertmsblsb(uid[0] & 0x1FFFFF, 21);
+	lotid = convert_msblsb(id[0] & 0x1FFFFF, 21);
 	lotid_num2string(lotid, strlotid);
 
-	pr_info("ECID: %08x:%08x:%08x:%08x\n", uid[0], uid[1], uid[2], uid[3]);
+	pr_info("ECID: %08x:%08x:%08x:%08x\n", id[0], id[1], id[2], id[3]);
 	pr_info("LOT ID : %s\n", strlotid);
 
 	return ret;
 }
 
-static int __init cpu_sys_init_setup(void)
-{
-	cpu_sys_id_setup();
+static const struct of_device_id nxp3220_cpuid_match[] = {
+	{ .compatible = "nexell,nxp3220-ecid" },
+	{ /* sentinel */ }
+};
 
-	return 0;
+static struct platform_driver nx_ecid_driver = {
+	.probe = nx_ecid_probe,
+	.driver = {
+		.name = "nexell-ecid",
+		.of_match_table = nxp3220_cpuid_match,
+	},
+};
+
+static int __init nx_ecid_init(void)
+{
+	nx_ecid_kobj = kobject_create_and_add("cpu", &platform_bus.kobj);
+
+	BUG_ON(!nx_ecid_kobj);
+
+	return platform_driver_register(&nx_ecid_driver);
 }
-core_initcall(cpu_sys_init_setup);
+
+static void __exit nx_ecid_exit(void)
+{
+	platform_driver_unregister(&nx_ecid_driver);
+}
+
+subsys_initcall(nx_ecid_init);
+module_exit(nx_ecid_exit);
+
+MODULE_DESCRIPTION("Nexell ECID driver");
+MODULE_LICENSE("GPL v2");
