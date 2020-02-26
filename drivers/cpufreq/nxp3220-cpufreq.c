@@ -23,8 +23,8 @@
 #include <linux/slab.h>
 #include <linux/thermal.h>
 #include <linux/of_device.h>
+#include <linux/soc/nexell/cpu-sys.h>
 #include "../../drivers/base/power/opp/opp.h"
-#include "../../drivers/soc/nexell/nxp3220/cpu-sys.h"
 #include "cpufreq-dt.h"
 
 #define CMU_AXI_OFF 0x264
@@ -736,6 +736,7 @@ create_pdev:
 			sizeof(struct cpufreq_dt_platform_data)));
 }
 device_initcall(cpufreq_dt_platdev_init);
+
 static int dt_cpufreq_remove(struct platform_device *pdev)
 {
 	cpufreq_unregister_driver(&dt_cpufreq_driver);
