@@ -534,6 +534,7 @@
 			syscon = <&sys_reg_sys>;
 			regmap = <&sys_sefuse>, <&sys_reg_hpm>;
 			clocks = <&cmu_cpu CLK_CPU_HPM>, <&cmu CLK_HPM_SYS0>;
+			assigned-clock-rates = <400000000>, <500000000>;
 			clock-names = "cpu_hpm", "core_hpm";
 		};
 
