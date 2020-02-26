@@ -11,9 +11,7 @@
 #include <linux/debugfs.h>
 #include <linux/uaccess.h>
 #include <linux/mfd/syscon.h>
-#include <linux/soc/nexell/sec_io.h>
 
-#define	QOS_SECURE_ACCESS
 #define	QOS_SYSFS_DIR		"qos"
 
 #define NIC400_CONTROL		0x10C
@@ -54,7 +52,7 @@ struct nic400_data {
 struct nic400_qos {
 	struct device *dev;
 	struct regmap *regmap;
-	void *base;
+	phys_addr_t base;
 	struct mutex lock;
 	struct nic400_data f_data;
 	struct nic400_data r_data;
@@ -124,127 +122,19 @@ static struct kobject *nic400_kobj;
 
 static u32 qos_readl(struct nic400_qos *qos, u32 offset)
 {
+	unsigned int offs = qos->base + offset;
 	u32 val;
 
-	mutex_lock(&qos->lock);
-#ifndef QOS_SECURE_ACCESS
-	regmap_read(qos->regmap, offset, &val);
-#else
-	val = sec_readl(qos->base + offset);
-#endif
-	mutex_unlock(&qos->lock);
+	regmap_read(qos->regmap, offs, &val);
+
 	return val;
 }
 
-static void qos_writel(struct nic400_qos *qos, u32 offset, u32 value)
+static void qos_writel(struct nic400_qos *qos, u32 offset, u32 val)
 {
-	mutex_lock(&qos->lock);
-#ifndef QOS_SECURE_ACCESS
-	regmap_write(qos->regmap, offset, value);
-#else
-	sec_writel(qos->base + offset, value);
-#endif
-	mutex_unlock(&qos->lock);
-}
+	unsigned int offs = qos->base + offset;
 
-static void nx_qos_parse_dt_ctl(struct device *dev, struct nic400_qos *qos)
-{
-	struct device_node *node = dev->of_node;
-	struct nic400_propety *prop = nic400_f_prop;
-	struct device_node *np;
-	u32 val;
-	int i, n = 0;
-
-	np = of_get_child_by_name(node, "control");
-	if (!np)
-		return;
-
-	pr_info("QoS: %s: control:\n", node->name);
-	for (i = 0; i < ARRAY_SIZE(nic400_f_prop); i++, prop++) {
-		if (!of_property_read_u32(np, prop->name, &val)) {
-			qos->f_data.value[prop->index] |=
-				((val & ((1UL << prop->size) - 1)) <<
-				prop->shift);
-			qos->f_data.offs[prop->index] = prop->offs;
-			qos->f_data.flags |= (1 << prop->index);
-			pr_cont(" %s:0x%x", prop->name, val);
-			n++;
-			if (!(n % 4))
-				pr_cont("\n");
-		}
-	}
-	pr_cont("\n");
-	of_node_put(np);
-}
-
-static void nx_qos_parse_dt_reg(struct device *dev, struct nic400_qos *qos)
-{
-	struct device_node *node = dev->of_node;
-	struct nic400_propety *prop = nic400_r_prop;
-	struct device_node *np;
-	u32 val;
-	int i, n = 0;
-
-	np = of_get_child_by_name(node, "register");
-	if (!np)
-		return;
-
-	pr_info("QoS: %s: register:\n", node->name);
-	for (i = 0; i < ARRAY_SIZE(nic400_r_prop); i++, prop++) {
-		if (!of_property_read_u32(np, prop->name, &val)) {
-			qos->r_data.value[prop->index] = val;
-			qos->r_data.offs[prop->index] = prop->offs;
-			qos->r_data.flags |= (1 << prop->index);
-			pr_cont(" %s:0x%08x", prop->name, val);
-			n++;
-			if (!(n % 4))
-				pr_cont("\n");
-		}
-	}
-	pr_cont("\n");
-	of_node_put(np);
-}
-
-static int nx_qos_setup_resource(struct platform_device *pdev,
-			       struct nic400_qos *qos)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	struct regmap *regmap;
-	struct resource	*mem;
-
-	regmap = syscon_node_to_regmap(np);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
-
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	qos->base = (void *)mem->start;
-	if (IS_ERR(qos->base))
-		return PTR_ERR(qos->base);
-
-	qos->regmap = regmap;
-	qos->dev = dev;
-	mutex_init(&qos->lock);
-
-	dev_set_drvdata(dev, qos);
-
-	return 0;
-}
-
-static void nx_qos_setup_bus(struct nic400_qos *qos)
-{
-	struct nic400_data *data;
-	int i;
-
-	for (data = &qos->f_data, i = 0; i < NIC400_ID_MAX; i++) {
-		if (data->flags & (1 << i))
-			qos_writel(qos, data->offs[i], data->value[i]);
-	}
-
-	for (data = &qos->r_data, i = 0; i < NIC400_ID_MAX; i++) {
-		if (data->flags & (1 << i))
-			qos_writel(qos, data->offs[i], data->value[i]);
-	}
+	regmap_write(qos->regmap, offs, val);
 }
 
 static int __get_property(const char *name, u32 *offs, int *shift, int *size,
@@ -287,10 +177,10 @@ static ssize_t nx_qos_f_show(struct device *dev,
 	val = (v >> shift) & mask;
 
 	dev_dbg(qos->dev,
-		"%s: %p R:0x%x -> 0x%x [mask:0x%x, size:%d, shift:%d]\n",
-		name, qos->base + offs, v, val, mask, size, shift);
+		"%s: 0x%x R:0x%x -> 0x%x [mask:0x%x, size:%d, shift:%d]\n",
+		name, offs, v, val, mask, size, shift);
 
-	 return scnprintf(buf, PAGE_SIZE, "0x%x\n", val);
+	return (int)scnprintf(buf, PAGE_SIZE, "0x%x\n", val);
 }
 
 static ssize_t nx_qos_f_store(struct device *dev,
@@ -322,8 +212,8 @@ static ssize_t nx_qos_f_store(struct device *dev,
 	qos_writel(qos, offs, v);
 
 	dev_dbg(qos->dev,
-		"%s: %p W:0x%x -> 0x%x [mask:0x%x, size:%d, shift:%d]\n",
-		name, qos->base + offs, val, v, mask, size, shift);
+		"%s: 0x%x W:0x%x -> 0x%x [mask:0x%x, size:%d, shift:%d]\n",
+		name, offs, val, v, mask, size, shift);
 
 	return count;
 }
@@ -349,7 +239,7 @@ static ssize_t nx_qos_r_show(struct device *dev,
 
 	val = qos_readl(qos, offs);
 
-	dev_dbg(qos->dev, "%s: %p R:0x%x\n", name, qos->base + offs, val);
+	dev_dbg(qos->dev, "%s: 0x%x R:0x%x\n", name, offs, val);
 
 	return scnprintf(buf, PAGE_SIZE, "0x%x\n", val);
 }
@@ -376,7 +266,7 @@ static ssize_t nx_qos_r_store(struct device *dev,
 
 	qos_writel(qos, offs, val);
 
-	dev_dbg(qos->dev, "%s: %p W:0x%x\n", name, qos->base + offs, val);
+	dev_dbg(qos->dev, "%s: 0x%x W:0x%x\n", name, offs, val);
 
 	return count;
 }
@@ -386,7 +276,23 @@ struct device_attribute dev_r_attr = {
 	.store = nx_qos_r_store,
 };
 
-static int nx_qos_create_dir(struct nic400_qos *qos,
+static void nx_qos_setup_bus(struct nic400_qos *qos)
+{
+	struct nic400_data *data;
+	int i;
+
+	for (data = &qos->f_data, i = 0; i < NIC400_ID_MAX; i++) {
+		if (data->flags & (1 << i))
+			qos_writel(qos, data->offs[i], data->value[i]);
+	}
+
+	for (data = &qos->r_data, i = 0; i < NIC400_ID_MAX; i++) {
+		if (data->flags & (1 << i))
+			qos_writel(qos, data->offs[i], data->value[i]);
+	}
+}
+
+static int nx_qos_create_sysdir(struct nic400_qos *qos,
 			    struct attribute_group *attr_group,
 			    const char *name,
 			    struct nic400_propety *prop, int len,
@@ -412,7 +318,7 @@ static int nx_qos_create_dir(struct nic400_qos *qos,
 		q_attrs->qos = qos;
 		attr = &q_attrs->device_attr;
 		attr->attr.name = prop[i].name;
-		attr->attr.mode = S_IRUGO | S_IWUSR;
+		attr->attr.mode = 0644;
 		attr->show = dev_attr->show;
 		attr->store = dev_attr->store;
 		attrs[i] = &attr->attr;
@@ -434,39 +340,108 @@ static int nx_qos_create_dir(struct nic400_qos *qos,
 	return ret;
 }
 
+static void nx_qos_parse_register(struct device *dev, struct nic400_qos *qos)
+{
+	struct device_node *node = dev->of_node;
+	struct nic400_propety *prop = nic400_r_prop;
+	struct device_node *np;
+	u32 val;
+	int i, n = 0;
+
+	np = of_get_child_by_name(node, "register");
+	if (!np)
+		return;
+
+	pr_info("QoS: %s: register:\n", node->name);
+	for (i = 0; i < ARRAY_SIZE(nic400_r_prop); i++, prop++) {
+		if (!of_property_read_u32(np, prop->name, &val)) {
+			qos->r_data.value[prop->index] = val;
+			qos->r_data.offs[prop->index] = prop->offs;
+			qos->r_data.flags |= (1 << prop->index);
+			pr_cont(" %s:0x%08x", prop->name, val);
+			n++;
+			if (!(n % 4))
+				pr_cont("\n");
+		}
+	}
+	pr_cont("\n");
+	of_node_put(np);
+}
+
+static void nx_qos_parse_control(struct device *dev, struct nic400_qos *qos)
+{
+	struct device_node *node = dev->of_node;
+	struct nic400_propety *prop = nic400_f_prop;
+	struct device_node *np;
+	u32 val;
+	int i, n = 0;
+
+	np = of_get_child_by_name(node, "control");
+	if (!np)
+		return;
+
+	pr_info("QoS: %s: control:\n", node->name);
+	for (i = 0; i < ARRAY_SIZE(nic400_f_prop); i++, prop++) {
+		if (!of_property_read_u32(np, prop->name, &val)) {
+			qos->f_data.value[prop->index] |=
+				((val & ((1UL << prop->size) - 1)) <<
+				prop->shift);
+			qos->f_data.offs[prop->index] = prop->offs;
+			qos->f_data.flags |= (1 << prop->index);
+			pr_cont(" %s:0x%x", prop->name, val);
+			n++;
+			if (!(n % 4))
+				pr_cont("\n");
+		}
+	}
+	pr_cont("\n");
+	of_node_put(np);
+}
+
 static int nx_qos_probe(struct platform_device *pdev)
 {
-	struct nic400_qos *qos;
 	struct device *dev = &pdev->dev;
-	int ret;
+	struct resource *res;
+	struct nic400_qos *qos;
 
 	qos = devm_kzalloc(dev, sizeof(*qos), GFP_KERNEL);
 	if (!qos)
 		return -ENOMEM;
 
-	ret = nx_qos_setup_resource(pdev, qos);
-	if (ret)
-		return ret;
+	qos->regmap = dev_get_regmap(dev->parent, NULL);
+	if (!qos->regmap)
+		return -EINVAL;
 
-	nx_qos_parse_dt_ctl(dev, qos);
-	nx_qos_parse_dt_reg(dev, qos);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (IS_ERR(res))
+		return PTR_ERR(res);
+
+	qos->base = res->start;
+	qos->dev = dev;
+	mutex_init(&qos->lock);
+	dev_set_drvdata(dev, qos);
+
+	nx_qos_parse_control(dev, qos);
+	nx_qos_parse_register(dev, qos);
 
 	/*
-	 * SYS FS:
+	 * SYS fs:
 	 * - /sys/devices/platform/qos/<node>/func
 	 * - /sys/devices/platform/qos/<node>/reg
 	 */
-	nx_qos_create_dir(qos, &qos->f_attr_group, "func",
-			nic400_f_prop, ARRAY_SIZE(nic400_f_prop),
-			&dev_f_attr);
+	nx_qos_create_sysdir(qos, &qos->f_attr_group, "func",
+			     nic400_f_prop, ARRAY_SIZE(nic400_f_prop),
+			     &dev_f_attr);
 
-	nx_qos_create_dir(qos, &qos->r_attr_group, "reg",
-			nic400_r_prop, ARRAY_SIZE(nic400_r_prop),
-			&dev_r_attr);
+	nx_qos_create_sysdir(qos, &qos->r_attr_group, "reg",
+			     nic400_r_prop, ARRAY_SIZE(nic400_r_prop),
+			     &dev_r_attr);
 
 	nx_qos_setup_bus(qos);
 
 	platform_set_drvdata(pdev, qos);
+
+	dev_info(&pdev->dev, "Load NIC400-QoS\n");
 
 	return 0;
 }
@@ -523,7 +498,7 @@ static int __init nx_qos_init(void)
 
 	return platform_driver_register(&nx_qos_driver);
 }
-arch_initcall(nx_qos_init);
+subsys_initcall(nx_qos_init);
 
 MODULE_AUTHOR("JungHyun, Kim <jhkim@nexell.co.kr>");
 MODULE_DESCRIPTION("BUS QoS driver for the Nexell");

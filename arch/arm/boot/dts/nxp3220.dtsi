@@ -402,38 +402,6 @@
 			#clock-cells = <1>;
 		};
 
-		nic400_qos: nic400_qos  {
-			compatible = "simple-bus";
-			#address-cells = <1>;
-			#size-cells = <1>;
-			ranges;
-
-			cpu: cpu {
-				compatible = "nexell,nxp3220-nic400-qos", "syscon";
-				reg = <0x21044000 0x200>;
-			};
-
-			display: display {
-				compatible = "nexell,nxp3220-nic400-qos", "syscon";
-				reg = <0x21045000 0x200>;
-			};
-
-			dma: dma {
-				compatible = "nexell,nxp3220-nic400-qos", "syscon";
-				reg = <0x21043000 0x200>;
-			};
-
-			usb_hsif: usb-hsif {
-				compatible = "nexell,nxp3220-nic400-qos", "syscon";
-				reg = <0x21042000 0x200>;
-			};
-
-			etc: etc {
-				compatible = "nexell,nxp3220-nic400-qos", "syscon";
-				reg = <0x21046000 0x200>;
-			};
-		};
-
 		adc: adc@20600000 {
 			compatible = "nexell,nxp3220-adc";
 			reg = <0x20600000 0x1000>;
@@ -920,6 +888,39 @@
 		sys_reg_hsifys: syscon@26030000 {
 			compatible = "syscon";
 			reg = <0x26030000 0x1000>;
+		};
+
+		sys_nic400_qos: sys-nic400-qos@21040000  {
+			compatible = "nexell,secure-regmap";
+			reg = <(0x21040000 + 0x2000) 0x5000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges;
+
+			cpu: cpu {
+				compatible = "nexell,nxp3220-nic400-qos";
+				reg = <(0x4000 - 0x2000) 0x200>;
+			};
+
+			display: display {
+				compatible = "nexell,nxp3220-nic400-qos";
+				reg = <(0x4000 - 0x2000) 0x200>;
+			};
+
+			dma: dma {
+				compatible = "nexell,nxp3220-nic400-qos";
+				reg = <(0x3000 - 0x2000) 0x200>;
+			};
+
+			usb_hsif: usb-hsif {
+				compatible = "nexell,nxp3220-nic400-qos";
+				reg = <(0x2000 - 0x2000) 0x200>;
+			};
+
+			etc: etc {
+				compatible = "nexell,nxp3220-nic400-qos";
+				reg = <(0x6000 - 0x2000) 0x200>;
+			};
 		};
 
 		sys_sefuse: sys-sefuse@20070000 {
