@@ -5,7 +5,8 @@ The EFUSE provides secure ecid, boot key, boot hash ...
 User can read by nvmem interface and function call.
 
 Required properties:
-- compatible : "nexell,nxp3220-efuse"
+- compatible : "nexell,secure-regmap" for a multi-function device 
+	       "nexell,nxp3220-efuse" for efuse devices.
 - reg : Offset and length of the register set for the controller device.
 - cell-name : efuse cell name for the nvmem inferface
 - cell-id : efuse cell id for the nvmem sys inferface
@@ -17,20 +18,23 @@ Sys interface: /sys/bus/nvmem/devices/[cell-name][cell-id]
 
 Example:
 
-#define S_EFUSE_NODE_DATA(_reg, _size, _name, _id) \
-		compatible = "nexell,nxp3220-efuse"; \
-		reg = <_reg _size>; \
-		cell-name = _name; \
-		cell-id = <_id>; \
-		cell-secure;
-
 /{
+	sys_sefuse: sys-sefuse@20070000 {
+		compatible = "nexell,secure-regmap";
+
 		sefuse_secid: efuse@20070100 { /* 128 bits */
-			S_EFUSE_NODE_DATA(0x20070100, 0x10, "secid", 0)
+			compatible = "nexell,nxp3220-efuse";
+			reg = <0x100 0x10>;
+			cell-name = secid;
+			cell-id = 0;
 		};
 
 		sefuse_bootkey0: efuse@20070110 { /* 128 bits */
-			S_EFUSE_NODE_DATA(0x20070110, 0x10, "sboot_key", 0)
+			compatible = "nexell,nxp3220-efuse";
+			reg = <0x110 0x10>;
+			cell-name = sboot_key;
+			cell-id = 0;
 		};
 		.....
+	};
 }
