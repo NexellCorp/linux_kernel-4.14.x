@@ -1,1 +1,1 @@
-obj-y += cpu-sys.o sec_io.o
+obj-y += cpu-sys.o
