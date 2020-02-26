@@ -417,6 +417,12 @@ config MFD_HI655X_PMIC
 	help
 	  Select this option to enable Hisilicon hi655x series pmic driver.
 
+config MFD_NEXELL_SEC_REG
+	bool
+	default y
+	depends on ARCH_NEXELL
+	select MFD_CORE
+
 config MFD_NXE2000
 	bool "Nexell NXE2000 PMIC Support"
 	depends on I2C=y
