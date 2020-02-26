@@ -3,36 +3,34 @@
  * Copyright (C) 2018  Nexell Co., Ltd.
  * Author: JungHyun, Kim <jhkim@nexell.co.kr>
  */
-#include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/io.h>
 #include <linux/module.h>
+#include <linux/regmap.h>
 #include <linux/nvmem-provider.h>
 #include <linux/of.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
-#include <linux/soc/nexell/sec_io.h>
 
 #define EFUSE_WORD_SIZE		4
 #define EFUSE_STRIDE		4
 
 struct nx_efuse_priv {
 	struct device *dev;
-	dma_addr_t base;
-	void __iomem *addr;
-	struct clk *clk;
 	const char *name;
 	int id;
-	bool is_secure;
+	struct regmap *regmap;
+	phys_addr_t reg;
+	int size;
 	struct nvmem_config config;
 };
 
 static int nx_efuse_read(void *context, unsigned int offset,
-				      void *val, size_t bytes)
+			 void *val, size_t bytes)
 {
 	struct nx_efuse_priv *efuse = context;
 	struct nvmem_config *config = &efuse->config;
-	void __iomem *addr;
+	unsigned int offs = efuse->reg + offset;
 	u32 *buf = val;
 	int size, i, ret;
 
@@ -43,66 +41,58 @@ static int nx_efuse_read(void *context, unsigned int offset,
 		return -EINVAL;
 	}
 
-	if (offset + bytes > config->size) {
+	if (offset + bytes > efuse->size) {
 		dev_err(efuse->dev,
 			"cell %s request 0x%x:0x%x over to size %d\n",
-			config->name, offset, offset + bytes, config->size);
+			config->name, offset, offset + bytes, efuse->size);
 		return -EINVAL;
 	}
 
-	if (!IS_ERR(efuse->clk)) {
-		ret = clk_prepare_enable(efuse->clk);
-		if (ret < 0) {
+	size = bytes > efuse->size ? efuse->size : bytes;
+
+	for (i = 0; i < (size / EFUSE_WORD_SIZE); i++) {
+		ret = regmap_read(efuse->regmap,
+				  offs + (i * EFUSE_WORD_SIZE), &buf[i]);
+		if (ret) {
 			dev_err(efuse->dev,
-				"cell %s failed to enable efuse clk\n",
-				config->name);
-			return ret;
+				"Error regmap[%d] read:0x%x, ret:%d\n",
+				i, offs + (i * EFUSE_WORD_SIZE), ret);
+			return 0;
 		}
 	}
-
-	addr = efuse->is_secure ? (void __iomem *)efuse->base : efuse->addr;
-	addr = addr + offset;
-	size = bytes > config->size ? config->size : bytes;
-
-	for (i = 0; i < (size / EFUSE_WORD_SIZE); i++)
-		buf[i] = efuse->is_secure ?
-			 sec_readl(addr + (i * EFUSE_WORD_SIZE)) :
-			 readl(addr + (i * EFUSE_WORD_SIZE));
-
-	if (!IS_ERR(efuse->clk))
-		clk_disable_unprepare(efuse->clk);
 
 	return size;
 }
 
 static int nx_efuse_probe(struct platform_device *pdev)
 {
-	struct resource *res;
 	struct nvmem_device *nvmem;
 	struct nvmem_config *config;
 	struct nx_efuse_priv *efuse;
 	struct device *dev = &pdev->dev;
+	struct resource *res;
 
 	efuse = devm_kzalloc(dev, sizeof(struct nx_efuse_priv),
 			     GFP_KERNEL);
 	if (!efuse)
 		return -ENOMEM;
 
-	efuse->is_secure = of_property_read_bool(dev->of_node, "cell-secure");
-
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (efuse->is_secure) {
-		efuse->addr = devm_ioremap_resource(&pdev->dev, res);
-		if (IS_ERR(efuse->addr))
-			return PTR_ERR(efuse->addr);
+	efuse->regmap = dev_get_regmap(dev->parent, NULL);
+	if (!efuse->regmap) {
+		dev_err(&pdev->dev, "Parent regmap unavailable.\n");
+		return -ENXIO;
 	}
 
-	efuse->clk = devm_clk_get(dev, NULL);
-	efuse->name = of_get_property(dev->of_node, "cell-name", NULL);
-	of_property_read_s32(dev->of_node, "cell-id", &efuse->id);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res)
+		return -ENODEV;
 
-	efuse->base = res->start;
+	efuse->name = of_get_property(dev_of_node(dev), "cell-name", NULL);
+	of_property_read_s32(dev_of_node(dev), "cell-id", &efuse->id);
+
 	efuse->dev = dev;
+	efuse->reg = res->start;
+	efuse->size = resource_size(res);
 
 	config = &efuse->config;
 	config->name = efuse->name;
@@ -112,7 +102,7 @@ static int nx_efuse_probe(struct platform_device *pdev)
 	config->owner = THIS_MODULE;
 	config->read_only = true;
 	config->reg_read = &nx_efuse_read;
-	config->size = resource_size(res);
+	config->size = efuse->size;
 	config->word_size = EFUSE_WORD_SIZE;
 	config->stride = EFUSE_STRIDE;
 
@@ -121,6 +111,9 @@ static int nx_efuse_probe(struct platform_device *pdev)
 		return PTR_ERR(nvmem);
 
 	platform_set_drvdata(pdev, nvmem);
+
+	dev_dbg(dev, "nvmem %s 0x%x:0x%x\n",
+		efuse->name, efuse->reg, efuse->size);
 
 	return 0;
 }

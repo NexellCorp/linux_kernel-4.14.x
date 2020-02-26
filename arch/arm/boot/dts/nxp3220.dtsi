@@ -903,23 +903,33 @@
 		};
 
 		sys_reg_sys: syscon@20030000 {
-			compatible = "nexell,system-reg", "syscon";
+			compatible = "syscon";
 			reg = <0x20030000 0x1000>;
 		};
 
 		sys_reg_usb: syscon@24030000 {
-			compatible = "nexell,system-reg","syscon";
+			compatible = "syscon";
 			reg = <0x24030000 0x1000>;
 		};
 
 		sys_reg_mm: syscon@25030000 {
-			compatible = "nexell,system-reg","syscon";
+			compatible = "syscon";
 			reg = <0x25030000 0x1000>;
 		};
 
 		sys_reg_hsifys: syscon@26030000 {
-			compatible = "nexell,system-reg","syscon";
+			compatible = "syscon";
 			reg = <0x26030000 0x1000>;
+		};
+
+		sys_sefuse: sys-sefuse@20070000 {
+			compatible = "nexell,secure-regmap";
+			reg = <0x20070000 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges;
+
+			#include "nxp3220-sefuse.dtsi"
 		};
 
 		pinctrl_0: pinctrl@20180000 {
@@ -1243,5 +1253,4 @@
 };
 
 #include "nxp3220-asv.dtsi"
-#include "nxp3220-efuse.dtsi"
 #include "nxp3220-pinctrl.dtsi"
