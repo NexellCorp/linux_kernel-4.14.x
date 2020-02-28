@@ -5,19 +5,19 @@
 
 		opp-0 {
 			opp-hz = /bits/ 64 <100000000>;
-			opp-microvolt = <925000>;
+			opp-microvolt = <937500>;
 		};
 		opp-1 {
 			opp-hz = /bits/ 64 <200000000>;
-			opp-microvolt = <925000>;
+			opp-microvolt = <937500>;
 		};
 		opp-2 {
 			opp-hz = /bits/ 64 <300000000>;
-			opp-microvolt = <925000>;
+			opp-microvolt = <937500>;
 		};
 		opp-3 {
 			opp-hz = /bits/ 64 <400000000>;
-			opp-microvolt = <925000>;
+			opp-microvolt = <937500>;
 		};
 		opp-4 {
 			opp-hz = /bits/ 64 <500000000>;
