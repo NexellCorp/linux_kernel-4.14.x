@@ -387,9 +387,7 @@ static int nx_display_crtc_parse_planes(struct device *dev,
 			DRM_ERROR("Failed, unknown plane [%d] %s\n",
 				i, strings[i]);
 		}
-		DRM_DEBUG_KMS("crtc.%d planes[%d]: %s, bg:0x%08x, key:0x%08x\n",
-			pipe, i, strings[i], dp->back_color,
-			dp->color_key);
+		DRM_DEBUG_KMS("crtc.%d planes[%d]: %s\n", pipe, i, strings[i]);
 	}
 
 	dp->num_overlays = size;
@@ -410,6 +408,11 @@ static int nx_display_crtc_parse_planes(struct device *dev,
 		"video-scale-hfilter-max", &dp->video_scale_hf_max);
 	of_property_read_u32(np,
 		"video-scale-vfilter-max", &dp->video_scale_vf_max);
+
+	DRM_INFO("crtc.%d: bg:0x%08x, key:0x%08x(%s), alpha:%s, vprio:%d\n",
+		pipe, dp->back_color, dp->color_key,
+		dp->color_key_on ? "on" : "off",
+		dp->alpla_blend_on ? "on" : "off", dp->video_priority);
 
 	return 0;
 }
@@ -741,6 +744,11 @@ static int nx_display_plane_set_property(struct drm_plane *plane,
 		nx_display_plane_set_priority(plane, val);
 	}
 
+	if (property == prop->back_color) {
+		ovl->dp->back_color = val;
+		nx_display_set_backcolor(ovl->dp);
+	}
+
 	return 0;
 }
 
@@ -775,6 +783,9 @@ static int nx_display_plane_get_property(struct drm_plane *plane,
 
 	if (property == prop->priority)
 		*val = ovl->dp->video_priority;
+
+	if (property == prop->back_color)
+		*val = ovl->dp->back_color;
 
 	return 0;
 }
@@ -828,7 +839,12 @@ static void nx_display_plane_create_props(struct drm_device *drm,
 	drm_property_create_range(drm, 0, "video-priority", 0, 2);
 	drm_object_attach_property(&plane->base,
 			prop->priority, dp->video_priority);
-
+#if 0
+	prop->back_color =
+	drm_property_create_range(drm, 0, "bg-color", 0, 0x00ffffff);
+	drm_object_attach_property(&plane->base,
+			prop->back_color, dp->back_color);
+#endif
 	/* plane property functions */
 	plane_funcs->atomic_set_property = nx_display_plane_set_property;
 	plane_funcs->atomic_get_property = nx_display_plane_get_property;

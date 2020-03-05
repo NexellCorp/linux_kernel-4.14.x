@@ -19,8 +19,10 @@
 static bool fb_format_bgr;
 static bool fb_format_argb;
 
+/* boot argument: nexell_drm.fb_bgr */
 MODULE_PARM_DESC(fb_bgr, "frame buffer BGR pixel format");
 module_param_named(fb_bgr, fb_format_bgr, bool, 0600);
+/* boot argument: nexell_drm.fb_argb */
 MODULE_PARM_DESC(fb_argb, "frame buffer ARGB pixel format");
 module_param_named(fb_argb, fb_format_argb, bool, 0600);
 

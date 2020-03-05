@@ -72,6 +72,7 @@ struct nx_overlay_prop {
 		} rgb;
 	} color;
 	struct drm_property *priority;
+	struct drm_property *back_color;
 };
 
 #define FMT_VID_YUV_TO_YVU	(1<<31)

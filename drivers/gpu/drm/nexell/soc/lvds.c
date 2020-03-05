@@ -120,7 +120,9 @@ static int lvds_prepare(struct nx_drm_display *display)
 
 	/* lvdsctrl2 */
 	val = readl(&reg->lvdsctrl2);
-	val &= ~((1 << 15) | (1 << 14) | (0x3 << 12) | (0x3f << 6) | (0x3f << 0));
+	val &= ~((1 << 15) | (1 << 14) | (0x3 << 12) |
+		 (0x3f << 6) | (0x3f << 0));
+
 	if (pixelclock >= MHZ(90)) {
 		pms_v = 1 << 14;
 		pms_s = 1 << 12;
