@@ -27,6 +27,7 @@
 
 	chosen {
 		stdout-path = &uart2;
+		/delete-node/ cpu0_opp_table_asv1;
 	};
 
 	memory@40000000 {
@@ -696,3 +697,5 @@
 &vpu {
 	status = "okay";
 };
+
+#include "nxp3220-asv1-leveling.dtsi"
