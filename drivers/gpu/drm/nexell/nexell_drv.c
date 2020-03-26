@@ -98,9 +98,10 @@ static struct drm_ioctl_desc nx_drm_ioctls[] = {
 			DRM_UNLOCKED | DRM_AUTH),
 	DRM_IOCTL_DEF_DRV(NX_GEM_GET, nx_drm_gem_get_ioctl, DRM_UNLOCKED),
 #ifdef CONFIG_DRM_NEXELL_G2D
-	DRM_IOCTL_DEF_DRV(NX_G2D_GET_VER, nx_drm_g2d_get_version, DRM_UNLOCKED),
-	DRM_IOCTL_DEF_DRV(NX_G2D_DMA_EXEC, nx_drm_g2d_exec_ioctl, DRM_UNLOCKED),
-	DRM_IOCTL_DEF_DRV(NX_G2D_DMA_SYNC, nx_drm_g2d_sync_ioctl, DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(NX_G2D_GET_VER, nx_g2d_get_version, DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(NX_G2D_EXEC, nx_g2d_exec_ioctl, DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(NX_G2D_SYNC, nx_g2d_sync_ioctl, DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(NX_G2D_EXEC_SYNC, nx_g2d_exec_sync_ioctl, DRM_UNLOCKED),
 #endif
 };
 

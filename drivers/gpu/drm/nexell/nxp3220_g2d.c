@@ -89,7 +89,10 @@ struct nx_g2d_data {
 	int major, minor;
 	int axi_burst, axi_cache, axi_prot;
 	int out_stand;
+	unsigned long state;
 };
+
+#define STATE_EXEC	(0)
 
 static void nx_g2d_dump_cmd(struct nx_g2d_data *g2d, struct nx_g2d_cmd *cmd)
 {
@@ -145,6 +148,8 @@ static void nx_g2d_exec_cmd(struct nx_g2d_data *g2d, struct nx_g2d_cmd *cmd)
 
 	/* run */
 	writel(1, base + cmd_reg_offs[NX_G2D_CMD_RUN]);
+
+	set_bit(STATE_EXEC, &g2d->state);
 }
 
 static int nx_g2d_setup_cmd(struct drm_device *drm, struct drm_file *file,
@@ -233,7 +238,7 @@ static irqreturn_t nx_g2d_irq_handler(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-int nx_drm_g2d_get_version(struct drm_device *drm_dev, void *data,
+int nx_g2d_get_version(struct drm_device *drm_dev, void *data,
 			 struct drm_file *file)
 {
 	struct nx_g2d_data *g2d = file->driver_priv;
@@ -251,7 +256,7 @@ int nx_drm_g2d_get_version(struct drm_device *drm_dev, void *data,
 	return 0;
 }
 
-int nx_drm_g2d_exec_ioctl(struct drm_device *drm, void *data,
+int nx_g2d_exec_ioctl(struct drm_device *drm, void *data,
 			  struct drm_file *file)
 {
 	struct nx_g2d_data *g2d = file->driver_priv;
@@ -278,17 +283,35 @@ int nx_drm_g2d_exec_ioctl(struct drm_device *drm, void *data,
 
 	mutex_unlock(&g2d->mutex);
 
-	wait_for_completion(&g2d->complete);
-
 	dev_dbg(g2d->dev, "[%lldms]\n", ktime_to_ms(ktime_get()) - ts);
 
 	return ret;
 }
 
-int nx_drm_g2d_sync_ioctl(struct drm_device *drm_dev, void *data,
+int nx_g2d_sync_ioctl(struct drm_device *drm_dev, void *data,
 			 struct drm_file *file)
 {
+	struct nx_g2d_data *g2d = file->driver_priv;
+
+	if (!test_bit(STATE_EXEC, &g2d->state))
+		return 0;
+
+	wait_for_completion(&g2d->complete);
+
+	clear_bit(STATE_EXEC, &g2d->state);
+
 	return 0;
+}
+
+int nx_g2d_exec_sync_ioctl(struct drm_device *drm, void *data,
+			  struct drm_file *file)
+{
+	int ret = nx_g2d_exec_ioctl(drm, data, file);
+
+	if (ret)
+		return ret;
+
+	return nx_g2d_sync_ioctl(drm, data, file);
 }
 
 static int nx_g2d_prepare(struct nx_g2d_data *g2d)
