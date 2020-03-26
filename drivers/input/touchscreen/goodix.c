@@ -49,6 +49,10 @@ struct goodix_ts_data {
 	const char *cfg_name;
 	struct completion firmware_loading_complete;
 	unsigned long irq_flags;
+	int screen_x_max;
+	int screen_y_max;
+	int cal_x_ratio;
+	int cal_y_ratio;
 };
 
 #define GOODIX_GPIO_INT_NAME		"irq"
@@ -78,6 +82,10 @@ struct goodix_ts_data {
 #define RESOLUTION_LOC		1
 #define MAX_CONTACTS_LOC	5
 #define TRIGGER_LOC		6
+
+#define	CAL_MUL_SHIFT		16
+#define	CAL_RATIO(a, b)		((a << CAL_MUL_SHIFT) / b)
+#define	CAL_COORD(a, b)		((a * b) >> CAL_MUL_SHIFT)
 
 static const unsigned long goodix_irq_flags[] = {
 	IRQ_TYPE_EDGE_RISING,
@@ -261,6 +269,12 @@ static void goodix_ts_report_touch(struct goodix_ts_data *ts, u8 *coor_data)
 		input_y = ts->abs_y_max - input_y;
 	if (ts->swapped_x_y)
 		swap(input_x, input_y);
+
+	if (ts->cal_x_ratio)
+		input_x = CAL_COORD(input_x, ts->cal_x_ratio);
+
+	if (ts->cal_y_ratio)
+		input_y = CAL_COORD(input_y, ts->cal_y_ratio);
 
 	input_mt_slot(ts->input_dev, id);
 	input_mt_report_slot_state(ts->input_dev, MT_TOOL_FINGER, true);
@@ -623,9 +637,9 @@ static int goodix_request_input_dev(struct goodix_ts_data *ts)
 	}
 
 	input_set_abs_params(ts->input_dev, ABS_MT_POSITION_X,
-			     0, ts->abs_x_max, 0, 0);
+			     0, ts->screen_x_max, 0, 0);
 	input_set_abs_params(ts->input_dev, ABS_MT_POSITION_Y,
-			     0, ts->abs_y_max, 0, 0);
+			     0, ts->screen_y_max, 0, 0);
 	input_set_abs_params(ts->input_dev, ABS_MT_WIDTH_MAJOR, 0, 255, 0, 0);
 	input_set_abs_params(ts->input_dev, ABS_MT_TOUCH_MAJOR, 0, 255, 0, 0);
 
@@ -675,6 +689,14 @@ static int goodix_configure_dev(struct goodix_ts_data *ts)
 
 	goodix_read_config(ts);
 
+	ts->screen_x_max = ts->abs_x_max;
+	ts->screen_y_max = ts->abs_y_max;
+
+	device_property_read_u32(&ts->client->dev, "touchscreen-max-x",
+				 &ts->screen_x_max);
+	device_property_read_u32(&ts->client->dev, "touchscreen-max-y",
+				 &ts->screen_y_max);
+
 	error = goodix_request_input_dev(ts);
 	if (error)
 		return error;
@@ -685,6 +707,17 @@ static int goodix_configure_dev(struct goodix_ts_data *ts)
 		dev_err(&ts->client->dev, "request IRQ failed: %d\n", error);
 		return error;
 	}
+
+	if (ts->screen_x_max != ts->abs_x_max)
+		ts->cal_x_ratio = CAL_RATIO(ts->screen_x_max, ts->abs_x_max);
+
+	if (ts->screen_y_max != ts->abs_y_max)
+		ts->cal_y_ratio = CAL_RATIO(ts->screen_y_max, ts->abs_y_max);
+
+	if (ts->cal_x_ratio || ts->cal_y_ratio)
+		dev_info(&ts->client->dev, "calibration: %d x %d -> %d x %d\n",
+			 ts->abs_x_max, ts->abs_y_max,
+			 ts->screen_x_max, ts->screen_y_max);
 
 	return 0;
 }
