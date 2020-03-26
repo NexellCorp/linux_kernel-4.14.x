@@ -170,8 +170,9 @@ struct nx_g2d_ver {
  * Nexell G2D ioctl
  */
 #define DRM_NX_G2D_GET_VER		0x10
-#define DRM_NX_G2D_DMA_EXEC		0x11
-#define DRM_NX_G2D_DMA_SYNC		0x12
+#define DRM_NX_G2D_EXEC			0x11
+#define DRM_NX_G2D_SYNC			0x12
+#define DRM_NX_G2D_EXEC_SYNC		0x13
 
 #define NX_IOWR(c, t)	DRM_IOWR(DRM_COMMAND_BASE + c, t)
 
@@ -184,9 +185,11 @@ struct nx_g2d_ver {
 
 #define DRM_IOCTL_NX_G2D_GET_VER \
 		NX_IOWR(DRM_NX_G2D_GET_VER, struct nx_g2d_ver)
-#define DRM_IOCTL_NX_G2D_DMA_EXEC \
-		NX_IOWR(DRM_NX_G2D_DMA_EXEC, struct nx_g2d_cmd)
-#define DRM_IOCTL_NX_G2D_DMA_SYNC \
-		NX_IOWR(DRM_NX_G2D_DMA_SYNC, struct nx_g2d_cmd)
+#define DRM_IOCTL_NX_G2D_EXEC \
+		NX_IOWR(DRM_NX_G2D_EXEC, struct nx_g2d_cmd)
+#define DRM_IOCTL_NX_G2D_SYNC \
+		NX_IOWR(DRM_NX_G2D_SYNC, struct nx_g2d_cmd)
+#define DRM_IOCTL_NX_G2D_EXEC_SYNC \
+		NX_IOWR(DRM_NX_G2D_EXEC_SYNC, struct nx_g2d_cmd)
 
 #endif
