@@ -397,6 +397,8 @@
 		interrupts = <13 IRQ_TYPE_EDGE_FALLING>; /* gpio_d 13 */
 		irq-gpios = <&gpio_d 13 0>;
 		reset-gpios = <&gpio_d 11 0>;
+		touchscreen-max-x = <1920>;
+		touchscreen-max-y = <720>;
 	};
 };
 
