@@ -113,6 +113,7 @@ static const struct file_operations nx_drm_fops = {
 	.compat_ioctl = drm_compat_ioctl,
 	.poll = drm_poll,
 	.read = drm_read,
+	.llseek = no_llseek,
 	.mmap = nx_drm_gem_fops_mmap,
 };
 #else
