@@ -96,6 +96,7 @@ struct nx_g2d_data {
 
 static void nx_g2d_dump_cmd(struct nx_g2d_data *g2d, struct nx_g2d_cmd *cmd)
 {
+#ifdef DEBUG_DUMP_CMD
 	int i;
 
 	dev_dbg(g2d->dev, "================================================\n");
@@ -105,6 +106,7 @@ static void nx_g2d_dump_cmd(struct nx_g2d_data *g2d, struct nx_g2d_cmd *cmd)
 				cmd_reg_offs[i], cmd->cmd[i]);
 	}
 	dev_dbg(g2d->dev, "================================================\n");
+#endif
 }
 
 static inline void nx_g2d_set_axiparam(struct nx_g2d_data *g2d)
@@ -261,7 +263,6 @@ int nx_g2d_exec_ioctl(struct drm_device *drm, void *data,
 {
 	struct nx_g2d_data *g2d = file->driver_priv;
 	struct nx_g2d_cmd *req = data;
-	long long ts = ktime_to_ms(ktime_get());
 	int ret;
 
 	if (WARN_ON(!g2d))
@@ -282,8 +283,6 @@ int nx_g2d_exec_ioctl(struct drm_device *drm, void *data,
 	nx_g2d_exec_cmd(g2d, req);
 
 	mutex_unlock(&g2d->mutex);
-
-	dev_dbg(g2d->dev, "[%lldms]\n", ktime_to_ms(ktime_get()) - ts);
 
 	return ret;
 }
@@ -306,8 +305,9 @@ int nx_g2d_sync_ioctl(struct drm_device *drm_dev, void *data,
 int nx_g2d_exec_sync_ioctl(struct drm_device *drm, void *data,
 			  struct drm_file *file)
 {
-	int ret = nx_g2d_exec_ioctl(drm, data, file);
+	int ret;
 
+	ret = nx_g2d_exec_ioctl(drm, data, file);
 	if (ret)
 		return ret;
 
