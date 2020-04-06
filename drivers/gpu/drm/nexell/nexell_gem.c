@@ -9,6 +9,7 @@
 #include <linux/dma-buf.h>
 #include <linux/shmem_fs.h>
 #include <linux/reservation.h>
+#include <linux/pfn_t.h>
 #include <drm/nexell_drm.h>
 
 #include "nexell_gem.h"
@@ -28,6 +29,11 @@ static const char * const gem_type_name[] = {
 };
 
 #define	LATE_CREATE_MMAP_OFFSET
+
+/* mmap with page falut */
+/*
+#define ADJUST_VM_MAP_FAULT
+*/
 
 static int nx_drm_gem_handle_create(struct drm_device *drm,
 				    struct drm_gem_object *obj,
@@ -537,10 +543,9 @@ static int nx_drm_gem_sys_contig_mmap(struct nx_gem_object *nx_obj,
 	pfn = dma_to_phys(drm->dev, dma_addr) >> PAGE_SHIFT;
 	pgoff = vma->vm_pgoff;
 
-	if (pgoff < nr_pages && nr_vma_pages <= (nr_pages - pgoff)) {
+	if (pgoff < nr_pages && nr_vma_pages <= (nr_pages - pgoff))
 		return remap_pfn_range(vma, vma->vm_start,
 				      pfn + pgoff, size, vma->vm_page_prot);
-	}
 
 	return 0;
 }
@@ -727,11 +732,12 @@ static void __vm_set_cache_attr(struct vm_area_struct *vma, uint32_t flags)
 		bool system = __gem_is_system(flags);
 
 		if (system)
-			vma->vm_page_prot = pgprot_noncached(
+			vma->vm_page_prot = pgprot_writecombine(
 					vm_get_page_prot(vma->vm_flags));
 	}
 
-	DRM_DEBUG_GEM("flags: %s\n", gem_type_name[flags]);
+	DRM_DEBUG_GEM("flags: %s, prot:0x%x\n",
+			gem_type_name[flags], vma->vm_page_prot);
 }
 
 static int nx_drm_gem_buf_mmap(struct nx_gem_object *nx_obj,
@@ -757,6 +763,12 @@ static int nx_drm_gem_buf_mmap(struct nx_gem_object *nx_obj,
 	 */
 	vma->vm_flags &= ~VM_PFNMAP;
 	vma->vm_pgoff = 0;
+
+	DRM_DEBUG_GEM(
+		"%pad/0x%p -> 0x%lx~0x%lx, size:%lu, prot:0x%x, flags:0x%lx\n",
+		&nx_obj->dma_addr, nx_obj->cpu_addr, vma->vm_start, vma->vm_end,
+		vma->vm_end - vma->vm_start, vma->vm_page_prot, vma->vm_flags);
+
 
 	switch (flags) {
 	case NEXELL_BO_SYSTEM:
@@ -917,9 +929,15 @@ static int nx_drm_gem_vm_fault(struct vm_fault *vmf)
 		if (!WARN_ON(!nx_obj->pages || !nx_obj->pages[pgoff])) {
 			pfn = page_to_pfn(
 				__gem_page_page(nx_obj->pages[pgoff]));
-			ret = vm_insert_pfn(vma,
-					(unsigned long)vmf->address,
-					pfn);
+
+			if (vma->vm_flags & VM_MIXEDMAP)
+				ret = vm_insert_mixed(vma,
+						(unsigned long)vmf->address,
+						__pfn_to_pfn_t(pfn, PFN_DEV));
+			else
+				ret = vm_insert_pfn(vma,
+						(unsigned long)vmf->address,
+						pfn);
 		}
 		mutex_unlock(&nx_obj->lock);
 	}
@@ -979,7 +997,12 @@ static int nx_drm_gem_vm_map(struct drm_gem_object *obj,
 	if (obj_size < vma->vm_end - vma->vm_start)
 		return -EINVAL;
 
+#ifdef TEST_VM_FLAGS
+	vma->vm_flags |= VM_MIXEDMAP;
+	vma->vm_flags &= ~VM_PFNMAP;
+#else
 	vma->vm_flags |= VM_IO | VM_PFNMAP | VM_DONTEXPAND | VM_DONTDUMP;
+#endif
 	vma->vm_ops = &nx_gem_vm_ops;
 	vma->vm_private_data = obj;
 
@@ -1044,8 +1067,12 @@ static int nx_drm_gem_mmap_vma(struct file *filp, struct vm_area_struct *vma)
 		return -EACCES;
 	}
 
+#ifdef ADJUST_VM_MAP_FAULT
 	ret = nx_drm_gem_vm_map(obj,
 			drm_vma_node_size(node) << PAGE_SHIFT, vma);
+#else
+	ret = nx_drm_gem_buf_mmap(to_nx_gem_obj(obj), vma);
+#endif
 
 	drm_gem_object_put_unlocked(obj);
 
